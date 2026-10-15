@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rätsel</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="card">
+      <h1>dies ist eine Rätsel</h1>
+      <form id="code-form">
+        <label for="code">Gib die vier Zahlen ein</label>
+        <input
+          id="code"
+          name="code"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]{4}"
+          minlength="4"
+          maxlength="4"
+          title="Bitte genau vier Ziffern von 0 bis 9 eingeben."
+          autocomplete="off"
+          placeholder="0000"
+          required
+        >
+        <button type="submit">Prüfen</button>
+      </form>
+    </main>
+    <script>
+      document.getElementById("code-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        const code = document.getElementById("code").value;
+        window.location.assign(code === "1234" ? "geloest.html" : "falsch.html");
+      });
+    </script>
+  </body>
+</html>

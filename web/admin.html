@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weihnachtsrätsel – Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><h1>🎄 Admin</h1></header>
+  <main>
+    <button id="beamer-exit" class="btn secondary" type="button" hidden>Beamer beenden</button>
+    <div id="notice" role="status"></div>
+    <section id="login" class="card">
+      <form id="login-form" class="stack">
+        <label for="f-code">Admincode</label>
+        <input id="f-code" class="big-input" type="password" autocomplete="off">
+        <button class="btn primary" type="submit">Anmelden</button>
+      </form>
+    </section>
+    <div id="app"></div>
+    <section class="card qr-card"><h2>QR-Code für Spieler</h2><div id="qr"></div></section>
+  </main>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

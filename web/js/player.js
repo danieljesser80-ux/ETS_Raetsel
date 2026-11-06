@@ -3,6 +3,7 @@ import { SUPABASE_URL, SUPABASE_KEY } from '../config.js';
 import { createApi } from './api.js';
 import { reasonText } from './texts.js';
 import { renderPlayer, updateCountdowns } from './views.js';
+import { createRefreshLoop } from './refresh.js';
 
 const root = document.getElementById('app');
 const notice = document.getElementById('notice');
@@ -11,6 +12,8 @@ const api = createApi(client);
 
 let state = null;
 let busy = false;
+const ui = { openTaskId: null, feedback: null };
+let feedbackTimer = null;
 
 function setNotice(text, kind) {
   notice.textContent = text || '';
@@ -19,12 +22,30 @@ function setNotice(text, kind) {
 }
 
 function draw() {
-  renderPlayer(root, state, handlers, Date.now());
+  renderPlayer(root, state && { ...state, openTaskId: ui.openTaskId, feedback: ui.feedback }, handlers, Date.now());
+  if (busy) for (const button of root.querySelectorAll('button')) button.disabled = true;
 }
 
-async function refresh() {
-  try {
+function setFeedback(scope, kind, text, { closeTask = false } = {}) {
+  clearTimeout(feedbackTimer);
+  ui.feedback = { scope, kind, text, accepted: closeTask };
+  draw();
+  if (scope === 'wort') return;
+  feedbackTimer = setTimeout(() => {
+    ui.feedback = null;
+    if (closeTask) ui.openTaskId = null;
+    draw();
+  }, 3000);
+}
+
+const sync = createRefreshLoop({
+  async load() {
+    await api.ensureSession();
     const s = await api.getState();
+    if (!s || !s.ok) throw new Error(reasonText(s?.reason));
+    return s;
+  },
+  apply(s) {
     s.fetchedAtMs = Date.now();
     state = s;
     if (notice.dataset.conn) {
@@ -32,93 +53,124 @@ async function refresh() {
       setNotice('');
     }
     draw();
-  } catch (e) {
+  },
+  onError() {
     notice.dataset.conn = '1';
     setNotice('Verbindung unterbrochen – neuer Versuch …', 'error');
-  }
-}
+  },
+});
+
+const refresh = () => busy ? Promise.resolve() : sync.request();
 
 const handlers = {
   async onJoin(name) {
     if (busy) return;
     busy = true;
+    sync.invalidate();
+    draw();
     try {
       const r = await api.joinRound(name);
       setNotice(r && r.ok ? '' : reasonText(r && r.reason), r && r.ok ? 'info' : 'error');
-      await refresh();
     } catch (e) {
       setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
     } finally {
+      await sync.request();
       busy = false;
+      draw();
     }
   },
   async onSubmit(answer) {
     if (busy) return;
     busy = true;
+    sync.invalidate();
     const btn = root.querySelector('button[type="submit"]');
     if (btn) btn.disabled = true;
     try {
       const r = await api.submitAnswer(answer);
-      if (!r || !r.ok) setNotice(reasonText(r && r.reason), 'error');
-      else if (r.correct) setNotice(`Richtig! Vorläufig Platz ${r.rank}`, 'success');
-      else setNotice('Leider falsch', 'error');
-      await refresh();
+      if (!r || !r.ok) ui.feedback = { scope: 'wort', kind: 'error', text: reasonText(r && r.reason) };
+      else if (r.correct) ui.feedback = { scope: 'wort', kind: 'success', text: `Richtig! Vorläufig Platz ${r.rank}` };
+      else ui.feedback = { scope: 'wort', kind: 'error', text: 'Leider falsch' };
     } catch (e) {
       setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
     } finally {
+      await sync.request();
       busy = false;
+      draw();
       const b = root.querySelector('button[type="submit"]');
       if (b) b.disabled = false;
     }
   },
-  async onStartTask(taskId) {
+  async onOpenTask(taskId) {
     if (busy) return;
     busy = true;
+    sync.invalidate();
+    clearTimeout(feedbackTimer);
     try {
-      const r = await api.startTask(taskId);
-      setNotice(r && r.ok ? '' : reasonText(r && r.reason), r && r.ok ? 'info' : 'error');
-      await refresh();
+      const task = state && (state.tasks || []).find((t) => t.id === taskId);
+      const r = task && task.started ? { ok: true } : await api.startTask(taskId);
+      if (r && r.ok) {
+        setNotice('');
+        ui.openTaskId = taskId;
+        ui.feedback = null;
+      } else {
+        setNotice(reasonText(r && r.reason), 'error');
+      }
     } catch (e) {
       setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
     } finally {
+      await sync.request();
       busy = false;
+      draw();
     }
   },
   async onSubmitTask(taskId, answer, choice) {
     if (busy) return;
     busy = true;
+    sync.invalidate();
+    draw();
     try {
       const r = await api.submitTask(taskId, answer, choice);
-      if (!r || !r.ok) setNotice(reasonText(r && r.reason), 'error');
-      else setNotice('Abgegeben. Das Rätsel ist jetzt gesperrt.', 'success');
-      await refresh();
+      if (r?.ok) {
+        const task = state?.tasks?.find((t) => t.id === taskId);
+        if (task) Object.assign(task, r);
+      }
+      if (!r || !r.ok) {
+        setFeedback(taskId, 'error', reasonText(r && r.reason));
+      } else if (r.correct === true) {
+        setFeedback(taskId, 'success', 'Richtig!', { closeTask: true });
+      } else if (r.correct === false) {
+        const left = r.attempts_remaining;
+        const remaining = r.submitted ? 'Keine weiteren Versuche.' : `Noch ${left} ${left === 1 ? 'Versuch' : 'Versuche'}.`;
+        setFeedback(taskId, 'error', `Falsch – ${remaining}`, { closeTask: true });
+      } else {
+        setFeedback(taskId, 'info', 'Geschätzt – abgegeben', { closeTask: true });
+      }
     } catch (e) {
       setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
     } finally {
+      await sync.request();
       busy = false;
+      draw();
     }
   },
 };
 
-async function start() {
-  try {
-    await api.ensureSession();
-  } catch (e) {
-    setNotice('Verbindung unterbrochen – neuer Versuch …', 'error');
-    setTimeout(start, 2000);
-    return;
-  }
+function start() {
+  sync.start();
   draw();
-  await refresh();
-  setInterval(refresh, 2000);
+  refresh();
   setInterval(() => state && updateCountdowns(root, state, Date.now()), 1000);
   try {
     client
       .channel('round-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'round' }, refresh)
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setNotice('Live-Verbindung unterbrochen – regelmäßige Aktualisierung bleibt aktiv.', 'info');
+        }
+      });
   } catch (e) {
-    // Polling genügt als Fallback.
+    setNotice('Live-Verbindung nicht verfügbar – regelmäßige Aktualisierung bleibt aktiv.', 'info');
   }
 }
 

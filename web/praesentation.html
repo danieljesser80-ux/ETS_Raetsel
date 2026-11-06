@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Das Spiel auf einen Blick – Weihnachtsrätsel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="presentation">
+  <header><h1>🎄 Gemeinsam rätseln</h1></header>
+  <main class="presentation-main">
+    <p class="presentation-intro">Findet eure Gruppe. Löst gemeinsam. Sammelt Punkte.</p>
+    <ol class="presentation-flow" role="list" aria-label="Der Spielablauf">
+      <li data-flow-step="login">
+        <span class="presentation-number" aria-hidden="true">1</span>
+        <h2>Anmelden</h2>
+        <p>QR-Code scannen und anmelden.</p>
+      </li>
+      <li data-flow-step="gruppenwort">
+        <span class="presentation-number" aria-hidden="true">2</span>
+        <h2>Gruppenwort</h2>
+        <p>Gruppe finden, Buchstaben zusammensetzen.</p>
+      </li>
+      <li data-flow-step="spielleiter">
+        <span class="presentation-number" aria-hidden="true">3</span>
+        <h2>Spielleiter</h2>
+        <p>Wer das erste richtige Wort eingibt, übernimmt.</p>
+      </li>
+      <li class="presentation-cycle" data-flow-step="raetselphase">
+        <span class="presentation-number" aria-hidden="true">4</span>
+        <h2>Frei rätseln</h2>
+        <p>Gemeinsam lösen; Spielleiter gibt Antworten ab.</p>
+        <p class="presentation-return"><span aria-hidden="true">↺</span> Zurück zur Übersicht</p>
+      </li>
+      <li data-flow-step="ende">
+        <span class="presentation-number" aria-hidden="true">5</span>
+        <h2>45 Minuten</h2>
+        <p>Admin beendet manuell.</p>
+      </li>
+    </ol>
+    <aside class="presentation-ranking" aria-label="Begleitende Rangliste">
+      <strong>Aktuelle Rangliste am Monitor</strong>
+      <p>Plätze bleiben bis zum Spielende vorläufig.</p>
+    </aside>
+    <aside class="card qr-card presentation-qr" aria-labelledby="qr-title">
+      <h2 id="qr-title">Jetzt mitspielen</h2>
+      <div id="qr"><p role="status">QR-Code benötigt eine über HTTP(S) geöffnete Seite.</p></div>
+    </aside>
+  </main>
+  <nav class="presentation-nav" aria-label="Weitere Informationen">
+    <a href="erklaerung.html">Zur Anleitung</a>
+    <a href="index.html">Zur Spielseite</a>
+  </nav>
+  <script type="module" src="js/presentation.js"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spielidee und Ablauf – Weihnachtsrätsel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="guide-page">
+  <header><h1>🎄 So funktioniert das Weihnachtsrätsel</h1></header>
+  <main class="guide">
+    <nav class="card" aria-label="Spielnavigation">
+      <a class="guide-link" href="index.html">Zur Spielseite</a>
+      <a class="guide-link" href="praesentation.html">Kurze Monitor-Präsentation</a>
+    </nav>
+
+    <section class="card" id="idee" aria-labelledby="idee-titel">
+      <h2 id="idee-titel">Die Spielidee</h2>
+      <p>Bei der Weihnachtsfeier löst ihr gemeinsam im Team: Gruppe finden, Buchstaben zum Wort
+        zusammensetzen, danach frei rätseln. Zusammenarbeit und gute Antworten zählen.</p>
+      <p>Ihr braucht ein Smartphone mit Internet und aktuellem Chrome oder Safari; keine Installation.</p>
+    </section>
+
+    <section class="card" id="ablaufgrafik" aria-labelledby="grafik-titel">
+      <h2 id="grafik-titel">Der Ablauf auf einen Blick</h2>
+      <figure class="guide-diagram" aria-labelledby="grafik-titel" aria-describedby="grafik-hinweis">
+        <aside class="guide-monitor" aria-labelledby="monitor-titel">
+          <h3 id="monitor-titel">Aktuelle Rangliste am Monitor</h3>
+          <p>Während des Spiels bleiben die Plätze vorläufig.</p>
+        </aside>
+        <ol class="guide-flow" role="list">
+          <li data-flow-step="login">
+            <strong class="guide-flow-title"><span class="guide-flow-number" aria-hidden="true">1</span>
+              Login / Anmeldung</strong>
+            <p>QR-Code scannen, Namen eingeben.</p>
+          </li>
+          <li data-flow-step="gruppenwort">
+            <strong class="guide-flow-title"><span class="guide-flow-number" aria-hidden="true">2</span>
+              Gemeinsames Gruppenwort</strong>
+            <p>Gruppe finden, Buchstaben zusammensetzen.</p>
+          </li>
+          <li data-flow-step="spielleiter">
+            <strong class="guide-flow-title"><span class="guide-flow-number" aria-hidden="true">3</span>
+              Spielleiterbestimmung</strong>
+            <p>Erste richtige Worteingabe bestimmt den Spielleiter.</p>
+          </li>
+          <li class="guide-flow-loop" data-flow-step="raetselphase">
+            <h3 class="guide-flow-title"><span class="guide-flow-number" aria-hidden="true">4</span>
+              Freie Rätselwahl</h3>
+            <ol class="guide-cycle" role="list" aria-label="Wiederholbare Rätselphase">
+              <li data-flow-step="uebersicht">
+                <strong>Rätselübersicht</strong>
+              </li>
+              <li data-flow-step="auswahl">
+                <strong>Rätsel frei auswählen</strong>
+              </li>
+              <li data-flow-step="antwort">
+                <strong>Gemeinsam lösen</strong>
+                <p>Spielleiter gibt die Antwort ab.</p>
+              </li>
+            </ol>
+            <p class="guide-flow-return"><span aria-hidden="true">↺</span>
+              Zurück zur Übersicht – nächstes verfügbares Rätsel wählen.</p>
+          </li>
+          <li class="guide-flow-end" data-flow-step="ende">
+            <strong class="guide-flow-title"><span class="guide-flow-number" aria-hidden="true">5</span>
+              Ende nach 45 Minuten</strong>
+            <p>Admin beendet manuell mit „Spiele beenden“; nicht automatisch.</p>
+          </li>
+        </ol>
+        <figcaption id="grafik-hinweis">Rätsel frei wählen, lösen, zurück zur Übersicht –
+          bis der Admin beendet.</figcaption>
+      </figure>
+    </section>
+
+    <section class="card" id="rollen" aria-labelledby="rollen-titel">
+      <h2 id="rollen-titel">Wer macht was?</h2>
+      <dl>
+        <dt>Spieler</dt>
+        <dd>Alle helfen beim Lösen. Das Gruppenwort darf jedes Mitglied eingeben.</dd>
+        <dt>Spielleiter der Gruppe</dt>
+        <dd>Wer das erste richtige Wort eingibt, übernimmt die Rolle.
+          Danach darf nur der Spielleiter Aufgaben öffnen und Antworten abgeben.</dd>
+        <dt>Admin / Moderation</dt>
+        <dd>Startet die Anmeldung, teilt Gruppen ein und beendet das Spiel.</dd>
+      </dl>
+    </section>
+
+    <section class="card" id="ablauf" aria-labelledby="ablauf-titel">
+      <h2 id="ablauf-titel">Gut zu wissen</h2>
+      <ol class="guide-steps">
+        <li>Mit Namen oder Spitznamen anmelden; der gemeinsame Countdown läuft 5 Minuten.
+          Der Admin kann die Anmeldung früher schließen.</li>
+        <li>Gruppen entstehen zufällig, normalerweise mit 4 bis 6 Mitgliedern;
+          der Admin kann die Größe einstellen. Gruppenname und Buchstaben stehen am Smartphone.
+          Am Monitor seht ihr die Teilnehmer, nach der Wortlösung „Gruppe komplett“.</li>
+        <li>Nach jeder Abgabe erscheinen 3 Sekunden Rückmeldung, dann wieder die Übersicht.
+          Dort seht ihr verfügbare Aufgaben und verbleibende Versuche.</li>
+      </ol>
+    </section>
+
+    <section class="card" id="wertung" aria-labelledby="wertung-titel">
+      <h2 id="wertung-titel">Zeit, Plätze und Punkte</h2>
+      <p>Beim Gruppenwort zählt die Zeit ab Gruppeneinteilung, danach ab dem ersten Öffnen.
+        Erneutes Öffnen bewirkt keinen Neustart.</p>
+      <p>Richtige Antworten beziehungsweise die Nähe bei Schätzungen zählen.
+        Bei Gleichstand entscheidet die kürzere Zeit. Falsche exakte Antworten bringen 0 Punkte.</p>
+      <p>Plätze bleiben bis „Spiele beenden“ vorläufig. Spieler sehen eigene Plätze, danach eigene
+        Punkte und Gesamtplatz. Die vollständige Rangliste sehen nur Admin und Beamer.</p>
+    </section>
+
+    <section class="card" id="regeln" aria-labelledby="regeln-titel">
+      <h2 id="regeln-titel">Die wichtigsten Spielregeln</h2>
+      <ul class="guide-rules">
+        <li>Bleibt im gleichen Browser auf demselben Gerät; wartet bei Verbindungsproblemen auf Wiederverbindung.</li>
+        <li>Gruppenwort: unbegrenzt viele Versuche, mit mindestens 3 Sekunden Abstand je Gruppe.</li>
+        <li>Exakte Antworten: bis zu drei Versuche. Richtige Lösung oder dritter Fehlversuch beendet die Aufgabe.</li>
+        <li>Schätzfragen: eine Abgabe. Sprecht euch vor dem Absenden ab.</li>
+      </ul>
+    </section>
+
+    <nav class="card" aria-label="Zurück zum Spiel">
+      <a class="guide-link" href="index.html">Zur Spielseite</a>
+    </nav>
+  </main>
+</body>
+</html>

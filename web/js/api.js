@@ -22,10 +22,23 @@ export function createApi(client) {
     joinRound: (name) => rpc('join_round', { p_name: name }),
     getState: () => rpc('get_state'),
     submitAnswer: (answer) => rpc('submit_answer', { p_answer: answer }),
+    startTask: (taskId) => rpc('start_task', { p_task_id: taskId }),
+    submitTask: (taskId, answer, choice) =>
+      rpc('submit_task_answer', { p_task_id: taskId, p_answer: answer, p_choice: choice ?? null }),
     admin: {
       startRegistration: withCode('admin_start_registration', (seconds) => ({ p_seconds: seconds })),
       closeRegistration: withCode('admin_close_registration'),
       formGroups: withCode('admin_form_groups'),
+      setGroupSize: withCode('admin_set_group_size', (min, max) => ({ p_min: min, p_max: max })),
+      setTask: withCode('admin_set_task', (id, f) => ({
+        p_id: id,
+        p_title: f.title ?? null,
+        p_body: f.body ?? null,
+        p_image_url: f.imageUrl ?? null,
+        p_solution: f.solution ?? null,
+        p_options: f.options ?? null,
+        p_correct_option: f.correctOption ?? null,
+      })),
       overview: withCode('admin_overview'),
       finish: withCode('admin_finish'),
       reset: withCode('admin_reset'),

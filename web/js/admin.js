@@ -81,7 +81,12 @@ const handlers = {
       return r;
     }, 'Anmeldung geschlossen.'),
   onForm: () => command(() => api.admin.formGroups(code), 'Gruppen eingeteilt.'),
-  onFinish: () => command(() => api.admin.finish(code), 'Aufgabe beendet.'),
+  onSetGroupSize: (min, max) => command(() => api.admin.setGroupSize(code, min, max), 'Gruppengröße gespeichert.'),
+  onSetTask: (id, fields) => command(() => api.admin.setTask(code, id, fields), 'Rätsel gespeichert.'),
+  onFinish: () => {
+    if (!confirm('Spiele wirklich beenden? Danach sind keine Abgaben mehr möglich und die Punkte werden final.')) return;
+    return command(() => api.admin.finish(code), 'Spiele beendet.');
+  },
   onReset: () => {
     if (!confirm('Wirklich alles zurücksetzen? Alle Teilnehmer und Ergebnisse werden gelöscht.')) return;
     closedLocally = false;

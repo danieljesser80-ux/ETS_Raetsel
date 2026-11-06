@@ -12,10 +12,22 @@ const REASONS = {
   zu_schnell: 'Nicht so schnell! Bitte kurz warten und dann erneut senden.',
   nicht_berechtigt: 'Falscher Admincode.',
   anmeldung_offen: 'Die Anmeldung ist noch offen. Bitte erst schließen.',
-  zu_wenige: 'Zu wenige Teilnehmer (mindestens 4).',
-  nicht_teilbar: 'Bei 7 Teilnehmern ist keine Einteilung möglich. Anmeldung erneut öffnen.',
+  zu_wenige: 'Zu wenige Teilnehmer für die eingestellte Mindestgröße.',
+  nicht_teilbar: 'Die Teilnehmerzahl passt nicht zur eingestellten Gruppengröße. Anmeldung erneut öffnen oder Größe ändern.',
   ungueltige_dauer: 'Ungültige Dauer.',
   zu_wenige_namen: 'Nicht genug Gruppennamen vorhanden.',
+  ungueltige_groesse: 'Ungültige Gruppengröße (1 bis 14, Minimum höchstens Maximum).',
+  wort_nicht_geloest: 'Eure Gruppe hat das Wort noch nicht gelöst.',
+  nicht_spielleiter: 'Nur der Spielleiter eurer Gruppe kann Antworten senden.',
+  unbekannte_aufgabe: 'Diese Aufgabe gibt es nicht.',
+  nicht_verfuegbar: 'Diese Aufgabe ist noch nicht freigeschaltet.',
+  bereits_abgegeben: 'Eure Gruppe hat dieses Rätsel schon abgegeben.',
+  nicht_gestartet: 'Das Rätsel wurde noch nicht geöffnet.',
+  ungueltige_auswahl: 'Bitte einen der Namen auswählen.',
+  ungueltige_optionen: 'Es werden genau 4 verschiedene Namen gebraucht, der richtige muss dabei sein.',
+  ungueltige_zahl: 'Bitte eine ganze Zahl eingeben (nur Ziffern).',
+  ungueltige_loesung: 'Bei Schätzfragen muss die Lösung eine ganze Zahl sein.',
+  ungueltiges_bild: 'Ungültiger Bildlink (https://… oder relativer Pfad).',
 };
 
 const PHASES = {
@@ -23,7 +35,7 @@ const PHASES = {
   anmeldung: 'Anmeldung läuft',
   gruppen_eingeteilt: 'Gruppen eingeteilt',
   wortaufgabe_aktiv: 'Wortaufgabe läuft',
-  aufgabe_abgeschlossen: 'Aufgabe abgeschlossen',
+  aufgabe_abgeschlossen: 'Spiele beendet',
 };
 
 export function reasonText(reason) {

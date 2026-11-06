@@ -60,7 +60,7 @@ const handlers = {
     try {
       const r = await api.submitAnswer(answer);
       if (!r || !r.ok) setNotice(reasonText(r && r.reason), 'error');
-      else if (r.correct) setNotice(`Richtig! Platz ${r.rank} – ${r.points} Punkte`, 'success');
+      else if (r.correct) setNotice(`Richtig! Vorläufig Platz ${r.rank}`, 'success');
       else setNotice('Leider falsch', 'error');
       await refresh();
     } catch (e) {
@@ -69,6 +69,33 @@ const handlers = {
       busy = false;
       const b = root.querySelector('button[type="submit"]');
       if (b) b.disabled = false;
+    }
+  },
+  async onStartTask(taskId) {
+    if (busy) return;
+    busy = true;
+    try {
+      const r = await api.startTask(taskId);
+      setNotice(r && r.ok ? '' : reasonText(r && r.reason), r && r.ok ? 'info' : 'error');
+      await refresh();
+    } catch (e) {
+      setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
+    } finally {
+      busy = false;
+    }
+  },
+  async onSubmitTask(taskId, answer, choice) {
+    if (busy) return;
+    busy = true;
+    try {
+      const r = await api.submitTask(taskId, answer, choice);
+      if (!r || !r.ok) setNotice(reasonText(r && r.reason), 'error');
+      else setNotice('Abgegeben. Das Rätsel ist jetzt gesperrt.', 'success');
+      await refresh();
+    } catch (e) {
+      setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
+    } finally {
+      busy = false;
     }
   },
 };

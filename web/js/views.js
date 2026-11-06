@@ -335,15 +335,13 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
     } else if (openTask) {
       card.append(...taskView(doc, state, openTask, handlers));
     } else {
-      card.append(sectionTitle(doc, group.name));
-      const list = el(doc, 'ul', { cls: 'members' });
+      card.classList.add('player-overview');
+      card.append(el(doc, 'h2', { cls: 'player-group-name', text: group.name }));
+      const list = el(doc, 'ul', { cls: 'members', attrs: { 'aria-label': 'Mitglieder eurer Gruppe' } });
       for (const m of group.members || []) {
         list.appendChild(el(doc, 'li', { text: m, cls: m === state.name ? 'me' : '' }));
       }
-      card.append(el(doc, 'p', { text: 'Eure Gruppe:' }), list);
-      const letters = el(doc, 'div', { cls: 'letters', attrs: { 'aria-label': 'Deine Buchstaben' } });
-      for (const l of state.letters || []) letters.appendChild(el(doc, 'span', { cls: 'letter', text: l }));
-      card.append(el(doc, 'p', { text: 'Deine Buchstaben:' }), letters);
+      card.append(list);
       if (state.solved) {
         card.append(
           el(doc, 'p', {
@@ -355,6 +353,9 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
         );
         card.append(...taskOverview(doc, state, handlers));
       } else {
+        const letters = el(doc, 'div', { cls: 'letters', attrs: { 'aria-label': 'Deine Buchstaben' } });
+        for (const l of state.letters || []) letters.appendChild(el(doc, 'span', { cls: 'letter', text: l }));
+        card.append(el(doc, 'p', { text: 'Deine Buchstaben:' }), letters);
         card.append(
           el(doc, 'p', { text: 'Findet eure Gruppenmitglieder und setzt das Wort zusammen' }),
           textForm(doc, {
@@ -368,6 +369,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
       }
     }
   } else if (phase === 'aufgabe_abgeschlossen') {
+    if (state.solved) card.classList.add('player-overview');
     card.append(sectionTitle(doc, 'Spiele beendet'));
     if (state.final) {
       card.append(

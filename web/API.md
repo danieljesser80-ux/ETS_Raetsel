@@ -56,6 +56,10 @@ Diese Regeln ersetzen widersprechende Ein-Versuch-/Polling-Aussagen oben für ex
 - `refresh.js`: `createRefreshLoop({load,apply,onError,setTimer,clearTimer})` mit `request()`, `invalidate()`, `start()`, `stop()`. Höchstens ein aktiver Abruf; weitere Abrufwünsche bündeln sich in einem Folgeabruf. `invalidate()` vor Benutzeraktionen verwirft Antworten älterer Generationen und hält Folgeabrufe bis `request()` nach der Aktion zurück. `stop()` invalidiert alles und entfernt Timer. Normalintervall 2 s, nach Fehlern 4/8/16/30 s; Realtime während Backoff löst keinen sofortigen Abruf aus. Fehleranzeige durch `onError`, Erfolg beendet Verbindungsfehlerstatus. Aktionen werden nie automatisch wiederholt.
 - Realtime wird nur für Spieler genutzt; Polling bleibt Fallback und meldet seinen Einsatz sichtbar bei Kanalfehlern. Controller aktualisieren Countdown lokal ohne komplette Neuzeichnung. Doppelabsenden wird mit einem Busy-Zustand verhindert.
 
+## Kompakte Spielerübersicht AEN-038
+
+`renderPlayer` markiert Gruppen-/Rätselübersichten mit `.player-overview`, nicht Login oder Einzelaufgabe. Gruppenname `.player-group-name` mit 32 px, umbruchfähige vollständige Teilnehmerliste mit `aria-label="Mitglieder eurer Gruppe"` und unveränderter Eigenmarkierung. Redundanter Absatz „Eure Gruppe“ entfällt. Buchstaben/Anleitung/Wortformular nur solange `state.solved` fehlt; nach serverseitiger Lösung auch mit weiterhin übergebenen Buchstaben kein Wortaufgaben-DOM. Eigener Wortplatz, Rollenhinweis, Rätsel-/Kategorie-/Versuchs-/Ergebnisstatus erhalten. Kompakte Abstände, mindestens 18 px Fließtext und 44 px Buttonhöhe; keine festen Inhaltsgrenzen. DOM-Abgleich, Antwort-/Öffnen-Handler, Rechte, Versuchslimits, Login, Einzelaufgabe und Adminlayouts unverändert. Keine Schemaänderung.
+
 ## Aktueller Monitorvertrag AEN-036
 
 Dieser Abschnitt ersetzt frühere Aussagen zu mobilen Adminlayouts, 1280×720 und skriptfreier Präsentation; Spielerverträge bleiben unverändert.

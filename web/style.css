@@ -83,6 +83,15 @@ label { font-weight: 700; }
 }
 .members { margin: 0; padding-left: 1.25rem; }
 .members li.me { font-weight: 900; background: var(--gold); padding: 0 0.3rem; border-radius: 0.3rem; list-style-position: inside; }
+.player-overview { gap: 0.5rem; padding: 0.75rem; }
+.player-overview p { margin: 0; }
+.player-overview .player-group-name { font-size: 2rem; line-height: 1.2; overflow-wrap: anywhere; }
+.player-overview .members { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; padding: 0; list-style: none; }
+.player-overview .members li { max-width: 100%; overflow-wrap: anywhere; }
+.player-overview h3 { margin: 0.5rem 0 0; font-size: 1.125rem; }
+.player-overview .task { gap: 0.25rem; padding: 0.5rem; }
+.player-overview .btn { min-height: 3rem; margin: 0; font-size: 1.125rem; overflow-wrap: anywhere; }
+.player-overview .message { padding: 0.5rem 0.75rem; }
 .hello { font-size: 1.5rem; font-weight: 800; margin: 0; }
 .ranking { padding-left: 0; list-style: none; margin: 0; }
 .ranking li { display: flex; gap: 0.75rem; padding: 0.4rem 0; border-bottom: 1px solid #999; }

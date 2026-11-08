@@ -3,8 +3,9 @@ import { renderPlayerQr } from './qr.js';
 import { SUPABASE_URL, SUPABASE_KEY } from '../config.js';
 import { createApi } from './api.js';
 import { reasonText } from './texts.js';
-import { renderAdmin, renderBeamer, renderMessage, updateCountdowns, clearDrafts } from './views.js';
+import { renderAdmin, renderMessage, updateCountdowns, clearDrafts } from './views.js';
 import { createRefreshLoop } from './refresh.js';
+import { resultsCsv } from './export.js';
 
 const root = document.getElementById('app');
 const notice = document.getElementById('notice');
@@ -15,12 +16,12 @@ const api = createApi(client);
 
 let code = sessionStorage.getItem('admincode') || '';
 let overview = null;
-let beamer = false;
 let closedLocally = false;
 let timer = null;
 let selectedGroup = null;
 let adminTab = 'steuerung';
 let busy = false;
+let connectionLost = false;
 
 function setNotice(text, kind) {
   notice.textContent = text || '';
@@ -29,14 +30,9 @@ function setNotice(text, kind) {
 }
 
 function draw() {
-  document.body.classList.toggle('beamer-mode', beamer);
   if (!overview) return;
-  if (beamer) {
-    renderBeamer(root, overview, Date.now());
-    return;
-  }
-  renderAdmin(root, { ...overview, selectedGroup, adminTab }, handlers, Date.now());
-  if (busy) for (const field of root.querySelectorAll('button, input')) field.disabled = true;
+  renderAdmin(root, { ...overview, selectedGroup, adminTab, connectionLost }, handlers, Date.now());
+  if (busy) for (const field of root.querySelectorAll('button, input, textarea, select')) field.disabled = true;
 }
 
 const sync = createRefreshLoop({
@@ -48,10 +44,13 @@ const sync = createRefreshLoop({
   },
   apply(o) {
     if (!o || !o.ok) {
+      connectionLost = true;
       setNotice(reasonText(o && o.reason), 'error');
       if (o && o.reason === 'nicht_berechtigt') logout();
+      else draw();
       return;
     }
+    connectionLost = false;
     if (o.phase !== 'anmeldung') closedLocally = false;
     if (closedLocally && o.closed_early === undefined) o.closed_early = true;
     o.fetchedAtMs = Date.now();
@@ -63,8 +62,10 @@ const sync = createRefreshLoop({
     draw();
   },
   onError() {
+    connectionLost = true;
     notice.dataset.conn = '1';
     setNotice('Verbindung unterbrochen – neuer Versuch …', 'error');
+    draw();
   },
 });
 
@@ -83,7 +84,7 @@ async function command(fn, okText, drafts) {
       setNotice(okText || '', 'success');
     }
   } catch (e) {
-    setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
+    setNotice(`Aktion nicht bestätigt: ${e.message || 'Verbindung unterbrochen'}. Status prüfen, bevor du sie wiederholst.`, 'error');
   } finally {
     await refresh();
     busy = false;
@@ -104,8 +105,12 @@ const handlers = {
     }, 'Anmeldung geschlossen.'),
   onForm: () => command(() => api.admin.formGroups(code), 'Gruppen eingeteilt.'),
   onSetGroupSize: (min, max) => command(() => api.admin.setGroupSize(code, min, max), 'Gruppengröße gespeichert.', ['gmin', 'gmax']),
+  onSetGameConfig: (minutes, difficulty, schedules) => command(() => api.admin.setGameConfig(code, minutes, difficulty, schedules),
+    'Spielzeit und Punkte gespeichert.', ['game-minutes', 'word-difficulty',
+      ...['leicht', 'mittel', 'schwer'].flatMap((level) => Array.from({ length: 9 }, (_, i) => `points-${level}-${i + 1}`))]),
+  onSetWords: (words) => command(() => api.admin.setWords(code, words), 'Wortliste gespeichert.', ['words']),
   onSetTask: (id, fields) => command(() => api.admin.setTask(code, id, fields), 'Rätsel gespeichert.',
-    ['title', 'body', 'image', 'solution', 'opt1', 'opt2', 'opt3', 'opt4', 'correct'].map((suffix) => `t-${id}-${suffix}`)),
+    ['title', 'body', 'image', 'solution', 'opt1', 'opt2', 'opt3', 'opt4', 'correct', 'difficulty'].map((suffix) => `t-${id}-${suffix}`)),
   onFinish: () => {
     if (!confirm('Spiele wirklich beenden? Danach sind keine Abgaben mehr möglich und die Punkte werden final.')) return;
     return command(() => api.admin.finish(code), 'Spiele beendet.');
@@ -122,11 +127,61 @@ const handlers = {
       return result;
     }, 'Zurückgesetzt.', null);
   },
-  onBeamer: () => {
-    beamer = true;
-    document.getElementById('beamer-exit').hidden = false;
-    draw();
+  async onBeamer() {
+    const child = window.open('beamer.html', 'raetsel-beamer');
+    if (!child) {
+      setNotice('Beamerfenster blockiert. Pop-ups für diese Website erlauben und erneut öffnen.', 'error');
+      return;
+    }
+    let token = null;
+    let ready = false;
+    const send = () => {
+      if (ready && token) {
+        child.postMessage({ type: 'raetsel-beamer-token', token }, location.origin);
+        cleanup();
+      }
+    };
+    const receive = (event) => {
+      if (event.origin !== location.origin || event.source !== child || event.data?.type !== 'raetsel-beamer-ready') return;
+      ready = true;
+      send();
+    };
+    const cleanup = () => {
+      window.removeEventListener('message', receive);
+      clearTimeout(timeout);
+    };
+    window.addEventListener('message', receive);
+    const timeout = setTimeout(() => {
+      cleanup();
+      setNotice('Beamerseite konnte nicht verbunden werden. Erneut öffnen.', 'error');
+    }, 15000);
+    try {
+      const result = await api.admin.openBeamer(code);
+      if (!result?.ok || !result.token) {
+        cleanup();
+        setNotice(reasonText(result?.reason), 'error');
+        return;
+      }
+      token = result.token;
+      send();
+    } catch (error) {
+      cleanup();
+      setNotice(`Beamerzugang fehlgeschlagen: ${error.message}`, 'error');
+    }
   },
+  onExport: () => command(async () => {
+    const result = await api.admin.exportResults(code);
+    if (!result?.ok) return result;
+    const url = URL.createObjectURL(new Blob([resultsCsv(result.rows)], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'raetsel-ergebnisse.csv';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return result;
+  }, 'Ergebnisse als CSV heruntergeladen.'),
   onSelectGroup: (name) => {
     selectedGroup = name;
     draw();
@@ -149,9 +204,6 @@ function logout() {
   overview = null;
   selectedGroup = null;
   adminTab = 'steuerung';
-  beamer = false;
-  document.body.classList.remove('beamer-mode');
-  document.getElementById('beamer-exit').hidden = true;
   loginBox.hidden = false;
   root.textContent = '';
 }
@@ -176,12 +228,6 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
   code = v;
   sessionStorage.setItem('admincode', v);
   enter();
-});
-
-document.getElementById('beamer-exit').addEventListener('click', () => {
-  beamer = false;
-  document.getElementById('beamer-exit').hidden = true;
-  draw();
 });
 
 renderPlayerQr(qrBox, location.href);

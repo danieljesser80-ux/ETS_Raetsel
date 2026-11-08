@@ -1,9 +1,24 @@
-import { countdownSeconds, formatClock } from './countdown.js';
+import { countdownSeconds, gameSeconds, elapsedSeconds, formatClock } from './countdown.js';
 import { phaseText } from './texts.js';
-import { taskPreparation } from './preparation.js';
+import { roundPreparation } from './preparation.js';
 
 const listeners = new WeakMap();
 const viewKeys = new WeakMap();
+
+function fieldDefault(field) {
+  if (field.tagName === 'SELECT') {
+    return [...field.options].find((option) => option.defaultSelected)?.value ?? field.options[0]?.value ?? '';
+  }
+  return field.defaultValue;
+}
+
+function updateDraftStatus(root) {
+  const status = root.querySelector('[data-draft-status]');
+  if (!status) return;
+  const dirty = [...root.querySelectorAll('input[name], textarea[name], select[name]')]
+    .some((field) => field.value !== fieldDefault(field));
+  status.textContent = dirty ? 'Ungespeicherte Änderungen – Bereitschaft gilt nur für zuletzt gespeicherte Daten.' : 'Alle Konfigurationsentwürfe entsprechen den gespeicherten Daten.';
+}
 
 function listen(node, event, handler) {
   node.addEventListener(event, handler);
@@ -29,7 +44,7 @@ function reconcile(old, fresh) {
   }
   const field = old.matches('input, textarea, select');
   const dirty = field && (old.type === 'radio' || old.type === 'checkbox'
-    ? old.checked !== old.defaultChecked : old.value !== old.defaultValue);
+    ? old.checked !== old.defaultChecked : old.value !== fieldDefault(old));
   const savedValue = field ? old.value : null;
   const savedChecked = old.checked;
   for (const attr of [...old.attributes]) {
@@ -85,7 +100,7 @@ export function clearDrafts(root, names) {
   for (const field of root.querySelectorAll('input[name], textarea[name], select[name]')) {
     if (selected && !selected.has(field.name)) continue;
     if (field.type === 'radio' || field.type === 'checkbox') field.checked = field.defaultChecked;
-    else field.value = field.defaultValue;
+    else field.value = fieldDefault(field);
   }
   if (!names) viewKeys.delete(root);
 }
@@ -111,8 +126,61 @@ function countdownBox(doc, seconds) {
 
 export function updateCountdowns(root, state, nowMs) {
   const secs = countdownSeconds(state, nowMs);
-  if (secs === null) return;
-  for (const n of root.querySelectorAll('[data-countdown]')) n.textContent = formatClock(secs);
+  for (const n of root.querySelectorAll('[data-countdown]')) {
+    n.hidden = secs === null || secs <= 0;
+    if (!n.hidden) n.textContent = formatClock(secs);
+    const box = n.closest('[data-registration-clock]');
+    if (box) box.hidden = n.hidden;
+  }
+  const game = gameSeconds(state, nowMs);
+  for (const n of root.querySelectorAll('[data-game-countdown]')) {
+    n.textContent = game === null ? '–' : formatClock(game);
+  }
+  for (const n of root.querySelectorAll('[data-time-warning]')) {
+    const text = game === null || game <= 0 ? '' : game <= 60 ? 'Letzte Minute!' : game <= 300 ? 'Noch höchstens fünf Minuten!' : '';
+    n.textContent = text;
+    n.hidden = !text;
+    n.classList.toggle('urgent', game !== null && game <= 60);
+  }
+  for (const n of root.querySelectorAll('[data-task-time]')) {
+    const start = n.dataset.startedMs ? Number(n.dataset.startedMs) : null;
+    const duration = n.dataset.durationMs ? Number(n.dataset.durationMs) : null;
+    const value = elapsedSeconds(start, duration, state, nowMs);
+    n.textContent = value === null ? (start === null && duration === null ? 'Nicht gestartet' : 'Zeit nicht verfügbar') : formatClock(value);
+  }
+  if (game === 0) {
+    for (const button of root.querySelectorAll('[data-open], [data-give-up], form button[type="submit"]')) button.disabled = true;
+  }
+}
+
+function gameClock(doc, state, nowMs) {
+  const seconds = gameSeconds(state, nowMs);
+  if (seconds === null) return null;
+  const clock = el(doc, 'section', { cls: 'game-clock', attrs: { 'aria-label': 'Verbleibende Spielzeit' } }, [
+    el(doc, 'strong', { text: 'Spielrestzeit' }),
+    el(doc, 'span', { text: formatClock(seconds), attrs: { 'data-game-countdown': '1', role: 'timer' } }),
+    el(doc, 'p', { cls: 'time-warning', attrs: { 'data-time-warning': '1', role: 'status' } }),
+  ]);
+  updateCountdowns(clock, state, nowMs);
+  return clock;
+}
+
+function taskTime(doc, start, duration, state, nowMs, label = 'Aufgabenzeit') {
+  const time = elapsedSeconds(start, duration, state, nowMs);
+  const value = el(doc, 'span', { text: time === null
+    ? (start == null && duration == null ? 'Nicht gestartet' : 'Zeit nicht verfügbar') : formatClock(time),
+  attrs: { 'data-task-time': '1', 'data-started-ms': start ?? '', 'data-duration-ms': duration ?? '' } });
+  return el(doc, 'p', { cls: 'task-time' }, [doc.createTextNode(`${label}: `), value]);
+}
+
+function giveUpButton(doc, taskId, handlers, disabled = false) {
+  const button = el(doc, 'button', { cls: 'btn danger', text: 'Aufgeben',
+    attrs: { type: 'button', 'data-give-up': taskId } });
+  button.disabled = disabled;
+  listen(button, 'click', (event) => {
+    if (!event.currentTarget.disabled) handlers.onGiveUp?.(taskId);
+  });
+  return button;
 }
 
 function sectionTitle(doc, text) {
@@ -163,6 +231,7 @@ export function renderMessage(root, text, kind = 'info') {
 }
 
 function submittedMark(task) {
+  if (task.given_up) return { text: 'Aufgegeben – 0 Punkte', cls: 'guessed' };
   if (task.correct === true) return { text: '✓ Richtig', cls: 'ok' };
   if (task.correct === false) return { text: '✗ Falsch', cls: 'wrong' };
   if (task.kind === 'estimate') return { text: 'Geschätzt', cls: 'guessed' };
@@ -177,6 +246,7 @@ function taskStatus(task, finished) {
     if (finished && pl.points !== undefined) return `${mark} – Platz ${pl.rank}, ${pl.points} Punkte`;
     return `${mark} – vorläufig Platz ${pl.rank}`;
   }
+  if (finished) return task.started ? 'Spiel beendet – offen, 0 Punkte' : 'Nicht gestartet – 0 Punkte';
   if (!task.available) return 'Noch nicht verfügbar';
   if (task.kind === 'exact' && task.attempts_used > 0) {
     return `Noch ${task.attempts_remaining} ${task.attempts_remaining === 1 ? 'Versuch' : 'Versuche'} – die Zeit läuft`;
@@ -236,9 +306,11 @@ function taskForm(doc, t, handlers, feedback) {
   });
 }
 
-function taskView(doc, state, task, handlers) {
+function taskView(doc, state, task, handlers, nowMs) {
   const fb = state.feedback && state.feedback.scope === task.id ? state.feedback : null;
-  const out = [sectionTitle(doc, task.title)];
+  const out = [sectionTitle(doc, task.detail_title || task.title),
+    el(doc, 'p', { text: `Schwierigkeit: ${task.difficulty ?? 'mittel'}` }),
+    taskTime(doc, task.started_at_ms, task.duration_ms, state, nowMs)];
   if (task.submitted) out.push(el(doc, 'p', { cls: 'tstatus', text: submittedMark(task).text }));
   if (task.body) out.push(el(doc, 'p', { cls: 'tbody', text: task.body }));
   if (task.image_url) out.push(el(doc, 'img', { cls: 'timg', attrs: { src: task.image_url, alt: task.title } }));
@@ -246,10 +318,11 @@ function taskView(doc, state, task, handlers) {
     out.push(el(doc, 'p', { text: `Noch ${task.attempts_remaining} ${task.attempts_remaining === 1 ? 'Versuch' : 'Versuche'}` }));
   }
   out.push(taskForm(doc, task, handlers, fb));
+  out.push(giveUpButton(doc, task.id, handlers, task.submitted || fb?.accepted === true));
   return out;
 }
 
-function taskOverview(doc, state, handlers) {
+function taskOverview(doc, state, handlers, nowMs) {
   const tasks = state.tasks || [];
   const isLeader = state.leader === true;
   const finished = state.phase === 'aufgabe_abgeschlossen';
@@ -257,7 +330,7 @@ function taskOverview(doc, state, handlers) {
   out.push(
     el(doc, 'p', {
       text: isLeader
-        ? 'Du bist Spielleiter: Tippe auf ein Rätsel, um es zu öffnen. Exakte Aufgaben erlauben bis zu drei Versuche, Schätzfragen eine Abgabe. Die Zeit läuft ab dem ersten Öffnen.'
+        ? 'Du bist Spielleiter. Öffnen startet die Zeit. Drei exakte Versuche, eine Schätzung.'
         : `Euer Spielleiter${state.leader_name ? ` (${state.leader_name})` : ''} öffnet die Rätsel und gibt die Antworten ein.`,
     }),
   );
@@ -277,6 +350,10 @@ function taskOverview(doc, state, handlers) {
       box.append(el(doc, 'p', { cls: 'tname', text: t.title }));
     }
     box.append(el(doc, 'p', { cls: 'tstatus', text: taskStatus(t, finished) }));
+    box.append(el(doc, 'div', { cls: 'task-meta' }, [
+      el(doc, 'span', { text: t.difficulty ?? 'mittel', attrs: { 'aria-label': `Schwierigkeit: ${t.difficulty ?? 'mittel'}` } }),
+      taskTime(doc, t.started_at_ms, t.duration_ms, state, nowMs, 'Zeit'),
+    ]));
     out.push(box);
   }
   if (!tasks.length) out.push(el(doc, 'p', { text: 'Noch keine Rätsel.' }));
@@ -295,6 +372,8 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
   const secs = countdownSeconds(state, nowMs);
   const phase = state.phase;
   const card = el(doc, 'section', { cls: 'card stack' });
+  const clock = gameClock(doc, state, nowMs);
+  if (clock) card.append(clock);
 
   if (!state.joined) {
     if (phase === 'anmeldung' && secs !== null && secs > 0) {
@@ -323,17 +402,19 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
     }
   } else if (phase === 'vorbereitet' || phase === 'anmeldung') {
     card.append(el(doc, 'p', { cls: 'hello', text: `Angemeldet als ${state.name}` }));
-    if (secs !== null) card.append(countdownBox(doc, secs));
+    if (secs !== null && secs > 0) card.append(countdownBox(doc, secs));
     card.append(el(doc, 'p', { cls: 'wait', text: 'Bitte warten' }));
   } else if (phase === 'wortaufgabe_aktiv' || phase === 'gruppen_eingeteilt') {
     const group = state.group;
-    const openTask = state.solved && state.leader === true && phase === 'wortaufgabe_aktiv' && state.openTaskId
+    const wordCompleted = state.word_completed === true || !!state.solved;
+    const openTask = wordCompleted && state.leader === true && phase === 'wortaufgabe_aktiv' && state.openTaskId
       ? (state.tasks || []).find((t) => t.id === state.openTaskId && t.started && t.available)
       : null;
     if (!group) {
       card.append(sectionTitle(doc, 'Bitte warten'), el(doc, 'p', { text: 'Du hast noch keine Gruppe.' }));
     } else if (openTask) {
-      card.append(...taskView(doc, state, openTask, handlers));
+      card.setAttribute('data-open-task', openTask.id);
+      card.append(...taskView(doc, state, openTask, handlers, nowMs));
     } else {
       card.classList.add('player-overview');
       card.append(el(doc, 'h2', { cls: 'player-group-name', text: group.name }));
@@ -342,16 +423,18 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
         list.appendChild(el(doc, 'li', { text: m, cls: m === state.name ? 'me' : '' }));
       }
       card.append(list);
-      if (state.solved) {
+      card.append(taskTime(doc, state.word_started_ms, state.word_duration_ms, state, nowMs, 'Gruppenwortzeit'));
+      if (wordCompleted) {
         card.append(
           el(doc, 'p', {
-            cls: 'message success',
-            text: state.solved.points !== undefined
+            cls: `message ${state.word_outcome === 'given_up' ? 'info' : 'success'}`,
+            text: state.word_outcome === 'given_up' ? 'Gruppenwort aufgegeben – 0 Punkte'
+              : state.solved.points !== undefined
               ? `Wort gelöst! Platz ${state.solved.rank} – ${state.solved.points} Punkte`
               : `Wort gelöst! Vorläufig Platz ${state.solved.rank}`,
           }),
         );
-        card.append(...taskOverview(doc, state, handlers));
+        card.append(...taskOverview(doc, state, handlers, nowMs));
       } else {
         const letters = el(doc, 'div', { cls: 'letters', attrs: { 'aria-label': 'Deine Buchstaben' } });
         for (const l of state.letters || []) letters.appendChild(el(doc, 'span', { cls: 'letter', text: l }));
@@ -366,11 +449,18 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
             feedback: state.feedback && state.feedback.scope === 'wort' ? state.feedback : null,
           }),
         );
+        card.append(giveUpButton(doc, 'wort', handlers));
       }
     }
   } else if (phase === 'aufgabe_abgeschlossen') {
-    if (state.solved) card.classList.add('player-overview');
+    card.classList.add('player-overview');
     card.append(sectionTitle(doc, 'Spiele beendet'));
+    if (state.group) {
+      card.append(el(doc, 'h2', { cls: 'player-group-name', text: state.group.name }));
+      const members = el(doc, 'ul', { cls: 'members', attrs: { 'aria-label': 'Mitglieder eurer Gruppe' } });
+      for (const name of state.group.members || []) members.append(el(doc, 'li', { text: name, cls: name === state.name ? 'me' : '' }));
+      card.append(members, taskTime(doc, state.word_started_ms, state.word_duration_ms, state, nowMs, 'Gruppenwortzeit'));
+    }
     if (state.final) {
       card.append(
         el(doc, 'p', {
@@ -381,7 +471,8 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
     } else {
       card.append(el(doc, 'p', { cls: 'message info', text: 'Die Spiele sind beendet.' }));
     }
-    if (state.solved) card.append(...taskOverview(doc, state, handlers));
+    if (state.word_outcome === 'given_up') card.append(el(doc, 'p', { text: 'Gruppenwort aufgegeben – 0 Punkte' }));
+    if (state.word_completed || state.solved) card.append(...taskOverview(doc, state, handlers, nowMs));
     else card.append(el(doc, 'p', { cls: 'message info', text: 'Eure Gruppe hat das Wort nicht gelöst.' }));
   } else {
     card.append(el(doc, 'p', { text: phaseText(phase) }));
@@ -389,6 +480,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
   root.appendChild(card);
   commit(liveRoot, root, JSON.stringify(['player', state.phase, state.joined, state.name,
     state.group?.name, !!state.solved, state.openTaskId || null]));
+  updateCountdowns(liveRoot, state, nowMs);
 }
 
 function remainingOf(overview, nowMs) {
@@ -405,7 +497,7 @@ function rankingList(doc, ranking, showPoints = true, groups = []) {
     const group = groups.find((g) => g.name === r.group);
     const name = el(doc, 'span', { cls: 'rname', text: r.group });
     if (group) name.append(el(doc, 'span', {
-      cls: 'group-status', text: group.solved ? 'Gruppe komplett' : (group.members || []).join(', '),
+      cls: 'group-status', text: group.word_completed || group.solved ? 'Gruppe komplett' : (group.members || []).join(', '),
     }));
     ol.appendChild(
       el(doc, 'li', {}, [
@@ -435,6 +527,7 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
   if (selected) {
     const card = el(doc, 'section', { cls: 'card stack admin-detail', attrs: { 'data-group-detail': selected.name } }, [
       sectionTitle(doc, selected.name),
+      gameClock(doc, overview, nowMs),
       el(doc, 'p', { text: (selected.members || []).join(', ') }),
     ]);
     const table = el(doc, 'table', { cls: 'detail' });
@@ -449,11 +542,11 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
     );
     const body = el(doc, 'tbody');
     for (const d of selected.details || []) {
-      const mark = d.correct === true ? ' ✓' : d.correct === false ? ' ✗' : '';
+      const mark = d.given_up ? '' : d.correct === true ? ' ✓' : d.correct === false ? ' ✗' : '';
       body.append(
         el(doc, 'tr', {}, [
           el(doc, 'td', { text: d.attempt_no ? `${d.title} – Versuch ${d.attempt_no}` : d.title }),
-          el(doc, 'td', { text: `${d.answer}${mark}` }),
+          el(doc, 'td', { text: d.given_up ? 'Aufgegeben – 0 Punkte' : `${d.answer ?? '–'}${mark}` }),
           el(doc, 'td', { text: formatClock(Math.max(0, Math.round((d.duration_ms || 0) / 1000))) }),
         ]),
       );
@@ -475,9 +568,14 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
     sectionTitle(doc, 'Status'),
     el(doc, 'p', { cls: 'phase', text: phaseText(phase) }),
   ]);
-  if (secs !== null) status.append(el(doc, 'p', { text: 'Restzeit:' }), countdownBox(doc, secs));
+  if (secs !== null && secs > 0) status.append(el(doc, 'div', { attrs: { 'data-registration-clock': '1' } }, [
+    el(doc, 'span', { text: 'Anmeldezeit: ' }), countdownBox(doc, secs),
+  ]));
+  if (phase === 'anmeldung' && closed) status.append(el(doc, 'p', { text: 'Anmeldung geschlossen' }));
+  const clock = gameClock(doc, overview, nowMs);
+  if (clock) status.append(clock);
   if (phase === 'wortaufgabe_aktiv' && overview.finished !== true) {
-    status.append(el(doc, 'p', { cls: 'note', text: 'Wertung vorläufig – Punkte werden erst mit „Spiele beenden“ final.' }));
+    status.append(el(doc, 'p', { cls: 'note', text: 'Wertung vorläufig – final mit Spielende.' }));
   }
   const players = overview.players || [];
   status.append(el(doc, 'p', { cls: 'count', text: `Teilnehmer: ${players.length}` }));
@@ -500,7 +598,7 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
     el(doc, 'label', { text: 'Dauer der Anmeldung (Sekunden)', attrs: { for: 'f-seconds' } }),
     secInput,
     mk('start', phase === 'anmeldung' ? 'Anmeldung erneut öffnen' : 'Anmeldung starten', canStart, 'primary', (event) =>
-      handlers.onStart && handlers.onStart(Number(event.currentTarget.parentElement.querySelector('[name="seconds"]').value)),
+      handlers.onStart && handlers.onStart(Number(liveRoot.querySelector('[name="seconds"]').value)),
     ),
     mk('close', 'Anmeldung schließen', phase === 'anmeldung', 'secondary', call('onClose')),
     mk('form', 'Gruppen einteilen', phase === 'anmeldung' && closed, 'primary', call('onForm')),
@@ -517,7 +615,8 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
 
   const groupsCard = el(doc, 'section', { cls: 'card stack' }, [sectionTitle(doc, 'Gruppen')]);
   for (const g of overview.groups || []) {
-    const result = g.solved ? ` – Platz ${g.rank}${overview.finished === true ? `, ${g.points} Punkte` : ' (vorläufig)'}` : ' – offen';
+    const result = g.word_outcome === 'given_up' ? ' – aufgegeben, 0 Punkte'
+      : g.solved ? ` – Platz ${g.rank}${overview.finished === true ? `, ${g.points} Punkte` : ' (vorläufig)'}` : ' – offen';
     const lead = g.leader ? ` (Spielleiter: ${g.leader})` : '';
     const nameBtn = el(doc, 'button', { cls: 'gname linklike', text: g.name, attrs: { type: 'button', 'data-group': g.name } });
     listen(nameBtn, 'click', () => handlers.onSelectGroup && handlers.onSelectGroup(g.name));
@@ -534,6 +633,7 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
   ]);
 
   const sizeCard = el(doc, 'section', { cls: 'card stack' }, [sectionTitle(doc, 'Gruppengröße')]);
+  sizeCard.append(controls.querySelector('label[for="f-seconds"]'), secInput);
   const numInput = (name, label, value) => [
     el(doc, 'label', { text: label, attrs: { for: `f-${name}` } }),
     el(doc, 'input', { cls: 'big-input', attrs: { id: `f-${name}`, name, type: 'number', min: 1, max: 14, value } }),
@@ -552,6 +652,70 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
         Number(event.currentTarget.parentElement.querySelector('[name="gmax"]').value)),
     ),
   );
+  for (const input of sizeCard.querySelectorAll('input')) input.disabled = !canStart;
+
+  const selectLevel = (name, value) => el(doc, 'select', { cls: 'big-input', attrs: { name, id: `f-${name}`, ...(canStart ? {} : { disabled: 'disabled' }) } },
+    ['leicht', 'mittel', 'schwer'].map((level) => el(doc, 'option', {
+      text: level, attrs: { value: level, ...(level === value ? { selected: 'selected' } : {}) },
+    })));
+  const gameCard = el(doc, 'section', { cls: 'card stack game-config' }, [
+    sectionTitle(doc, 'Spielzeit und Punkte'),
+    el(doc, 'label', { text: 'Spieldauer (Minuten)', attrs: { for: 'f-game-minutes' } }),
+    el(doc, 'input', { cls: 'big-input', attrs: { id: 'f-game-minutes', name: 'game-minutes', type: 'number',
+      min: 1, max: 35791394, value: overview.game_minutes ?? 25, ...(canStart ? {} : { disabled: 'disabled' }) } }),
+    el(doc, 'label', { text: 'Schwierigkeit des Gruppenworts', attrs: { for: 'f-word-difficulty' } }),
+    selectLevel('word-difficulty', overview.word_difficulty ?? 'mittel'),
+    el(doc, 'p', { text: 'Spielzeit ab Gruppeneinteilung. Automatisches Ende; endgültig falsch/aufgegeben: 0 Punkte.' }),
+  ]);
+  const pointsTable = el(doc, 'table', { cls: 'points-table' }, [
+    el(doc, 'caption', { text: 'Punkte je Platz und Schwierigkeit' }),
+    el(doc, 'thead', {}, [el(doc, 'tr', {}, ['Platz', 'leicht', 'mittel', 'schwer'].map((text) => el(doc, 'th', { text })))]),
+  ]);
+  const pointRows = el(doc, 'tbody');
+  for (let i = 1; i <= 9; i++) {
+    const row = el(doc, 'tr', {}, [el(doc, 'th', { text: i === 9 ? '9+' : i })]);
+    for (const level of ['leicht', 'mittel', 'schwer']) {
+      row.append(el(doc, 'td', {}, [el(doc, 'input', { cls: 'big-input', attrs: {
+        type: 'number', name: `points-${level}-${i}`, min: 0, max: 10000,
+        value: overview.point_schedules?.[level]?.[i - 1] ?? '',
+        'aria-label': `${level}, Platz ${i === 9 ? '9 und weitere' : i}`,
+        ...(canStart ? {} : { disabled: 'disabled' }),
+      } })]));
+    }
+    pointRows.append(row);
+  }
+  pointsTable.append(pointRows);
+  gameCard.append(pointsTable, mk('set-game', 'Spielzeit und Punkte speichern', canStart, 'primary', () => {
+    const values = (name) => liveRoot.querySelector(`[name="${name}"]`).value;
+    const schedules = Object.fromEntries(['leicht', 'mittel', 'schwer'].map((level) => [level,
+      Array.from({ length: 9 }, (_, i) => values(`points-${level}-${i + 1}`) === '' ? null : Number(values(`points-${level}-${i + 1}`)))]));
+    handlers.onSetGameConfig?.(Number(values('game-minutes')), values('word-difficulty'), schedules);
+  }));
+  const wordsInput = el(doc, 'textarea', { cls: 'big-input', text: (overview.words || []).join('\n'),
+    attrs: { id: 'f-words', name: 'words', rows: 8, ...(canStart ? {} : { disabled: 'disabled' }) } });
+  const fileInput = el(doc, 'input', { attrs: { type: 'file', accept: '.txt,text/plain',
+    'aria-label': 'Geschützte Wortliste lokal importieren', ...(canStart ? {} : { disabled: 'disabled' }) } });
+  listen(fileInput, 'change', async (event) => {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      liveRoot.querySelector('[name="words"]').value = text.split(/\r?\n/)
+        .filter((line) => line.trim() && !line.trim().startsWith('#')).join('\n');
+      liveRoot.querySelector('[data-word-import]').textContent = 'Import als Entwurf geladen – zum Übernehmen speichern.';
+    } catch (error) {
+      liveRoot.querySelector('[data-word-import]').textContent = `Datei konnte nicht gelesen werden: ${error.message}`;
+    }
+  });
+  const wordsCard = el(doc, 'section', { cls: 'card stack' }, [
+    sectionTitle(doc, 'Gruppenwortliste'),
+    el(doc, 'label', { text: 'Ein Wort pro Zeile, A–Z, höchstens 9 Buchstaben', attrs: { for: 'f-words' } }),
+    wordsInput, fileInput,
+    el(doc, 'p', { attrs: { 'data-word-import': '1', role: 'status' } }),
+    el(doc, 'p', { text: 'Geschützten Default lokal importieren. Ungefähr ähnliche Länge/Schwierigkeit wählen; keine feste Gleichheitsregel.' }),
+    mk('set-words', 'Wortliste speichern', canStart, 'primary', () =>
+      handlers.onSetWords?.(liveRoot.querySelector('[name="words"]').value.split(/\r?\n/).map((word) => word.trim()).filter(Boolean))),
+  ]);
 
   const tasksCard = el(doc, 'section', { cls: 'card stack' }, [sectionTitle(doc, 'Rätsel verwalten')]);
   for (const t of overview.tasks || []) {
@@ -570,7 +734,9 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
       el(doc, 'p', { cls: 'tname', text: `${t.category}: ${t.title}` }),
       el(doc, 'p', { text: t.available ? 'Freigegeben' : 'Nicht verfügbar (keine Lösung)' }),
     ]);
-    box.append(l1, title, l2, body, l3, image, l4, solution);
+    box.append(l1, title, l2, body, l3, image, l4, solution,
+      el(doc, 'label', { text: 'Schwierigkeit', attrs: { for: `f-t-${t.id}-difficulty` } }),
+      selectLevel(`t-${t.id}-difficulty`, t.difficulty ?? 'mittel'));
     const optInputs = [];
     let correct = null;
     if (t.needs_choice) {
@@ -584,11 +750,11 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
       correct = ic;
     }
     box.append(
-      mk(`save-${t.id}`, 'Speichern', true, 'primary', (event) => {
+      mk(`save-${t.id}`, 'Speichern', canStart, 'primary', (event) => {
         if (!handlers.onSetTask) return;
         const box = event.currentTarget.parentElement;
         const value = (suffix) => box.querySelector(`[name="t-${t.id}-${suffix}"]`).value;
-        const f = { title: value('title'), body: value('body'), imageUrl: value('image'), solution: value('solution') };
+        const f = { title: value('title'), body: value('body'), imageUrl: value('image'), solution: value('solution'), difficulty: value('difficulty') };
         if (t.needs_choice) {
           const names = [1, 2, 3, 4].map((n) => value(`opt${n}`).trim()).filter(Boolean);
           f.options = names;
@@ -610,28 +776,41 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
   }
   if (!(overview.totals && overview.totals.length)) tl.appendChild(el(doc, 'li', { text: 'Noch keine Ergebnisse.' }));
   totalsCard.append(tl);
+  if (overview.finished) totalsCard.append(mk('export', 'Ergebnisse als CSV exportieren', true, 'primary', call('onExport')));
 
   const preparation = el(doc, 'section', { cls: 'card stack', attrs: { 'data-section': 'preparation' } }, [
     sectionTitle(doc, 'Vorbereitung'),
-    el(doc, 'p', { text: 'Prüfung der gespeicherten Inhalte. Bildadressen werden nur auf Hinterlegung geprüft; keine Startsperre.' }),
+    el(doc, 'p', { text: 'Gespeicherte Konfiguration: Bildadressen nur auf Hinterlegung geprüft, keine zusätzliche Startsperre.' }),
+    el(doc, 'p', { cls: 'note', text: 'Ungespeicherte Änderungen werden erst nach Speichern geprüft.', attrs: { 'data-draft-status': '1', role: 'status' } }),
   ]);
-  for (const task of overview.tasks || []) {
-    const missing = taskPreparation(task);
-    preparation.append(el(doc, 'p', { text: `${task.title}: ${missing.length ? missing.join('; ') : 'Bereit'}` }));
-  }
+  const missing = roundPreparation(overview);
+  preparation.append(el(doc, 'p', { cls: `message ${overview.connectionLost ? 'error' : missing.length ? 'info' : 'success'}`,
+    text: overview.connectionLost ? 'Bereitschaft derzeit nicht prüfbar – Verbindung unterbrochen.'
+      : missing.length ? 'Vorbereitung noch unvollständig' : 'Bereit zum Start' }));
+  const problems = el(doc, 'ul');
+  for (const problem of missing) problems.append(el(doc, 'li', { text: problem }));
+  preparation.append(problems);
+  const taskList = el(doc, 'section', { cls: 'card stack' }, [sectionTitle(doc, 'Aufgabenübersicht')]);
+  for (const task of overview.tasks || []) taskList.append(el(doc, 'p', {
+    text: `${task.category}: ${task.title} – ${task.difficulty ?? 'mittel'} – ${task.answers ?? 0} Abgaben`,
+  }));
+  for (const field of tasksCard.querySelectorAll('input, textarea')) field.disabled = !canStart;
   const sections = [status, controls, sizeCard, playersCard, groupsCard, rankCard, tasksCard, totalsCard];
   sections.forEach((section, index) => section.setAttribute('data-section', `admin-${index}`));
   const tabs = [
-    ['steuerung', 'Steuerung', [controls, sizeCard]],
+    ['steuerung', 'Steuerung', [controls]],
+    ['vorbereitung', 'Vorbereitung', [preparation, sizeCard, gameCard, wordsCard, tasksCard]],
     ['teilnehmer', 'Teilnehmer', [playersCard]],
     ['gruppen', 'Gruppen', [groupsCard]],
     ['rangliste', 'Rangliste', [rankCard]],
-    ['aufgaben', 'Aufgaben', [preparation, tasksCard]],
+    ['aufgaben', 'Aufgaben', [taskList]],
     ['wertung', 'Gesamtwertung', [totalsCard]],
   ];
   const selectedTab = overview.adminTab || 'steuerung';
   const nav = el(doc, 'div', { cls: 'admin-tabs', attrs: { role: 'tablist', 'aria-label': 'Adminbereiche' } });
   const panels = el(doc, 'div', { cls: 'admin-panels' });
+  listen(panels, 'input', () => updateDraftStatus(liveRoot));
+  listen(panels, 'change', () => updateDraftStatus(liveRoot));
   for (const [key, title, cards] of tabs) {
     const tabId = `admin-tab-${key}`;
     const panelId = `admin-panel-${key}`;
@@ -665,6 +844,7 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
   }
   root.append(el(doc, 'div', { cls: 'admin-workspace' }, [status, nav, panels]));
   commit(liveRoot, root, JSON.stringify(['admin', phase, overview.selectedGroup || null]));
+  updateDraftStatus(liveRoot);
 }
 
 export function renderBeamer(root, overview, nowMs = Date.now()) {
@@ -680,10 +860,12 @@ export function renderBeamer(root, overview, nowMs = Date.now()) {
   wrap.append(el(doc, 'h1', { text: phaseText(overview.phase) }));
   if (overview.phase === 'anmeldung') {
     const secs = remainingOf(overview, nowMs);
-    if (secs !== null) wrap.append(countdownBox(doc, secs));
+    if (secs !== null && secs > 0) wrap.append(countdownBox(doc, secs));
   }
+  const clock = gameClock(doc, overview, nowMs);
+  if (clock) wrap.append(clock);
   wrap.append(
-    el(doc, 'p', { cls: 'count', text: `Teilnehmer: ${(overview.players || []).length}` }),
+    el(doc, 'p', { cls: 'count', text: `Teilnehmer: ${overview.participants_count ?? (overview.players || []).length}` }),
     sectionTitle(doc, 'Rangliste'),
     rankingList(doc, overview.ranking, overview.finished === true, overview.groups),
   );

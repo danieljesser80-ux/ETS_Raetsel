@@ -22,6 +22,9 @@ export function createApi(client) {
     joinRound: (name) => rpc('join_round', { p_name: name }),
     getState: () => rpc('get_state'),
     submitAnswer: (answer) => rpc('submit_answer', { p_answer: answer }),
+    giveUp: (taskId = 'wort') => rpc('give_up', { p_task_id: taskId }),
+    gameConfig: () => rpc('game_config'),
+    beamerState: (token) => rpc('beamer_state', { p_token: token }),
     startTask: (taskId) => rpc('start_task', { p_task_id: taskId }),
     submitTask: (taskId, answer, choice) =>
       rpc('submit_task_answer', { p_task_id: taskId, p_answer: answer, p_choice: choice ?? null }),
@@ -30,6 +33,12 @@ export function createApi(client) {
       closeRegistration: withCode('admin_close_registration'),
       formGroups: withCode('admin_form_groups'),
       setGroupSize: withCode('admin_set_group_size', (min, max) => ({ p_min: min, p_max: max })),
+      setGameConfig: withCode('admin_set_game_config', (minutes, difficulty, schedules) => ({
+        p_minutes: minutes, p_word_difficulty: difficulty, p_schedules: schedules,
+      })),
+      setWords: withCode('admin_set_words', (words) => ({ p_words: words })),
+      openBeamer: withCode('admin_open_beamer'),
+      exportResults: withCode('admin_export'),
       setTask: withCode('admin_set_task', (id, f) => ({
         p_id: id,
         p_title: f.title ?? null,
@@ -38,6 +47,7 @@ export function createApi(client) {
         p_solution: f.solution ?? null,
         p_options: f.options ?? null,
         p_correct_option: f.correctOption ?? null,
+        p_difficulty: f.difficulty ?? null,
       })),
       overview: withCode('admin_overview'),
       finish: withCode('admin_finish'),

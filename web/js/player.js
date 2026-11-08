@@ -16,6 +16,9 @@ const ui = { openTaskId: null, feedback: null };
 let feedbackTimer = null;
 
 function setNotice(text, kind) {
+  delete notice.dataset.pending;
+  delete notice.dataset.conn;
+  delete notice.dataset.uncertain;
   notice.textContent = text || '';
   notice.className = text ? `message ${kind || 'info'}` : '';
   notice.setAttribute('role', kind === 'error' ? 'alert' : 'status');
@@ -23,7 +26,19 @@ function setNotice(text, kind) {
 
 function draw() {
   renderPlayer(root, state && { ...state, openTaskId: ui.openTaskId, feedback: ui.feedback }, handlers, Date.now());
+  const guide = document.querySelector('nav[aria-label="Spielanleitung"]');
+  if (guide) guide.hidden = !!root.querySelector('[data-open-task]');
   if (busy) for (const button of root.querySelectorAll('button')) button.disabled = true;
+}
+
+function pending() {
+  setNotice('Übertragung läuft – bitte warten.', 'info');
+  notice.dataset.pending = '1';
+}
+
+function uncertain() {
+  setNotice('Verbindung unterbrochen – Eingang unklar. Nach Wiederverbindung den Aufgabenstatus prüfen; nicht automatisch erneut senden.', 'error');
+  notice.dataset.uncertain = '1';
 }
 
 function setFeedback(scope, kind, text, { closeTask = false } = {}) {
@@ -48,6 +63,7 @@ const sync = createRefreshLoop({
   apply(s) {
     s.fetchedAtMs = Date.now();
     state = s;
+    if (notice.dataset.pending) setNotice('');
     if (notice.dataset.conn) {
       delete notice.dataset.conn;
       setNotice('');
@@ -55,8 +71,9 @@ const sync = createRefreshLoop({
     draw();
   },
   onError() {
+    if (notice.dataset.uncertain) return;
+    setNotice('Verbindung unterbrochen – Status wird erneut abgerufen …', 'error');
     notice.dataset.conn = '1';
-    setNotice('Verbindung unterbrochen – neuer Versuch …', 'error');
   },
 });
 
@@ -68,11 +85,12 @@ const handlers = {
     busy = true;
     sync.invalidate();
     draw();
+    pending();
     try {
       const r = await api.joinRound(name);
       setNotice(r && r.ok ? '' : reasonText(r && r.reason), r && r.ok ? 'info' : 'error');
     } catch (e) {
-      setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
+      uncertain();
     } finally {
       await sync.request();
       busy = false;
@@ -83,6 +101,8 @@ const handlers = {
     if (busy) return;
     busy = true;
     sync.invalidate();
+    draw();
+    pending();
     const btn = root.querySelector('button[type="submit"]');
     if (btn) btn.disabled = true;
     try {
@@ -91,13 +111,11 @@ const handlers = {
       else if (r.correct) ui.feedback = { scope: 'wort', kind: 'success', text: `Richtig! Vorläufig Platz ${r.rank}` };
       else ui.feedback = { scope: 'wort', kind: 'error', text: 'Leider falsch' };
     } catch (e) {
-      setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
+      uncertain();
     } finally {
       await sync.request();
       busy = false;
       draw();
-      const b = root.querySelector('button[type="submit"]');
-      if (b) b.disabled = false;
     }
   },
   async onOpenTask(taskId) {
@@ -105,6 +123,8 @@ const handlers = {
     busy = true;
     sync.invalidate();
     clearTimeout(feedbackTimer);
+    draw();
+    pending();
     try {
       const task = state && (state.tasks || []).find((t) => t.id === taskId);
       const r = task && task.started ? { ok: true } : await api.startTask(taskId);
@@ -116,7 +136,7 @@ const handlers = {
         setNotice(reasonText(r && r.reason), 'error');
       }
     } catch (e) {
-      setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
+      uncertain();
     } finally {
       await sync.request();
       busy = false;
@@ -128,6 +148,7 @@ const handlers = {
     busy = true;
     sync.invalidate();
     draw();
+    pending();
     try {
       const r = await api.submitTask(taskId, answer, choice);
       if (r?.ok) {
@@ -141,12 +162,34 @@ const handlers = {
       } else if (r.correct === false) {
         const left = r.attempts_remaining;
         const remaining = r.submitted ? 'Keine weiteren Versuche.' : `Noch ${left} ${left === 1 ? 'Versuch' : 'Versuche'}.`;
-        setFeedback(taskId, 'error', `Falsch – ${remaining}`, { closeTask: true });
+        setFeedback(taskId, 'error', `Falsch – ${remaining}`, { closeTask: r.submitted === true });
       } else {
         setFeedback(taskId, 'info', 'Geschätzt – abgegeben', { closeTask: true });
       }
     } catch (e) {
-      setNotice('Verbindung unterbrochen – bitte erneut versuchen.', 'error');
+      uncertain();
+    } finally {
+      await sync.request();
+      busy = false;
+      draw();
+    }
+  },
+  async onGiveUp(scope) {
+    if (busy || !confirm('Wirklich aufgeben? Diese Aufgabe wird endgültig mit 0 Punkten beendet. Beim Gruppenwort wirst du Spielleiter.')) return;
+    busy = true;
+    sync.invalidate();
+    draw();
+    pending();
+    try {
+      const result = await api.giveUp(scope);
+      if (!result?.ok) setFeedback(scope, 'error', reasonText(result?.reason));
+      else {
+        if (scope !== 'wort') ui.openTaskId = null;
+        ui.feedback = null;
+        setNotice('Aufgegeben – 0 Punkte.', 'info');
+      }
+    } catch (error) {
+      uncertain();
     } finally {
       await sync.request();
       busy = false;

@@ -42,7 +42,7 @@
           <li data-flow-step="spielleiter">
             <strong class="guide-flow-title"><span class="guide-flow-number" aria-hidden="true">3</span>
               Spielleiterbestimmung</strong>
-            <p>Erste richtige Worteingabe bestimmt den Spielleiter.</p>
+            <p>Erste richtige Worteingabe oder bestätigtes Aufgeben bestimmt den Spielleiter.</p>
           </li>
           <li class="guide-flow-loop" data-flow-step="raetselphase">
             <h3 class="guide-flow-title"><span class="guide-flow-number" aria-hidden="true">4</span>
@@ -64,12 +64,12 @@
           </li>
           <li class="guide-flow-end" data-flow-step="ende">
             <strong class="guide-flow-title"><span class="guide-flow-number" aria-hidden="true">5</span>
-              Ende nach 45 Minuten</strong>
-            <p>Admin beendet manuell mit „Spiele beenden“; nicht automatisch.</p>
+              Automatisches Spielende</strong>
+            <p>Konfigurierbar ab Gruppeneinteilung, Standard 25 Minuten. Admin kann mit „Spiele beenden“ früher beenden.</p>
           </li>
         </ol>
         <figcaption id="grafik-hinweis">Rätsel frei wählen, lösen, zurück zur Übersicht –
-          bis der Admin beendet.</figcaption>
+          bis die Spielzeit endet.</figcaption>
       </figure>
     </section>
 
@@ -79,10 +79,10 @@
         <dt>Spieler</dt>
         <dd>Alle helfen beim Lösen. Das Gruppenwort darf jedes Mitglied eingeben.</dd>
         <dt>Spielleiter der Gruppe</dt>
-        <dd>Wer das erste richtige Wort eingibt, übernimmt die Rolle.
+        <dd>Wer die erste richtige Worteingabe macht oder das Gruppenwort bestätigt aufgibt, übernimmt.
           Danach darf nur der Spielleiter Aufgaben öffnen und Antworten abgeben.</dd>
         <dt>Admin / Moderation</dt>
-        <dd>Startet die Anmeldung, teilt Gruppen ein und beendet das Spiel.</dd>
+        <dd>Konfiguriert, startet die Anmeldung, teilt Gruppen ein und kann früher beenden.</dd>
       </dl>
     </section>
 
@@ -94,19 +94,22 @@
         <li>Gruppen entstehen zufällig, normalerweise mit 4 bis 6 Mitgliedern;
           der Admin kann die Größe einstellen. Gruppenname und Buchstaben stehen am Smartphone.
           Am Monitor seht ihr die Teilnehmer, nach der Wortlösung „Gruppe komplett“.</li>
-        <li>Nach jeder Abgabe erscheinen 3 Sekunden Rückmeldung, dann wieder die Übersicht.
-          Dort seht ihr verfügbare Aufgaben und verbleibende Versuche.</li>
+        <li>Fehlversuch 1/2 bleibt im Rätsel. Nach endgültiger Abgabe: 3 Sekunden Rückmeldung,
+          dann Übersicht. Aufgabenzeiten und Spielrestzeit stehen am Smartphone.</li>
       </ol>
     </section>
 
     <section class="card" id="wertung" aria-labelledby="wertung-titel">
       <h2 id="wertung-titel">Zeit, Plätze und Punkte</h2>
-      <p>Beim Gruppenwort zählt die Zeit ab Gruppeneinteilung, danach ab dem ersten Öffnen.
-        Erneutes Öffnen bewirkt keinen Neustart.</p>
-      <p>Richtige Antworten beziehungsweise die Nähe bei Schätzungen zählen.
-        Bei Gleichstand entscheidet die kürzere Zeit. Falsche exakte Antworten bringen 0 Punkte.</p>
-      <p>Plätze bleiben bis „Spiele beenden“ vorläufig. Spieler sehen eigene Plätze, danach eigene
-        Punkte und Gesamtplatz. Die vollständige Rangliste sehen nur Admin und Beamer.</p>
+      <p>Gruppenwortzeit ab Gruppeneinteilung, weitere Aufgaben ab erstem Öffnen.
+        Erneutes Öffnen: kein Neustart.</p>
+      <p>Richtige Antworten: Platz nach Zeit. Schätzungen: Nähe; bei Gleichstand entscheidet die kürzere Zeit.
+        Punkte je Schwierigkeit leicht/mittel/schwer konfiguriert der Admin vor Einteilung.
+        Gesamtpunkte sind die Summe aller Aufgaben einschließlich Gruppenwort.</p>
+      <div id="point-schedules" aria-live="polite"><p role="status">Aktuelle Punktestaffeln werden geladen …</p></div>
+      <p>Erste/zweite Fehlversuche ziehen keine Punkte ab. Endgültig falsch oder aufgegeben:
+        0 Punkte. Plätze vorläufig; eigene Punkte und Gesamtplatz erst nach Spielende.
+        Vollständige Rangliste nur für Admin und Beamer.</p>
     </section>
 
     <section class="card" id="regeln" aria-labelledby="regeln-titel">
@@ -116,6 +119,7 @@
         <li>Gruppenwort: unbegrenzt viele Versuche, mit mindestens 3 Sekunden Abstand je Gruppe.</li>
         <li>Exakte Antworten: bis zu drei Versuche. Richtige Lösung oder dritter Fehlversuch beendet die Aufgabe.</li>
         <li>Schätzfragen: eine Abgabe. Sprecht euch vor dem Absenden ab.</li>
+        <li>Aufgeben erst nach Rückfrage: endgültig 0 Punkte, keine Wiederaufnahme.</li>
       </ul>
     </section>
 
@@ -123,5 +127,6 @@
       <a class="guide-link" href="index.html">Zur Spielseite</a>
     </nav>
   </main>
+  <script type="module" src="js/guide.js"></script>
 </body>
 </html>

@@ -3,6 +3,24 @@
 Statische Seiten für GitHub Pages in `web/` (Veröffentlichungsordner; die Dateien im Hauptordner `C:\Raetsel` wie index.html/falsch.html/n8n-* sind Altlasten und werden **nicht** angefasst). Kein Build-Schritt. Reines HTML, CSS und ES-Module (Vanilla JS). Einzige externe Skripte per CDN mit fester Version: `@supabase/supabase-js@2` (jsDelivr/esm.sh) und ein QR-Code-Generator. Deutsch: mobile Spieler (Chrome/Safari, große Bedienelemente, ab 320 px); Admin/Anleitung/Präsentation für Desktop 1920×1200 (AEN-036). Backend-Verträge: `supabase/API.md`.
 
 ## Sicherheit und Datenschutz
+
+## Aktueller Gesamtvertrag AEN-053
+
+Dieser Abschnitt ersetzt widersprechende Altverträge unten. Vorbereitung wird zentral; Wortlösungen nicht veröffentlicht. Eigene Beamerseite statt integriertem Umschalter; konfigurierbare Spielzeit mit automatischem Ende statt 45 Minuten/manuell.
+
+- Spieler: `word_completed` (richtig oder aufgegeben) schaltet Folgerätsel frei, `solved` bleibt nur richtige Wortlösung. `onGiveUp(taskId)` bestätigt endgültige 0 Punkte; Wort für jedes Mitglied, andere Aufgaben nur Spielleiter. Abbruch ohne RPC. Exakte Fehlversuche 1/2 bleiben offen, terminale Abgaben nach 3 s zurück. Link zur Anleitung nur bei `data-open-task` verborgen.
+- Geocaching-Zustand: zufällige öffentliche UUID statt interner Orts-ID, `title` immer neutral, `detail_title` erst nach Start. Keine Ortsmetadaten in ungestarteten Aufgaben. Admin verwendet interne IDs.
+- `countdown.js`: Anmeldezeit nur in offener Anmeldung; `gameSeconds(state,nowMs)` aus `game_deadline_ms` und Serverabgleich; `elapsedSeconds(startMs,durationMs,state,nowMs)` ab erstem Start, nach Abschluss feste Dauer, offene Aufgaben bei Spielende begrenzt. `updateCountdowns` aktualisiert getrennte Anmelde-/Spiel-/Aufgabentimer ohne RPC. Restzeit ≤5/≤1 Minuten visuell markieren.
+- Zustand/Anzeige: Wort `word_started_ms`, `word_duration_ms`, `word_outcome`; Aufgaben `started_at_ms`, `duration_ms`, `difficulty`, `given_up`. Start/Endzeiten kommen vom Server; fehlend nicht als 0 darstellen. Zeiten eigene Gruppe, auch für Mitglieder. Finale Ansicht behält Teilnehmer und Wortdauer, keine entfernten Wortaufgabenreste.
+- Admin-Tabs: `steuerung`, `vorbereitung`, `teilnehmer`, `gruppen`, `rangliste`, `aufgaben`, `wertung`. Vorbereitung bündelt alle Konfiguration, Aufgaben im Betriebsreiter nur lesend. `game-minutes`, `word-difficulty`, `points-<stufe>-1..9`, Textfeld `words`; externe Textdatei nur durch expliziten lokalen Import lesen. Keine Lösung im Source/öffentlichen Download.
+- API ergänzt `giveUp(taskId)`, `gameConfig()`, `beamerState(token)` und Admin `setGameConfig(code,minutes,wordDifficulty,schedules)`, `setWords(code,words)`, `openBeamer(code)`, `exportResults(code)`, `setTask` zusätzlich `difficulty`. Alle Konfiguration serverseitig vor Gruppeneinteilung gesperrt. Busy auch für Select/Textarea, echte Select-Defaultwerte, gezieltes `clearDrafts`.
+- Gespeicherte Bereitschaft aus `roundPreparation(overview)` mit fehlenden Inhalten, passenden Größen/Wörtern, Staffeln/Dauer und automatischer Endeinrichtung; ungespeicherte Änderungen separat sichtbar. Kein neuer Freigabeschritt.
+- `beamer.html`/`js/beamer.js`: neuer Tab/Fenster, eigener geschützter Anzeigetoken aus `admin_open_beamer`, nicht Admincode. Same-Origin-Bootstrap via `postMessage` mit Origin/Source-Prüfung; `sessionStorage` nur Anzeigetoken, kein Code/URL-Token. Eigener Abrufkoordinator; keine Spielsteuerung/Exit. Blockiertes Fenster/Netz-/Zugriffsfehler sichtbar.
+- `guide.js`: nur öffentliche `game_config()` ohne Auth, echte Punktestaffeln als Tabelle oder sichtbarer Fehler. Anleitung/Präsentation allgemeine automatische Dauer (Standard25, konfigurierbar), Aufgeben bestimmt Wort-Spielleiter. Grenzen 450/100 Wörter, Monitor1920×1200 und QR erhalten.
+- `export.js`: `resultsCsv(rows)` mit CRLF/UTF-8/CSV-Escaping und Formelschutz; expliziter Admin-Download nach endgültigem Ende, Gruppen-/Aufgabenstatus/-zeiten/-punkte, keine Lösungen/Antworten/Code. Kein Reset.
+- Verbindung/Übertragung: Abgaben laufen sichtbar, Doppelklick blockiert, unsicherer Eingang als unklar, erneuter Zustandsabgleich statt automatischer Wiederholung. Realtime/Backoff unverändert.
+
+## Bisherige Verträge (durch obige Regeln präzisiert)
 - Nutzerdaten (Spitznamen, Gruppennamen, Antworten) werden **nur** mit `textContent`/`createElement` in das DOM geschrieben, nie über `innerHTML`.
 - Im Browser nur Project-URL und publishable Key (`web/config.js`, bereits vorbelegt, siehe unten). Kein Admincode, kein service_role-Key im Code. Der Admincode wird nur in `sessionStorage` gehalten.
 - Supabase Anonymous Auth mit persistierter Sitzung (Standard von supabase-js, localStorage) → Wiederzugang im selben Browser (ENT-010).

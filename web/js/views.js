@@ -1,6 +1,9 @@
 import { countdownSeconds, gameSeconds, elapsedSeconds, formatClock } from './countdown.js';
-import { phaseText } from './texts.js';
+import { phaseText, reasonText } from './texts.js';
 import { roundPreparation } from './preparation.js';
+
+// UNA-040: Aufklappzustand der Kategorien überlebt den periodischen Neuaufbau.
+const openCategories = new Set();
 
 const listeners = new WeakMap();
 const viewKeys = new WeakMap();
@@ -334,28 +337,50 @@ function taskOverview(doc, state, handlers, nowMs) {
         : `Euer Spielleiter${state.leader_name ? ` (${state.leader_name})` : ''} öffnet die Rätsel und gibt die Antworten ein.`,
     }),
   );
-  let lastCategory = null;
+  const groups = [];
   for (const t of tasks) {
-    if (t.category !== lastCategory) {
-      out.push(el(doc, 'h3', { text: t.category }));
-      lastCategory = t.category;
+    let group = groups[groups.length - 1];
+    if (!group || group.name !== t.category) {
+      group = groups.find((g) => g.name === t.category) || { name: t.category, items: [] };
+      if (!groups.includes(group)) groups.push(group);
     }
-    const mark = t.submitted ? submittedMark(t) : null;
-    const box = el(doc, 'div', { cls: `task stack${mark ? ` ${mark.cls}` : ''}`, attrs: { 'data-task': t.id } });
-    if (isLeader && !finished && !t.submitted && t.available) {
-      const b = el(doc, 'button', { cls: 'btn primary', text: t.title, attrs: { type: 'button', 'data-open': t.id } });
-      listen(b, 'click', () => handlers.onOpenTask && handlers.onOpenTask(t.id));
-      box.append(b);
-    } else {
-      box.append(el(doc, 'p', { cls: 'tname', text: t.title }));
-    }
-    box.append(el(doc, 'p', { cls: 'tstatus', text: taskStatus(t, finished) }));
-    box.append(el(doc, 'div', { cls: 'task-meta' }, [
-      el(doc, 'span', { text: t.difficulty ?? 'mittel', attrs: { 'aria-label': `Schwierigkeit: ${t.difficulty ?? 'mittel'}` } }),
-      taskTime(doc, t.started_at_ms, t.duration_ms, state, nowMs, 'Zeit'),
-    ]));
-    out.push(box);
+    group.items.push(t);
   }
+  groups.forEach((group, index) => {
+    const open = openCategories.has(group.name);
+    const panelId = `task-category-${index}`;
+    const toggle = el(doc, 'button', { cls: 'btn secondary category-toggle', text: `${group.name} (${group.items.length})`,
+      attrs: { type: 'button', 'aria-expanded': String(open), 'aria-controls': panelId, 'data-category': group.name } });
+    listen(toggle, 'click', (event) => {
+      const button = event.currentTarget;
+      const next = button.getAttribute('aria-expanded') !== 'true';
+      if (next) openCategories.add(group.name); else openCategories.delete(group.name);
+      button.setAttribute('aria-expanded', String(next));
+      const panel = button.ownerDocument.getElementById(panelId);
+      if (panel) panel.hidden = !next;
+    });
+    out.push(el(doc, 'h3', {}, [toggle]));
+    const panel = el(doc, 'div', { cls: 'stack category-panel', attrs: { id: panelId } });
+    if (!open) panel.setAttribute('hidden', 'hidden');
+    for (const t of group.items) {
+      const mark = t.submitted ? submittedMark(t) : null;
+      const box = el(doc, 'div', { cls: `task stack${mark ? ` ${mark.cls}` : ''}`, attrs: { 'data-task': t.id } });
+      if (isLeader && !finished && !t.submitted && t.available) {
+        const b = el(doc, 'button', { cls: 'btn primary', text: t.title, attrs: { type: 'button', 'data-open': t.id } });
+        listen(b, 'click', () => handlers.onOpenTask && handlers.onOpenTask(t.id));
+        box.append(b);
+      } else {
+        box.append(el(doc, 'p', { cls: 'tname', text: t.title }));
+      }
+      box.append(el(doc, 'p', { cls: 'tstatus', text: taskStatus(t, finished) }));
+      box.append(el(doc, 'div', { cls: 'task-meta' }, [
+        el(doc, 'span', { text: t.difficulty ?? 'mittel', attrs: { 'aria-label': `Schwierigkeit: ${t.difficulty ?? 'mittel'}` } }),
+        taskTime(doc, t.started_at_ms, t.duration_ms, state, nowMs, 'Zeit'),
+      ]));
+      panel.append(box);
+    }
+    out.push(panel);
+  });
   if (!tasks.length) out.push(el(doc, 'p', { text: 'Noch keine Rätsel.' }));
   return out;
 }
@@ -767,6 +792,47 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
     tasksCard.append(box);
   }
 
+  const preview = overview.importPreview;
+  const importCard = el(doc, 'section', { cls: 'card stack', attrs: { 'data-section': 'task-import' } }, [
+    sectionTitle(doc, 'Aufgaben importieren'),
+    el(doc, 'p', { text: 'Markdown-Datei im Format raetsel-aufgaben/1 einlesen (siehe docs/AUFGABENFORMAT.md). Die Datei ersetzt den gesamten Aufgabensatz; erst nach der Vorschau wird übernommen.' }),
+  ]);
+  const importInput = el(doc, 'input', { attrs: { type: 'file', accept: '.md,.txt,text/markdown,text/plain',
+    'aria-label': 'Aufgabendatei lokal einlesen', ...(canStart ? {} : { disabled: 'disabled' }) } });
+  listen(importInput, 'change', async (event) => {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+    try {
+      handlers.onImportFile?.(await file.text());
+    } catch (error) {
+      handlers.onImportFile?.('');
+    }
+  });
+  importCard.append(importInput);
+  if (preview) {
+    const list = (items, label) => {
+      if (!items?.length) return;
+      const ul = el(doc, 'ul', { attrs: { 'aria-label': label } });
+      for (const item of items) {
+        const where = item.line ? `Zeile ${item.line}: ` : item.task ? `${item.task}: ` : '';
+        ul.append(el(doc, 'li', { text: `${where}${item.message || reasonText(item.reason)}` }));
+      }
+      importCard.append(ul);
+    };
+    if (preview.reason) importCard.append(el(doc, 'p', { cls: 'message error', text: reasonText(preview.reason) }));
+    list(preview.errors, 'Fehler');
+    list(preview.warnings, 'Warnungen');
+    if (preview.counts) {
+      const c = preview.counts;
+      importCard.append(el(doc, 'p', { attrs: { role: 'status', 'data-import-counts': '1' },
+        text: `Vorschau: ${c.new} neu, ${c.replaced} ersetzt, ${c.removed} entfernt, ${c.unready} nicht spielbar.` }));
+    }
+    importCard.append(
+      mk('import-apply', 'Aufgaben übernehmen', canStart && preview.canApply === true, 'primary', call('onImportApply')),
+      mk('import-cancel', 'Vorschau verwerfen', true, 'secondary', call('onImportCancel')),
+    );
+  }
+
   const totalsCard = el(doc, 'section', { cls: 'card stack' }, [sectionTitle(doc, 'Gesamtwertung')]);
   const tl = el(doc, 'ol', { cls: 'ranking' });
   for (const x of overview.totals || []) {
@@ -799,7 +865,7 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
   sections.forEach((section, index) => section.setAttribute('data-section', `admin-${index}`));
   const tabs = [
     ['steuerung', 'Steuerung', [controls]],
-    ['vorbereitung', 'Vorbereitung', [preparation, sizeCard, gameCard, wordsCard, tasksCard]],
+    ['vorbereitung', 'Vorbereitung', [preparation, sizeCard, gameCard, wordsCard, importCard, tasksCard]],
     ['teilnehmer', 'Teilnehmer', [playersCard]],
     ['gruppen', 'Gruppen', [groupsCard]],
     ['rangliste', 'Rangliste', [rankCard]],

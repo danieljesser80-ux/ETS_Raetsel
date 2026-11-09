@@ -3,6 +3,7 @@ import { SUPABASE_URL, SUPABASE_KEY } from '../config.js';
 import { createApi } from './api.js';
 import { renderBeamer, updateCountdowns } from './views.js';
 import { createRefreshLoop } from './refresh.js';
+import { stateKey } from './clientcache.js';
 
 const root = document.getElementById('app');
 const notice = document.getElementById('notice');
@@ -12,6 +13,7 @@ const api = createApi(createClient(SUPABASE_URL, SUPABASE_KEY, {
 sessionStorage.removeItem('admincode');
 let token = sessionStorage.getItem('display-token');
 let state = null;
+let lastKey = null;
 const sync = createRefreshLoop({
   load: async () => {
     const result = await api.beamerState(token);
@@ -20,9 +22,12 @@ const sync = createRefreshLoop({
   },
   apply(result) {
     result.fetchedAtMs = Date.now();
+    const key = stateKey(result);
+    const unchanged = state && key === lastKey && !notice.textContent;
     state = result;
+    lastKey = key;
     notice.textContent = '';
-    renderBeamer(root, state, Date.now());
+    if (!unchanged) renderBeamer(root, state, Date.now());
   },
   onError(error) {
     notice.textContent = `Beamer nicht verbunden: ${error.message}`;

@@ -4,6 +4,7 @@ import { createApi } from './api.js';
 import { reasonText } from './texts.js';
 import { renderPlayer, updateCountdowns } from './views.js';
 import { createRefreshLoop } from './refresh.js';
+import { stateKey } from './clientcache.js';
 
 const root = document.getElementById('app');
 const notice = document.getElementById('notice');
@@ -11,6 +12,7 @@ const client = createClient(SUPABASE_URL, SUPABASE_KEY);
 const api = createApi(client);
 
 let state = null;
+let stateKey_ = null;
 let busy = false;
 const ui = { openTaskId: null, feedback: null };
 let feedbackTimer = null;
@@ -62,13 +64,16 @@ const sync = createRefreshLoop({
   },
   apply(s) {
     s.fetchedAtMs = Date.now();
+    const key = stateKey(s);
+    const unchanged = state && key === stateKey_ && !notice.dataset.conn;
     state = s;
+    stateKey_ = key;
     if (notice.dataset.pending) setNotice('');
     if (notice.dataset.conn) {
       delete notice.dataset.conn;
       setNotice('');
     }
-    draw();
+    if (!unchanged) draw();
   },
   onError() {
     if (notice.dataset.uncertain) return;

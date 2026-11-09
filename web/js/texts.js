@@ -31,6 +31,17 @@ const REASONS = {
   ungueltige_schwierigkeit: 'Bitte leicht, mittel oder schwer auswählen.',
   ungueltige_punktestaffel: 'Je Stufe neun nicht ansteigende ganze Punktewerte von 0 bis 10000 eintragen.',
   ungueltige_wortliste: 'Eindeutige Wörter mit 1 bis 9 Buchstaben A–Z eintragen; keine leeren Zeilen, Umlaute oder ß.',
+  ungueltige_aufgaben: 'Die Aufgabendatei enthält Fehler oder ist leer; Liste prüfen.',
+  ungueltige_id: 'Ungültige Aufgaben-ID.',
+  doppelte_id: 'Aufgaben-ID doppelt.',
+  ungueltige_kategorie: 'Kategorie fehlt oder ist länger als 40 Zeichen.',
+  ungueltiger_titel: 'Titel fehlt oder ist länger als 120 Zeichen.',
+  ungueltiger_typ: 'Typ muss exakt, schaetzung oder auswahl sein.',
+  ungueltiger_text: 'Text fehlt oder ist länger als 4000 Zeichen.',
+  optionen_nicht_erlaubt: 'Optionen sind nur beim Typ auswahl erlaubt.',
+  kategorie_schreibweise: 'Kategorie unterscheidet sich nur in Groß-/Kleinschreibung.',
+  keine_loesung: 'Keine Lösung – Aufgabe nicht spielbar.',
+  keine_richtige_option: 'Keine richtige Option – Aufgabe nicht spielbar.',
 };
 
 const PHASES = {

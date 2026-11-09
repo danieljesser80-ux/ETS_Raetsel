@@ -6,6 +6,8 @@ import { reasonText } from './texts.js';
 import { renderAdmin, renderMessage, updateCountdowns, clearDrafts } from './views.js';
 import { createRefreshLoop } from './refresh.js';
 import { resultsCsv } from './export.js';
+import { stateKey, createConfigCache } from './clientcache.js';
+import { parseAufgaben, tasksForImport } from './aufgabenformat.js';
 
 const root = document.getElementById('app');
 const notice = document.getElementById('notice');
@@ -16,6 +18,9 @@ const api = createApi(client);
 
 let code = sessionStorage.getItem('admincode') || '';
 let overview = null;
+let overviewKey = null;
+const configCache = createConfigCache();
+let importPreview = null;
 let closedLocally = false;
 let timer = null;
 let selectedGroup = null;
@@ -31,38 +36,51 @@ function setNotice(text, kind) {
 
 function draw() {
   if (!overview) return;
-  renderAdmin(root, { ...overview, selectedGroup, adminTab, connectionLost }, handlers, Date.now());
+  renderAdmin(root, { ...overview, selectedGroup, adminTab, connectionLost, importPreview }, handlers, Date.now());
   if (busy) for (const field of root.querySelectorAll('button, input, textarea, select')) field.disabled = true;
 }
 
 const sync = createRefreshLoop({
   async load() {
     await api.ensureSession();
-    const o = await api.admin.overview(code);
+    let o = await api.admin.overview(code, configCache.rev());
     if (!o) throw new Error('Keine Antwort vom Server');
-    return o;
+    let merged = configCache.merge(o);
+    if (merged === null) {
+      configCache.clear();
+      o = await api.admin.overview(code, null);
+      if (!o) throw new Error('Keine Antwort vom Server');
+      merged = configCache.merge(o);
+    }
+    return merged;
   },
   apply(o) {
     if (!o || !o.ok) {
       connectionLost = true;
+      configCache.clear();
       setNotice(reasonText(o && o.reason), 'error');
       if (o && o.reason === 'nicht_berechtigt') logout();
       else draw();
       return;
     }
+    const wasLost = connectionLost;
     connectionLost = false;
     if (o.phase !== 'anmeldung') closedLocally = false;
     if (closedLocally && o.closed_early === undefined) o.closed_early = true;
     o.fetchedAtMs = Date.now();
+    const key = stateKey(o, `${closedLocally}`);
+    const unchanged = overview && key === overviewKey && !wasLost;
     overview = o;
+    overviewKey = key;
     if (notice.dataset.conn) {
       delete notice.dataset.conn;
       setNotice('');
     }
-    draw();
+    if (!unchanged) draw();
   },
   onError() {
     connectionLost = true;
+    configCache.clear();
     notice.dataset.conn = '1';
     setNotice('Verbindung unterbrochen – neuer Versuch …', 'error');
     draw();
@@ -121,6 +139,8 @@ const handlers = {
     return command(async () => {
       const result = await api.admin.reset(code);
       if (result && result.ok) {
+        configCache.clear();
+        importPreview = null;
         adminTab = 'steuerung';
         selectedGroup = null;
       }
@@ -194,6 +214,42 @@ const handlers = {
     adminTab = tab;
     draw();
   },
+  async onImportFile(text) {
+    const parsed = parseAufgaben(text);
+    if (!parsed.ok) {
+      importPreview = { errors: parsed.errors, warnings: parsed.warnings, canApply: false };
+      draw();
+      return;
+    }
+    if (busy) return;
+    busy = true;
+    draw();
+    try {
+      const r = await api.admin.importTasks(code, tasksForImport(parsed.tasks), false);
+      importPreview = {
+        errors: r?.errors || [], warnings: r?.warnings || parsed.warnings, counts: r?.counts,
+        canApply: !!r?.ok, tasks: parsed.tasks, reason: r && !r.ok && !r.errors ? r.reason : null,
+      };
+    } catch (e) {
+      setNotice(`Vorschau nicht möglich: ${e.message || 'Verbindung unterbrochen'}.`, 'error');
+    } finally {
+      busy = false;
+      draw();
+    }
+  },
+  onImportApply: () => {
+    const tasks = importPreview && importPreview.canApply ? importPreview.tasks : null;
+    if (!tasks) return;
+    return command(async () => {
+      const r = await api.admin.importTasks(code, tasksForImport(tasks), true);
+      if (r && r.ok) importPreview = null;
+      return r;
+    }, 'Aufgaben importiert.');
+  },
+  onImportCancel: () => {
+    importPreview = null;
+    draw();
+  },
 };
 
 function logout() {
@@ -202,6 +258,9 @@ function logout() {
   code = '';
   sessionStorage.removeItem('admincode');
   overview = null;
+  overviewKey = null;
+  importPreview = null;
+  configCache.clear();
   selectedGroup = null;
   adminTab = 'steuerung';
   loginBox.hidden = false;

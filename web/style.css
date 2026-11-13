@@ -54,28 +54,12 @@ main { max-width: 40rem; margin: 0 auto; padding: 0.75rem; }
 .stack { display: flex; flex-direction: column; gap: 0.75rem; }
 
 .card {
-  position: relative;
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-dark) 100%);
   border: 2px solid #5a4b3c;
-  border-top: 8px solid var(--gold);
   border-radius: 0.2rem;
-  padding: 1.15rem 1rem 1rem;
+  padding: 1rem;
   margin-bottom: 0.85rem;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
-}
-.card::after {
-  content: "AKTE NORDPOL • VERTRAULICH";
-  position: absolute;
-  top: 0.35rem;
-  right: 0.65rem;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: rgba(158, 27, 27, 0.65);
-  border: 1px solid rgba(158, 27, 27, 0.5);
-  padding: 0.05rem 0.35rem;
-  transform: rotate(-1.5deg);
-  pointer-events: none;
 }
 
 .message {
@@ -293,7 +277,6 @@ body.presentation { font-size: 1.5rem; overflow-wrap: anywhere; }
   position: relative;
   background: var(--paper);
   border: 2px solid #5a4b3c;
-  border-top: 6px solid var(--gold);
   border-radius: 0.2rem;
   padding: 0.8rem;
 }
@@ -324,7 +307,6 @@ body.presentation { font-size: 1.5rem; overflow-wrap: anywhere; }
 .presentation-ranking {
   background: var(--paper);
   border: 2px solid #5a4b3c;
-  border-top: 6px solid var(--gold);
   border-radius: 0.2rem;
   padding: 0.75rem;
   text-align: center;
@@ -354,7 +336,6 @@ table.detail th, table.detail td { text-align: left; padding: 0.4rem; border-bot
 .beamer {
   background: var(--paper);
   border: 3px solid #5a4b3c;
-  border-top: 10px solid var(--gold);
   border-radius: 0.25rem;
   padding: 1.5rem;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);

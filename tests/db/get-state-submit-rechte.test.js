@@ -137,31 +137,31 @@ describe('DB submit_answer', { skip }, () => {
     assert.equal(res[0].player_id, members[0]);
   });
 
-  it('TST-S-005: 3-s-Grenze: 2999 ms -> zu_schnell', async () => {
+  it('TST-S-005: 1-s-Grenze: 999 ms -> zu_schnell', async () => {
     await startedRound(db, 8);
     await rpc(db, uid(1), 'submit_answer', 'FALSCH1');
-    await setNow(db, isoAt(T0_MS + 2999));
+    await setNow(db, isoAt(T0_MS + 999));
     assert.deepEqual(await rpc(db, uid(1), 'submit_answer', 'FALSCH2'), { ok: false, reason: 'zu_schnell' });
   });
 
-  it('TST-S-005: 3-s-Grenze: 3000 ms -> erlaubt; Intervall gilt je Gruppe, nicht je Spieler', async () => {
+  it('TST-S-005: 1-s-Grenze: 1000 ms -> erlaubt; Intervall gilt je Gruppe, nicht je Spieler', async () => {
     await startedRound(db, 8);
     const gid = await groupOf(1);
     const [a, b] = await memberOf(gid);
     await rpc(db, a, 'submit_answer', 'FALSCH1');
-    await setNow(db, isoAt(T0_MS + 1000));
+    await setNow(db, isoAt(T0_MS + 500));
     assert.equal((await rpc(db, b, 'submit_answer', 'FALSCH2')).reason, 'zu_schnell');
-    await setNow(db, isoAt(T0_MS + 3000));
+    await setNow(db, isoAt(T0_MS + 1000));
     assert.deepEqual(await rpc(db, b, 'submit_answer', 'FALSCH3'), { ok: true, correct: false });
   });
 
-  it('TST-S-005: richtige Antwort innerhalb 3 s nach falschem Versuch -> zu_schnell', async () => {
+  it('TST-S-005: richtige Antwort innerhalb 1 s nach falschem Versuch -> zu_schnell', async () => {
     await startedRound(db, 8);
     await rpc(db, uid(1), 'submit_answer', 'FALSCH1');
     await setNow(db, isoAt(T0_MS + 500));
     const sol = await solutionOf(db, uid(1));
     assert.equal((await rpc(db, uid(1), 'submit_answer', sol)).reason, 'zu_schnell');
-    await setNow(db, isoAt(T0_MS + 3000));
+    await setNow(db, isoAt(T0_MS + 1000));
     assert.equal((await rpc(db, uid(1), 'submit_answer', sol)).correct, true);
   });
 
@@ -288,7 +288,7 @@ describe('DB Rechte und Reset', { skip }, () => {
     await startedRound(db, 8);
     const sol = await solutionOf(db, uid(1));
     await rpc(db, uid(1), 'submit_answer', 'FALSCH1');
-    await setNow(db, isoAt(T0_MS + 3000));
+    await setNow(db, isoAt(T0_MS + 1000));
     await rpc(db, uid(1), 'submit_answer', sol);
     const cnt = async (t) => (await q(db, `SELECT count(*)::int AS c FROM public.${t}`))[0].c;
     assert.ok((await cnt('results')) > 0 && (await cnt('attempts')) > 0);

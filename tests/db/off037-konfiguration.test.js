@@ -101,7 +101,7 @@ describe('DB OFF-037..045 Konfiguration', { skip }, () => {
 
   it('admin_set_words: ungueltige Listen lassen die gespeicherten Woerter unveraendert', async () => {
     const before = (await q(db, 'SELECT word FROM public.words ORDER BY word')).map((r) => r.word);
-    const bad = [[], ['ZEBRA', 'zebra'], ['ZEBRA', 'ZEBRA'], ['ZEBRA1'], ['ZEBRAKUHXX'], [''], ['  '], [null], ['OK', null]];
+    const bad = [[], ['ZEBRA', 'zebra'], ['ZEBRA', 'ZEBRA'], ['ZEBRA1'], [''], ['  '], [null], ['OK', null]];
     for (const l of bad) {
       const r = await admin(db, 'admin_set_words', l);
       assert.equal(r.ok, false, JSON.stringify(l));
@@ -110,9 +110,10 @@ describe('DB OFF-037..045 Konfiguration', { skip }, () => {
     assert.deepEqual((await q(db, 'SELECT word FROM public.words ORDER BY word')).map((r) => r.word), before);
   });
 
-  it('admin_set_words: Wort mit neun Buchstaben ok, mit zehn nicht', async () => {
+  it('OFF-064: admin_set_words akzeptiert Wörter mit mehr als neun Buchstaben', async () => {
     assert.equal((await admin(db, 'admin_set_words', ['ABCDEFGHI'])).ok, true);
-    assert.equal((await admin(db, 'admin_set_words', ['ABCDEFGHIJ'])).ok, false);
+    assert.equal((await admin(db, 'admin_set_words', ['ABCDEFGHIJ', 'ELEKTROTECHNIK'])).ok, true);
+    assert.deepEqual((await q(db, 'SELECT word FROM public.words ORDER BY word')).map((r) => r.word), ['ABCDEFGHIJ', 'ELEKTROTECHNIK']);
   });
 
   it('admin_set_task: neue Signatur mit difficulty, null laesst den Wert unveraendert', async () => {

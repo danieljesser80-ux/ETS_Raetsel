@@ -65,3 +65,9 @@ export function phaseText(phase) {
   }
   return 'Unbekannt';
 }
+
+export function giveUpConfirmation(scope) {
+  return scope === 'wort'
+    ? 'Wirklich aufgeben? Das Gruppenwort wird endgültig mit 0 Punkten beendet. Du wirst Spielleiter.'
+    : 'Wirklich aufgeben? Diese Aufgabe wird endgültig mit 0 Punkten beendet.';
+}

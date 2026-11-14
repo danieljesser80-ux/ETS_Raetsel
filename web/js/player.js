@@ -1,7 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { SUPABASE_URL, SUPABASE_KEY } from '../config.js';
 import { createApi } from './api.js';
-import { reasonText } from './texts.js';
+import { reasonText, giveUpConfirmation } from './texts.js';
 import { renderPlayer, updateCountdowns } from './views.js';
 import { createRefreshLoop } from './refresh.js';
 import { stateKey } from './clientcache.js';
@@ -180,10 +180,7 @@ const handlers = {
     }
   },
   async onGiveUp(scope) {
-    const prompt = scope === 'wort'
-      ? 'Wirklich aufgeben? Das Gruppenwort wird endgültig mit 0 Punkten beendet. Du wirst Spielleiter.'
-      : 'Wirklich aufgeben? Diese Aufgabe wird endgültig mit 0 Punkten beendet.';
-    if (busy || !confirm(prompt)) return;
+    if (busy || !confirm(giveUpConfirmation(scope))) return;
     busy = true;
     sync.invalidate();
     draw();

@@ -7,17 +7,21 @@ import { stateKey } from './clientcache.js';
 
 const root = document.getElementById('app');
 const notice = document.getElementById('notice');
+const playerMode = new URLSearchParams(location.search).get('mode') === 'player';
 const api = createApi(createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
 }));
 sessionStorage.removeItem('admincode');
-let token = sessionStorage.getItem('display-token');
+let token = playerMode ? null : sessionStorage.getItem('display-token');
 let state = null;
 let lastKey = null;
 const sync = createRefreshLoop({
   load: async () => {
+    if (playerMode) await api.ensureSession();
     const result = await api.beamerState(token);
-    if (!result?.ok) throw new Error('Beamerzugang ungültig – über den Admin erneut öffnen.');
+    if (!result?.ok) throw new Error(playerMode
+      ? 'Spielerzugang nicht gefunden – bitte zuerst auf diesem Gerät im Spiel anmelden.'
+      : 'Beamerzugang ungültig – über den Admin erneut öffnen.');
     return result;
   },
   apply(result) {
@@ -46,9 +50,9 @@ window.addEventListener('message', (event) => {
   sync.start();
 });
 if (window.opener) window.opener.postMessage({ type: 'raetsel-beamer-ready' }, location.origin);
-if (token) sync.start();
+if (playerMode || token) sync.start();
 else if (!window.opener) {
-  notice.textContent = 'Diese Beamerseite über „Beamer-Ansicht“ im Admin öffnen.';
+  notice.textContent = 'Diese Beamerseite über „Beamer-Ansicht“ im Admin öffnen oder aus der Spieleransicht starten.';
   notice.className = 'message error';
 }
 setInterval(() => state && updateCountdowns(root, state, Date.now()), 1000);

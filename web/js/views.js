@@ -710,6 +710,7 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
     el(doc, 'input', { cls: 'big-input', attrs: { id: 'f-game-minutes', name: 'game-minutes', type: 'number',
       min: 1, max: 35791394, value: overview.game_minutes ?? 25, ...(canStart ? {} : { disabled: 'disabled' }) } }),
     el(doc, 'label', { text: 'Schwierigkeit des Gruppenworts', attrs: { for: 'f-word-difficulty' } }),
+    el(doc, 'p', { cls: 'task-difficulty' }, [difficultyTag(doc, overview.word_difficulty ?? 'mittel')]),
     selectLevel('word-difficulty', overview.word_difficulty ?? 'mittel'),
     el(doc, 'p', { text: 'Spielzeit ab Gruppeneinteilung. Automatisches Ende; endgültig falsch/aufgegeben: 0 Punkte.' }),
   ]);

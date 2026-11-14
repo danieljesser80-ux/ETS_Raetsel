@@ -30,7 +30,7 @@ const REASONS = {
   ungueltiges_bild: 'Ungültiger Bildlink (https://… oder relativer Pfad).',
   ungueltige_schwierigkeit: 'Bitte leicht, mittel oder schwer auswählen.',
   ungueltige_punktestaffel: 'Je Stufe neun nicht ansteigende ganze Punktewerte von 0 bis 10000 eintragen.',
-  ungueltige_wortliste: 'Eindeutige Wörter mit 1 bis 9 Buchstaben A–Z eintragen; keine leeren Zeilen, Umlaute oder ß.',
+  ungueltige_wortliste: 'Eindeutige Wörter aus A–Z eintragen; keine leeren Zeilen, Umlaute oder ß.',
   ungueltige_aufgaben: 'Die Aufgabendatei enthält Fehler oder ist leer; Liste prüfen.',
   ungueltige_id: 'Ungültige Aufgaben-ID.',
   doppelte_id: 'Aufgaben-ID doppelt.',

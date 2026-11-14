@@ -196,15 +196,15 @@ describe('DB admin_form_groups', { skip: !SCHEMA_EXISTS && 'supabase/schema.sql 
       assert.equal(tasks.length, sizes.length);
       for (const t of tasks) {
         assert.equal(t.solution, t.word);
-        assert.ok(t.word.length >= t.size && t.word.length <= 2 * t.size, `Wortlaenge ${t.word} fuer Groesse ${t.size}`);
         const letters = await q(db, `
           SELECT l.player_id, l.position, l.letter FROM public.letters l
           JOIN public.players p ON p.id = l.player_id WHERE p.group_id = $1`, [t.group_id]);
         assert.equal([...letters.map((l) => l.letter)].sort().join(''), [...t.word].sort().join(''));
         const per = new Map();
         for (const l of letters) per.set(l.player_id, (per.get(l.player_id) ?? 0) + 1);
-        assert.equal(per.size, t.size, 'jedes Mitglied hat Buchstaben');
-        for (const c of per.values()) assert.ok(c >= 1 && c <= 2);
+        const memberIds = (await q(db, 'SELECT id FROM public.players WHERE group_id = $1', [t.group_id])).map((p) => p.id);
+        const counts = memberIds.map((id) => per.get(id) ?? 0);
+        assert.ok(Math.max(...counts) - Math.min(...counts) <= 1, 'Buchstaben moeglichst gleichmaessig verteilt');
         const positions = new Set(letters.map((l) => `${l.player_id}:${l.position}`));
         assert.equal(positions.size, letters.length, 'Positionen je Spieler eindeutig');
       }

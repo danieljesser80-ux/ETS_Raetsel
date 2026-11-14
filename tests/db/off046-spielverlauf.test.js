@@ -461,7 +461,7 @@ describe('DB OFF-051..056 Export und Beamer', { skip }, () => {
     await assert.rejects(() => rpcAnon(db, 'admin_open_beamer', ADMIN_CODE), /permission denied/i);
   });
 
-  it('beamer_state: anon liest bereinigte Anzeige ohne Loesungen, Buchstaben und Spielernamen', async () => {
+  it('beamer_state: Anzeigetoken zeigt Mitgliedernamen auch nach Wortloesung, aber keine Loesungen oder Buchstaben', async () => {
     const t = (await admin(db, 'admin_open_beamer')).token;
     await solveWord(m1[0]);
     const res = await rpcAnon(db, 'beamer_state', t);
@@ -476,7 +476,7 @@ describe('DB OFF-051..056 Export und Beamer', { skip }, () => {
     const json = JSON.stringify(s);
     for (const g of [g1, g2]) assert.ok(!json.includes(await wordOf(db, g)));
     const doneNames = (await q(db, 'SELECT name FROM public.players WHERE group_id = $1', [g1])).map((x) => x.name);
-    for (const n of doneNames) assert.ok(!json.includes(n), 'Teilnehmer geloester Gruppe ersetzt durch Gruppe komplett');
+    for (const n of doneNames) assert.ok(json.includes(n), 'Mitgliedernamen bleiben nach der Wortloesung sichtbar');
     assert.ok(!/solution|loesung|letters|code_hash/i.test(json));
     const letters = (await q(db, 'SELECT letter FROM public.letters LIMIT 1'))[0].letter;
     assert.ok(!json.includes(`"${letters}"`) || letters.length === 0);

@@ -17,7 +17,6 @@ let state = null;
 let lastKey = null;
 const sync = createRefreshLoop({
   load: async () => {
-    if (playerMode) await api.ensureSession();
     const result = await api.beamerState(token);
     if (!result?.ok) throw new Error(playerMode
       ? 'Spielerzugang nicht gefunden – bitte zuerst auf diesem Gerät im Spiel anmelden.'
@@ -50,7 +49,13 @@ window.addEventListener('message', (event) => {
   sync.start();
 });
 if (window.opener) window.opener.postMessage({ type: 'raetsel-beamer-ready' }, location.origin);
-if (playerMode || token) sync.start();
+if (playerMode) {
+  api.ensureSession().then(() => sync.start()).catch((error) => {
+    notice.textContent = `Spielersitzung konnte nicht geladen werden: ${error.message}`;
+    notice.className = 'message error';
+    notice.setAttribute('role', 'alert');
+  });
+} else if (token) sync.start();
 else if (!window.opener) {
   notice.textContent = 'Diese Beamerseite über „Beamer-Ansicht“ im Admin öffnen oder aus der Spieleransicht starten.';
   notice.className = 'message error';

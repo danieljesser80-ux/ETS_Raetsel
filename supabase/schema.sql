@@ -612,7 +612,7 @@ begin
     return jsonb_build_object('ok', false, 'reason', 'bereits_geloest');
   end if;
   select max(at) into last_at from public.attempts where group_id = p.group_id;
-  if last_at is not null and (extract(epoch from (now_ts - last_at)) * 1000) < 1000 then
+  if last_at is not null and (extract(epoch from (now_ts - last_at)) * 1000) < 3000 then
     return jsonb_build_object('ok', false, 'reason', 'zu_schnell');
   end if;
 

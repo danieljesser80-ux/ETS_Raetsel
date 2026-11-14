@@ -77,7 +77,7 @@ test('Falsche Antwort 1 und 2 schliessen die Aufgabe nicht, die endgueltige drit
   }
   await b.h().onSubmitTask('t', 'x');
   assert.equal(b.last().state.feedback.accepted, true, 'endgueltig');
-  b.timers.filter((x) => x.ms === 3000).pop().f();
+  b.timers.filter((x) => x.ms === 1000).pop().f();
   assert.equal(b.exposed.ui.openTaskId, null);
 });
 

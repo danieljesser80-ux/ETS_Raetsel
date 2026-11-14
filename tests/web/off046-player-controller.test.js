@@ -20,7 +20,7 @@ async function boot({ api = {}, state = { ok: true, phase: 'wortaufgabe_aktiv', 
   };
   const render = (root, s, h) => { draws.push({ state: s, handlers: h }); };
   const body = SRC.split('\n').filter((l) => !/^import /.test(l)).join('\n');
-  const fn = new Function('document', 'createClient', 'SUPABASE_URL', 'SUPABASE_KEY', 'createApi', 'reasonText',
+  const fn = new Function('document', 'createClient', 'SUPABASE_URL', 'SUPABASE_KEY', 'createApi', 'reasonText', 'giveUpConfirmation',
     'renderPlayer', 'updateCountdowns', 'createRefreshLoop', 'stateKey', 'ANSWER_FEEDBACK_MS', 'setTimeout', 'clearTimeout', 'setInterval', 'confirm',
     `${body}\nreturn { ui, get busy() { return busy; } };`);
   const confirms = [];
@@ -35,7 +35,7 @@ async function boot({ api = {}, state = { ok: true, phase: 'wortaufgabe_aktiv', 
         async request() { cur = await cfg.load(); cfg.apply(cur); },
       };
     },
-    stateKey,
+    stateKey, 1000,
     (f, ms) => { timers.push({ f, ms }); return timers.length; }, () => {}, () => 1,
     (t) => { confirms.push(t); return confirms.answer ?? true; });
   await new Promise((r) => setImmediate(r));

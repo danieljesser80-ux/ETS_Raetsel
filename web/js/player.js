@@ -5,6 +5,7 @@ import { reasonText } from './texts.js';
 import { renderPlayer, updateCountdowns } from './views.js';
 import { createRefreshLoop } from './refresh.js';
 import { stateKey } from './clientcache.js';
+import { ANSWER_FEEDBACK_MS } from './feedback.js';
 
 const root = document.getElementById('app');
 const notice = document.getElementById('notice');
@@ -47,12 +48,11 @@ function setFeedback(scope, kind, text, { closeTask = false } = {}) {
   clearTimeout(feedbackTimer);
   ui.feedback = { scope, kind, text, accepted: closeTask };
   draw();
-  if (scope === 'wort') return;
   feedbackTimer = setTimeout(() => {
     ui.feedback = null;
     if (closeTask) ui.openTaskId = null;
     draw();
-  }, 3000);
+  }, ANSWER_FEEDBACK_MS);
 }
 
 const sync = createRefreshLoop({
@@ -112,9 +112,9 @@ const handlers = {
     if (btn) btn.disabled = true;
     try {
       const r = await api.submitAnswer(answer);
-      if (!r || !r.ok) ui.feedback = { scope: 'wort', kind: 'error', text: reasonText(r && r.reason) };
-      else if (r.correct) ui.feedback = { scope: 'wort', kind: 'success', text: `Richtig! Vorläufig Platz ${r.rank}` };
-      else ui.feedback = { scope: 'wort', kind: 'error', text: 'Leider falsch' };
+      if (!r || !r.ok) setFeedback('wort', 'error', reasonText(r && r.reason));
+      else if (r.correct) setFeedback('wort', 'success', `Richtig! Vorläufig Platz ${r.rank}`);
+      else setFeedback('wort', 'error', 'Leider falsch');
     } catch (e) {
       uncertain();
     } finally {
@@ -180,7 +180,10 @@ const handlers = {
     }
   },
   async onGiveUp(scope) {
-    if (busy || !confirm('Wirklich aufgeben? Diese Aufgabe wird endgültig mit 0 Punkten beendet. Beim Gruppenwort wirst du Spielleiter.')) return;
+    const prompt = scope === 'wort'
+      ? 'Wirklich aufgeben? Das Gruppenwort wird endgültig mit 0 Punkten beendet. Du wirst Spielleiter.'
+      : 'Wirklich aufgeben? Diese Aufgabe wird endgültig mit 0 Punkten beendet.';
+    if (busy || !confirm(prompt)) return;
     busy = true;
     sync.invalidate();
     draw();

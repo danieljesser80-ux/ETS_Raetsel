@@ -338,7 +338,7 @@ test('TST-S-030: Beamer zeigt vor Loesungen alle Gruppen mit Teilnehmern, auch o
   assert.ok(!/Gruppe komplett/.test(t));
 });
 
-test('TST-S-043: Beamer zeigt Mitglieder geloester Gruppen in einer Zeile und Punkte live', () => {
+test('TST-S-030: Beamer zeigt Mitglieder geloester Gruppen in einer Zeile und Punkte live', () => {
   const root = makeRoot();
   renderBeamer(root, overview({ phase: 'wortaufgabe_aktiv', groups: GROUPS, ranking: RANKING }), NOW);
   const t = textOf(root);
@@ -349,7 +349,7 @@ test('TST-S-043: Beamer zeigt Mitglieder geloester Gruppen in einer Zeile und Pu
   assert.ok(idx(t, 'Rentierbande') < idx(t, 'Lichterkette'), 'Gesamtrangfolge zuerst');
 });
 
-test('TST-S-043: Beamer behaelt alle Teilnehmernamen auch nach allen Wortloesungen', () => {
+test('TST-S-030: Beamer behaelt alle Teilnehmernamen auch nach allen Wortloesungen', () => {
   const root = makeRoot();
   const groups = GROUPS.map((g, i) => ({ ...g, solved: true, rank: i + 1 }));
   renderBeamer(root, overview({ phase: 'wortaufgabe_aktiv', groups, ranking: [{ rank: 1, group: 'Rentierbande', points: 10 }, { rank: 2, group: 'Lichterkette', points: 8 }] }), NOW);

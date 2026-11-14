@@ -27,13 +27,12 @@ Reine Funktionen, ES-Module (`"type": "module"`), keine Abhängigkeiten, Node 20
 `GROUP_NAMES`: Array fester weihnachtlicher Namen, mindestens 30, eindeutig (auch ohne Beachtung der Groß-/Kleinschreibung), nicht leer.
 `assignGroupNames(count, rng) -> string[]`: `count` verschiedene Namen aus `GROUP_NAMES`; `count > GROUP_NAMES.length` oder ungültiges `count` → `RangeError`.
 
-## Wörter und Buchstaben (UNA-005; SWA-008, ENT-009)
-`MAX_WORD_LENGTH = 9` (OFF-015, SWA-026).
-`WORDS`: leere Liste; geheime Defaultwörter werden nicht veröffentlicht (AEN-053).
-`wordsForGroupSize(n, words = WORDS) -> string[]`: Wörter aus ausdrücklich übergebener Konfiguration mit Länge `n <= L <= min(2n, MAX_WORD_LENGTH)`; für n = 1 alle Wörter. Gruppengrößen über 9 haben kein passendes Wort. Tests verwenden synthetische Wörter, Defaultimport erfolgt geschützt im Admin aus externer Datei.
-`assignLetters(word, memberIds, rng) -> { ok:true, assignment: { [memberId]: string[] } } | { ok:false, reason }`
-- reason `'ungueltiges_wort'`: nicht ausschließlich A–Z oder leer. reason `'wortlaenge'`: Länge < Mitgliederzahl oder > 2*Mitgliederzahl (bei genau einem Mitglied entfällt die Obergrenze: es erhält alle gemischten Buchstaben).
-- Jedes Mitglied erhält 1 bis 2 Buchstaben; die Vereinigung aller Buchstaben ist genau die Buchstabenmultimenge des Wortes. Überschüssige Buchstaben (Länge − Mitglieder) gehen an verschiedene, zufällig gewählte Mitglieder. Zuordnung der Buchstaben zu Mitgliedern mit `rng` gemischt.
+## Wörter und Buchstaben (UNA-005; SWA-008, ENT-009, OFF-064)
+`WORDS`: leere Liste; geheime Defaultwörter liegen außerhalb des Repositories und werden nur im Admin importiert. Die Admin-Wortliste enthält ausschließlich eindeutige A–Z-Wörter, ohne maximale Länge.
+`wordsForGroupSize(n, words = WORDS) -> string[]`: gibt eine unveränderte Kopie der gesamten ausdrücklich übergebenen Wortliste zurück; die Gruppengröße filtert die Auswahl nicht.
+`assignLetters(word, memberIds, rng) -> { ok:true, assignment: Record<memberId,string[]> } | { ok:false, reason }`
+- reason `'ungueltiges_wort'`: nicht ausschließlich A–Z oder leer. Leere Mitgliederliste → `'keine_mitglieder'`.
+- Jedes Zeichen wird genau einmal verteilt. Die Reihenfolge der Mitglieder und Buchstaben wird mit `rng` gemischt; die Buchstabenanzahl pro Mitglied unterscheidet sich höchstens um eins. Ist das Wort kürzer als die Gruppe, erhalten einzelne Mitglieder keine Buchstaben; bei langen Wörtern können Mitglieder mehr als zwei Buchstaben erhalten.
 
 ## Antworten (UNA-006; SWA-009 bis SWA-011, ENT-005)
 - `normalizeAnswer(s) -> string`: trimmen und in Großbuchstaben; Nicht-String → `''`.

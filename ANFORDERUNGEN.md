@@ -18,17 +18,17 @@
 | Noch offen | OFF-064: automatisierte Testausführung, Konsistenz-/Geheimnisprüfung, Code-Review und Smartphoneprüfung; anschließend PR prüfen und nur nach ausdrücklicher Freigabe mergen/veröffentlichen. DOC-009 (`docs/KONFIGURATIONSMANAGEMENT.md`) wird hier referenziert, ist im aktuellen Repository-Stand aber nicht vorhanden. Zusätzlich bleiben die bisherigen Generalprobe-, Aufgabeninhalt-, Last-/Gerätemessungs- und Release-Freigaben offen. |
 | Baseline | Keine neue Baseline nach AEN-053/AEN-054. BL-008 ist eingefroren, aber nicht freigegeben; die bestätigte Veröffentlichung des aktuellen Arbeitsstands ist keine Veröffentlichung/Freigabe von BL-008. Regeln vor Generalprobe/Feier in DOC-009 beachten; Freigabe nur durch Kunden. |
 | Geheimnisse | Lösungen und Default-Wortdatei ausschließlich in `C:\Raetsel-geheim`; Defaultimport aus `gruppenwoerter-default.txt`. Keine Lösungen, Admincodes oder geheimen Schlüssel in Projekt, Chat, Exporte oder Screenshots übernehmen. |
-| Aktuelle Anschlussaufgabe | Keine Umsetzung läuft. Die neue Nutzernachricht bestimmt die Aufgabe; Veröffentlichung, Live-Lasttest und Datenlöschung sind dadurch nicht autorisiert. OFF-056 reale Generalprobe bleibt unabhängig offen. |
+| Aktuelle Anschlussaufgabe | OFF-064 wird auf einem separaten Branch umgesetzt; Testausführung, Review und Verifikation stehen aus. Die neue Nutzernachricht autorisiert weder Merge nach `main` noch Veröffentlichung, Live-Lasttest oder Datenlöschung. OFF-056 reale Generalprobe bleibt unabhängig offen. |
 
-**Pflege:** Bei Abschluss eines Arbeitspakets, bestätigter Veröffentlichung/Kundenprüfung oder Unterbrechung diesen Abschnitt aktualisieren: tatsächliche Änderungen, Nachweis, offen/blockiert und gegebenenfalls präzise Fortsetzung. Nur belegte Ergebnisse eintragen; Umsetzung, Veröffentlichung und Abnahme nicht gleichsetzen. Details bleiben in ihren maßgeblichen Dokumenten/Testprotokollen, statt Chatverläufe oder Logs zu kopieren. Dauerhafte Einstiegsregeln stehen in `.github\copilot-instructions.md` und DOC-009.
+**Pflege:** Bei Abschluss eines Arbeitspakets, bestätigter Veröffentlichung/Kundenprüfung oder Unterbrechung diesen Abschnitt aktualisieren: tatsächliche Änderungen, Nachweis, offen/blockiert und gegebenenfalls präzise Fortsetzung. Nur belegte Ergebnisse eintragen; Umsetzung, Veröffentlichung und Abnahme nicht gleichsetzen. Details bleiben in ihren maßgeblichen Dokumenten/Testprotokollen, statt Chatverläufe oder Logs zu kopieren. Dauerhafte Einstiegsregeln stehen in `.github\copilot-instructions.md`; DOC-009 wird referenziert, die Datei `docs/KONFIGURATIONSMANAGEMENT.md` fehlt jedoch im aktuellen Repository-Stand.
 
 ## 1. Dokumentstand und Vorgehen
 
 | Merkmal | Stand |
 |---|---|
 | Dokument-ID | DOC-001 |
-| Version | 0.61 |
-| Datum | 09.11.2026 |
+| Version | 0.63 |
+| Datum | 14.11.2026 |
 | Status | Baseline für ersten Release freigegeben (AEN-006) |
 | Zweck | Gemeinsame Grundlage für Anforderungen, Änderungen, Architektur, Implementierung und Prüfung |
 | Einsatz | Private Weihnachtsfeier, maximal 100 Spieler |
@@ -83,7 +83,7 @@ Gemäß AEN-002, OFF-057/AEN-056 und AEN-057 gilt folgende Arbeitsstrategie. Sie
 
 **Modellersatz (AEN-057, 09.11.2026):** Kunde verlangt „ersetze Haiku mit Gemini Flash“. Gemeint ist Gemini 3.8 Flash aus der gezeigten Modellauswahl; es ersetzt Haiku 5.5 ausschließlich in der aktiven Strategie für einfache Aufgaben. Historische AEN-/OFF-Einträge bleiben als damalige Entscheidungen erhalten. In der vorgelegten Preistabelle fehlen Preise für Gemini 3.8 Flash; daraus keine belegte Kostenersparnis ableiten. Sichtbare Hauptmodellverfügbarkeit ist keine Garantie der Agentenverfügbarkeit; bei Delegation weiterhin explizit auswählen und fehlende Verfügbarkeit offenlegen. Keine automatische Umschaltung des Hauptmodells.
 
-**Kontextauswahl:** Zum Einstieg DOC-001 nur Abschnitt 0 und 2 sowie DOC-009 lesen; Abschnitt 1.3 bei Fragen zu Arbeitsweise/Modellwahl. Anschließend betroffene OFF/KAN/SWA/ARC/UNA/TST anhand ihrer IDs suchen und nur maßgebliche Definitionen, notwendige Querverweise, relevante Codeabschnitte und Nachweise lesen. Ganze OFF-/AEN-Historien, Archive oder vollständige Sitzungsverläufe nicht vorsorglich laden. Definitionen nicht so kürzen, dass Bedingungen oder Ausnahmen verloren gehen. Bereits gelesenen unveränderten Kontext innerhalb einer Sitzung nicht erneut vollständig laden.
+**Kontextauswahl:** Zum Einstieg DOC-001 nur Abschnitt 0 und 2 sowie DOC-009 lesen; Abschnitt 1.3 bei Fragen zu Arbeitsweise/Modellwahl. Hinweis für diesen Stand: DOC-009 ist im Repository nicht vorhanden; deshalb konnte dessen Inhalt nicht geprüft werden. Anschließend betroffene OFF/KAN/SWA/ARC/UNA/TST anhand ihrer IDs suchen und nur maßgebliche Definitionen, notwendige Querverweise, relevante Codeabschnitte und Nachweise lesen. Ganze OFF-/AEN-Historien, Archive oder vollständige Sitzungsverläufe nicht vorsorglich laden. Definitionen nicht so kürzen, dass Bedingungen oder Ausnahmen verloren gehen. Bereits gelesenen unveränderten Kontext innerhalb einer Sitzung nicht erneut vollständig laden.
 
 **Delegation:** Normalen Kontext statt langen Kontext verwenden. Kleine Aufgaben direkt erledigen; Agenten nur für konkrete größere Pakete einsetzen, deren unabhängige Bearbeitung den zusätzlichen Kontext und Aufruf rechtfertigt. Agenten erhalten nur relevante Dokumentauszüge, IDs, Schnittstellen und ein eindeutiges Abschlusskriterium. Keine dauerhaft laufenden Agenten, doppelten Erkundungen oder mehrfachen Reviews ohne konkrete neue Fragestellung.
 
@@ -97,7 +97,7 @@ Agenten werden erst gestartet, wenn ein konkretes Arbeitspaket mit ausreichend g
 
 ## 2. Dokumentverzeichnis
 
-Jede ID hat genau eine maßgebliche Definitionsstelle. Querverweise und die Matrix ersetzen diese Definition nicht. Die sieben aktiven Dokumente werden bei Änderungen gemeinsam auf Konsistenz geprüft (AEN-022: SWA in DOC-002, UNA in DOC-004 aufgegangen; die Dokument-IDs DOC-003 und DOC-005 sind entfallen und werden nicht neu vergeben).
+Jede ID hat genau eine maßgebliche Definitionsstelle. Querverweise und die Matrix ersetzen diese Definition nicht. Die sechs im Repository vorhandenen aktiven Dokumente werden bei Änderungen gemeinsam auf Konsistenz geprüft; DOC-009 ist als siebtes Dokument referenziert, fehlt aber im aktuellen Repository-Stand (AEN-022: SWA in DOC-002, UNA in DOC-004 aufgegangen; die Dokument-IDs DOC-003 und DOC-005 sind entfallen und werden nicht neu vergeben).
 
 | Dokument-ID | Dokument | Maßgeblicher Inhalt | Version |
 |---|---|---|---|
@@ -136,9 +136,9 @@ Seit AEN-022 nur noch Kundenanforderung → Kundenabnahmetest. Die Ableitung SWA
 | Ebene | Stand |
 |---|---|
 | Kundenanforderungen | Entscheidungen einschließlich ENT-008 getroffen; Anforderungsbaseline für ersten Release freigegeben (AEN-006), Folgeänderungen beauftragt, keine neue Release-Freigabe |
-| Softwareanforderungen | Abgeleitet, an die Folgeänderungen bis AEN-053 angepasst |
+| Softwareanforderungen | Abgeleitet, einschließlich OFF-064/AEN-062 (SWA-058 bis SWA-064) angepasst |
 | Architektur | GitHub Pages + Supabase vom Kunden gewählt (ENT-011); Details Entwurf |
-| Komponentenanforderungen | Abgeleiteter Entwurf |
+| Komponentenanforderungen | Abgeleiteter Entwurf, ergänzt um UNA-041 bis UNA-045 für OFF-064 |
 | Implementierung | AEN-053/AEN-054 und OFF-058..063 umgesetzt/verifiziert. OFF-064 auf separatem Branch implementiert; keine Übernahme nach `main`, keine Veröffentlichung. Spieler-Beamer erfordert das neue `supabase/schema.sql` und eine bereits angemeldete Spielersitzung. |
 | Tests | Letzter nachgewiesener Lauf: AEN-061 (345 schnelle/558 volle Tests, Lauf 010). OFF-064-Testfälle ergänzt; Ausführung, Konsistenz und Geheimnisprüfung stehen aus. Smartphone-/Beamerprüfung nach Schema-Update ebenfalls offen. |
 | Baseline / Kundenabnahme / Release | Konfigurationsmanagement nach DOC-009 (AEN-014). BL-001: Anforderungsbaseline „v0.5“ für den ersten Release vom Kunden freigegeben am 05.11.2026 (AEN-006). BL-002: Gesamtstand eingefroren, Freigabe offen. BL-003 bis BL-007 abgelöst. BL-008: Stand nach AEN-021 eingefroren, Freigabe offen; die nächste Baseline folgt vor der Generalprobe (AEN-022). Kundenabnahme und Release nicht erfolgt. |

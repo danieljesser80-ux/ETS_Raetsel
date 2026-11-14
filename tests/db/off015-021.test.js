@@ -23,18 +23,18 @@ describe('DB OFF-016, OFF-018, OFF-019, OFF-020', { skip: !SCHEMA_EXISTS && 'sup
   const setTask = (id, patch) => setTaskPre(db, id, patch);
   const leaderOf = async () => (await q(db, 'SELECT player_id FROM public.results LIMIT 1'))[0]?.player_id;
 
-  it('TST-S-024: kein Wort länger als 9 Buchstaben, auch nach erneuter Einrichtung', async () => {
+  it('OFF-064: Wortliste mit langen Wörtern bleibt nach Schema-Update erhalten', async () => {
     await q(db, "INSERT INTO public.words (word) VALUES ('ELEKTROTECHNIK')");
     const sql = await readFile(SCHEMA_PATH, 'utf8');
     await db.exec(sql);
     const w = await q(db, 'SELECT count(*)::int AS c, max(char_length(word))::int AS m FROM public.words');
-    assert.deepEqual(w[0], { c: 16, m: 9 });
+    assert.deepEqual(w[0], { c: 17, m: 14 });
   });
 
-  it('TST-S-024: eingeteilte Gruppen erhalten Wörter bis 9 Buchstaben', async () => {
+  it('OFF-064: eingeteilte Gruppen erhalten das vollständige konfigurierte Wort', async () => {
     const rows = await q(db, 'SELECT char_length(solution)::int AS n FROM public.group_tasks');
     assert.ok(rows.length > 0);
-    for (const r of rows) assert.ok(r.n <= 9 && r.n >= 4);
+    for (const r of rows) assert.ok(r.n >= 1);
   });
 
   it('TST-S-024: Bildadressen von Schach und Sudoku vorausgefüllt, gespeicherte Adresse bleibt', async () => {

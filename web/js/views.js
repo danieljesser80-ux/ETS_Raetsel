@@ -510,7 +510,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
   } else {
     card.append(el(doc, 'p', { text: phaseText(phase) }));
   }
-  if (state.joined && ['gruppen_eingeteilt', 'wortaufgabe_aktiv', 'aufgabe_abgeschlossen'].includes(phase)) {
+  if (state.joined) {
     card.append(el(doc, 'p', { cls: 'beamer-link' }, [
       el(doc, 'a', { text: 'Beamer-Ansicht auf diesem Gerät öffnen', attrs: {
         href: 'beamer.html?mode=player', target: '_blank', rel: 'noopener',

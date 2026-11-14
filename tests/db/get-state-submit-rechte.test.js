@@ -161,7 +161,7 @@ describe('DB submit_answer', { skip }, () => {
     await setNow(db, isoAt(T0_MS + 500));
     const sol = await solutionOf(db, uid(1));
     assert.equal((await rpc(db, uid(1), 'submit_answer', sol)).reason, 'zu_schnell');
-    await setNow(db, isoAt(T0_MS + 1000));
+    await setNow(db, isoAt(T0_MS + 3000));
     assert.equal((await rpc(db, uid(1), 'submit_answer', sol)).correct, true);
   });
 
@@ -288,7 +288,7 @@ describe('DB Rechte und Reset', { skip }, () => {
     await startedRound(db, 8);
     const sol = await solutionOf(db, uid(1));
     await rpc(db, uid(1), 'submit_answer', 'FALSCH1');
-    await setNow(db, isoAt(T0_MS + 1000));
+    await setNow(db, isoAt(T0_MS + 3000));
     await rpc(db, uid(1), 'submit_answer', sol);
     const cnt = async (t) => (await q(db, `SELECT count(*)::int AS c FROM public.${t}`))[0].c;
     assert.ok((await cnt('results')) > 0 && (await cnt('attempts')) > 0);

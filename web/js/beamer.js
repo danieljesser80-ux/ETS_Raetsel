@@ -9,7 +9,7 @@ const root = document.getElementById('app');
 const notice = document.getElementById('notice');
 const playerMode = new URLSearchParams(location.search).get('mode') === 'player';
 const api = createApi(createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+  auth: { persistSession: playerMode, autoRefreshToken: playerMode, detectSessionInUrl: false },
 }));
 sessionStorage.removeItem('admincode');
 let token = playerMode ? null : sessionStorage.getItem('display-token');
@@ -39,7 +39,7 @@ const sync = createRefreshLoop({
   },
 });
 
-window.addEventListener('message', (event) => {
+if (!playerMode) window.addEventListener('message', (event) => {
   if (event.origin !== location.origin || event.source !== window.opener
       || event.data?.type !== 'raetsel-beamer-token' || typeof event.data.token !== 'string'
       || !/^[0-9a-f]{64}$/.test(event.data.token)) return;

@@ -539,7 +539,7 @@ function rankingList(doc, ranking, showPoints = true, groups = [], showMembersFo
     if (group) {
       const members = (group.members || []).join(', ');
       if (showMembersForCompleted) {
-        if (members) name.append(el(doc, 'span', { cls: 'group-members', text: `(${members})` }));
+        if (members) name.append(el(doc, 'span', { cls: 'group-members', text: ` (${members})` }));
       } else {
         name.append(el(doc, 'span', { cls: 'group-status',
           text: group.word_completed || group.solved ? 'Gruppe komplett' : members }));

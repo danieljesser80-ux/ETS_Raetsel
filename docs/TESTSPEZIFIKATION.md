@@ -1,6 +1,6 @@
 # Testkonzept und Testspezifikation – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-006 | **Version:** 0.4 | **Datum:** 05.11.2026
+**Dokument-ID:** DOC-006 | **Version:** 0.26 | **Datum:** 14.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 
@@ -28,6 +28,7 @@ Unit-Tests prüfen Komponentenverträge; Integrationstests prüfen reale Schnitt
 | TST-K-004 | KAN-013, KAN-014 | Mehrere Gruppen lösen in festgelegter Reihenfolge; gespeicherte Plätze und Punkte entsprechen den freigegebenen Regeln. |
 | TST-K-005 | KAN-002 | Veranstaltungsszenario mit 100 aktiven Spielern plus Steuerung funktioniert; ein zusätzlicher Teilnehmer wird verständlich abgewiesen. |
 | TST-K-006 | KAN-015 | Abnahme der weiteren Kategorien nach ENT-007/ENT-008; konkrete Testfälle anschließend ergänzen. |
+| TST-K-016 | KAN-052 bis KAN-058 | Beamer zeigt Mitglieder und aktuelle Punkte einzeilig; Clusterfortschritt und Schwierigkeitstags sind sichtbar; Rückmeldung dauert eine Sekunde; beliebige Admin-Wörter werden verteilt; Spieler-Beamer ist read-only; Aufgeben-Hinweise unterscheiden Start- und Folgeaufgaben. |
 
 ### 1.3 Software-/Systemtests
 
@@ -41,6 +42,7 @@ Unit-Tests prüfen Komponentenverträge; Integrationstests prüfen reale Schnitt
 | TST-S-006 | SWA-013 | 100 aktive Clients mit realen Anmeldungen, Phasenwechseln, Gruppenzuweisungen und Antwortspitzen; Messung gegen ENT-013, einschließlich Fehler- und Wiederverbindungsverhalten. |
 | TST-S-007 | SWA-008, SWA-014, SWA-015 | Manipulierte Gruppen-/Punkteangaben, Zugriff auf Lösungen und fremde persönliche Daten sowie Spieleraufruf von Adminaktionen werden abgewiesen; Löschung nach ENT-012. |
 | TST-S-008 | SWA-016 | Nach Spezifikation jeder weiteren Kategorie: gültige/ungültige Ergebnisse und Kategorienablauf; konkrete Testfälle anschließend ergänzen. |
+| TST-S-043 | SWA-058, SWA-062, SWA-063 | Tokenbasierter Beamer und registrierter Spielerzugriff; anonym ohne Token abweisen; Mitgliedernamen nach Wortlösung sichtbar; beliebig lange und kurze Admin-Wörter vollständig und fair verteilen. |
 
 ### 1.4 Architektur-/Integrationstests
 
@@ -60,11 +62,13 @@ Unit-Tests prüfen Komponentenverträge; Integrationstests prüfen reale Schnitt
 | TST-U-002 | UNA-002 | Namensvalidierung, geschlossene Runde, Kapazitätsgrenze und wiederholte Registrierung; korrekter fachlicher Fehler beziehungsweise einmaliger Teilnehmer. |
 | TST-U-003 | UNA-003 | Uhr kontrollierbar simulieren: Start, 300-Sekunden-Grenze, abgelaufene Restzeit, Gerätezeitabweichung und ungültiger Phasenübergang. |
 | TST-U-004 | UNA-004 | Teilnehmerzahlen von 0 bis 100 gegen freigegebene Regeln; jeder Teilnehmer genau einmal, kein Fremdteilnehmer, zulässige Größen oder expliziter Ablehnungsfall. |
-| TST-U-005 | UNA-005 | Wortlängen von Gruppengröße bis doppelter Gruppengröße (4 bis 6 Mitglieder), wiederholte Buchstaben und ungeeignete Wortlänge; vollständige Buchstabenmultimenge, ein bis zwei Buchstaben pro Mitglied. |
+| TST-U-005 | UNA-005 | Alle A–Z-Wortlängen und Gruppengrößen; vollständige Buchstabenmultimenge und möglichst gleichmäßige Verteilung, auch wenn einzelne Mitglieder keine oder mehr als zwei Buchstaben erhalten. |
 | TST-U-006 | UNA-006 | Berechtigung, falsche/richtige und normalisierte Antworten nach ENT-005, bereits gelöste Gruppe; eindeutige Ergebnisse. Parallelitätsnachweis zusätzlich in TST-A-002. |
 | TST-U-007 | UNA-007 | Alle zulässigen Plätze und ungültige Konfigurationen gegen freigegebene Punkteformel; deterministische Ergebnisse ohne stillschweigende Ersatzwerte. |
 | TST-U-008 | UNA-008 | Zustandsdarstellung, Updates, Verbindungsfehler und erneuter Abruf; nur berechtigte persönliche Informationen sichtbar. |
 | TST-U-009 | UNA-009 | Rollenprüfung und Löschumfang nach ENT-012; keine unberechtigte Mutation und keine Löschung außerhalb der gewählten Runde. |
+| TST-U-035 | UNA-042, UNA-043, UNA-045 | Beamerzeile mit Klammern und Live-Punkten; Fortschrittsanzeige `erledigt/Gesamtzahl`; farbige Schwierigkeits-Tags; beliebige Wortlängen und gleichmäßige Buchstabenverteilung. |
+| TST-U-036 | UNA-044 | Gemeinsame Rückmeldezeit von 1000 ms und differenzierter Aufgeben-Hinweis für Starträtsel/Folgeaufgaben. |
 
 ## 2. Testprotokolle
 

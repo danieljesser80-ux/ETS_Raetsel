@@ -4,11 +4,13 @@ import { makeRoot, textOf } from './dom-helper.js';
 
 const { renderPlayer, renderBeamer } = await import('../../web/js/views.js');
 const { ANSWER_FEEDBACK_MS } = await import('../../web/js/feedback.js');
+const { giveUpConfirmation } = await import('../../web/js/texts.js');
 const NOW = 1_000_000;
 
 const tasks = [
   { id: 'a', category: 'Wissen', title: 'Frage A', difficulty: 'leicht', submitted: true, available: true, started: true },
   { id: 'b', category: 'Wissen', title: 'Frage B', difficulty: 'schwer', submitted: false, available: true, started: false },
+  { id: 'c', category: 'Action', title: 'Frage C', difficulty: 'mittel', submitted: false, available: true, started: false },
 ];
 const playerState = (over = {}) => ({
   ok: true, phase: 'wortaufgabe_aktiv', joined: true, name: 'Anna',
@@ -27,9 +29,10 @@ test('TST-U-035: Schwierigkeits-Tags enthalten Text und passende Farbklasse in d
   const root = makeRoot();
   renderPlayer(root, playerState(), {}, NOW);
   const tags = [...root.querySelectorAll('.difficulty-tag')];
-  assert.deepEqual(tags.map((tag) => tag.textContent), ['Leicht', 'Schwer']);
+  assert.deepEqual(tags.map((tag) => tag.textContent), ['Leicht', 'Schwer', 'Mittel']);
   assert.ok(tags[0].classList.contains('difficulty-leicht'));
   assert.ok(tags[1].classList.contains('difficulty-schwer'));
+  assert.ok(tags[2].classList.contains('difficulty-mittel'));
 });
 
 test('TST-U-035: Schwierigkeits-Tag bleibt auch in der Aufgaben-Einzelansicht sichtbar', () => {
@@ -67,4 +70,13 @@ test('TST-U-035: Jeder angemeldete Spieler kann die reine Beamer-Ansicht auf ein
 
 test('TST-U-036: Antwort-Rueckmeldung ist fuer Wort und Folgeaufgaben auf eine Sekunde gesetzt', () => {
   assert.equal(ANSWER_FEEDBACK_MS, 1000);
+});
+
+test('TST-U-036: Aufgeben-Hinweis nennt Spielleiter nur beim Startraetsel und stets null Punkte', () => {
+  const start = giveUpConfirmation('wort');
+  const followUp = giveUpConfirmation('schach');
+  assert.match(start, /0 Punkte/);
+  assert.match(start, /Spielleiter/);
+  assert.match(followUp, /0 Punkte/);
+  assert.doesNotMatch(followUp, /Spielleiter/);
 });

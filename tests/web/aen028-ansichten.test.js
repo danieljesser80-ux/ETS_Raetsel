@@ -387,6 +387,15 @@ test('TST-S-030: Namen in der Gruppenliste werden als Text dargestellt', () => {
   }
 });
 
+test('TST-U-035: Admin-Aufgabenpflege und Aufgabenuebersicht zeigen Schwierigkeits-Tags', () => {
+  const root = makeRoot();
+  renderAdmin(root, overview({ phase: 'vorbereitet', tasks: [{ ...ADMIN_TASKS[0], difficulty: 'mittel', answers: 2 }] }), AH().h, NOW);
+  const tags = [...root.querySelectorAll('.difficulty-tag')];
+  assert.ok(tags.length >= 2, 'Editor und Aufgabenuebersicht');
+  assert.ok(tags.every((tag) => tag.textContent === 'Mittel'));
+  assert.ok(tags.every((tag) => tag.classList.contains('difficulty-mittel')));
+});
+
 // ---- Vorbereitungskontrolle (KAN-032, SWA-037)
 test('TST-S-030: Admin zeigt je Aufgabe fehlende Bestandteile, keine Startsperre', () => {
   const root = makeRoot();

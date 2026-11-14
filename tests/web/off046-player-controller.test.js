@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { stateKey } from '../../web/js/clientcache.js';
+import { giveUpConfirmation } from '../../web/js/texts.js';
 
 const SRC = readFileSync(new URL('../../web/js/player.js', import.meta.url), 'utf8');
 
@@ -25,7 +26,7 @@ async function boot({ api = {}, state = { ok: true, phase: 'wortaufgabe_aktiv', 
   const confirms = [];
   const exposed = fn(dom.window.document,
     () => ({ channel: () => ({ on() { return this; }, subscribe() {} }) }), 'u', 'k',
-    () => fullApi, (r) => `reason:${r}`, render, () => {},
+    () => fullApi, (r) => `reason:${r}`, giveUpConfirmation, render, () => {},
     (cfg) => {
       loopCalls.push(cfg);
       let cur = null;
@@ -58,7 +59,7 @@ test('TST-S-042: Spieleransicht zeichnet bei nur geaenderter Serverzeit nicht ne
   assert.equal(b.draws.length, afterSame + 1, 'geaenderter Zustand: Render');
 });
 
-test('Falsche Antwort 1 und 2 schliessen die Aufgabe nicht, die endgueltige dritte schliesst nach 3 s', async () => {
+test('Falsche Antwort 1 und 2 schliessen die Aufgabe nicht, die endgueltige dritte schliesst nach 1 s', async () => {
   const wrong = [{ ok: true, correct: false, attempts_remaining: 2, submitted: false },
     { ok: true, correct: false, attempts_remaining: 1, submitted: false },
     { ok: true, correct: false, attempts_remaining: 0, submitted: true }];
@@ -69,7 +70,7 @@ test('Falsche Antwort 1 und 2 schliessen die Aufgabe nicht, die endgueltige drit
   assert.equal(b.exposed.ui.openTaskId, 't');
   for (const k of [0, 1]) {
     await b.h().onSubmitTask('t', 'x');
-    const t = b.timers.filter((x) => x.ms === 3000).pop();
+    const t = b.timers.filter((x) => x.ms === 1000).pop();
     t.f();
     assert.equal(b.exposed.ui.openTaskId, 't', `Versuch ${k + 1}: Aufgabe bleibt offen`);
     assert.equal(b.last().state.feedback, null);
@@ -80,7 +81,7 @@ test('Falsche Antwort 1 und 2 schliessen die Aufgabe nicht, die endgueltige drit
   assert.equal(b.exposed.ui.openTaskId, null);
 });
 
-test('Richtige Antwort schliesst nach 3 s', async () => {
+test('Richtige Antwort schliesst nach 1 s', async () => {
   const st = { ok: true, phase: 'wortaufgabe_aktiv', tasks: [{ id: 't', started: true }] };
   const b = await boot({ api: { submitTask: async () => ({ ok: true, correct: true }) }, state: st });
   await b.h().onOpenTask('t');
@@ -123,7 +124,7 @@ test('Verbindungsfehler bei Abgabe: Unsicherheitstext, kein automatisches Wieder
   const text = b.dom.window.document.getElementById('notice').textContent;
   assert.match(text, /unterbrochen|nicht sicher|unklar|prüf/i);
   assert.match(text, /Abgabe|angekommen|gespeichert|sicher|prüf/i, 'benennt die Unsicherheit der Abgabe');
-  b.timers.forEach((t) => { if (t.ms >= 3000) t.f(); });
+  b.timers.forEach((t) => { if (t.ms >= 1000) t.f(); });
   await new Promise((r) => setImmediate(r));
   assert.equal(n, 1, 'keine automatische Wiederholung');
   assert.equal(b.exposed.ui.openTaskId, 't', 'Aufgabe bleibt offen');

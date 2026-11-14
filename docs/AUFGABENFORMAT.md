@@ -42,7 +42,7 @@ Bei fehlender Lösung oder fehlender richtiger Auswahloption gibt der Parser ein
 
 ## 4. Beispiel
 
-```markdown
+```
 Format: raetsel-aufgaben/1
 
 ## Aufgabe: beispiel-text

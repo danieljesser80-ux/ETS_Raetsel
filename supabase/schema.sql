@@ -69,19 +69,144 @@ create index if not exists attempts_group_at_idx on public.attempts (group_id, a
 
 create table if not exists public.results (
   group_id integer not null unique references public.groups(id) on delete cascade,
-  rank integer not null unique check (rank >= 1),
-  points integer not null check (points >= 1),
   player_id uuid not null references public.players(id) on delete cascade,
   solved_at timestamptz not null
 );
+-- AEN-021: Plätze und Punkte werden aus den Abgaben berechnet (public.ranking), nicht gespeichert.
+alter table public.results drop column if exists rank;
+alter table public.results drop column if exists points;
+alter table public.round add column if not exists words_started_at timestamptz;
+alter table public.results add column if not exists outcome text not null default 'solved'
+  check (outcome in ('solved', 'given_up'));
+alter table public.round add column if not exists game_minutes int not null default 25
+  check (game_minutes between 1 and 35791394);
+alter table public.round add column if not exists game_deadline timestamptz;
+alter table public.round add column if not exists finished_at timestamptz;
+alter table public.round add column if not exists word_difficulty text not null default 'mittel'
+  check (word_difficulty in ('leicht', 'mittel', 'schwer'));
+alter table public.round add column if not exists point_schedules jsonb not null default
+  '{"leicht":[5,4,3,2,2,1,1,1,1],"mittel":[10,8,6,5,4,3,2,1,1],"schwer":[20,16,12,10,8,6,4,2,2]}';
+-- Laufende Alt-Runden bekommen einmalig eine Frist, nicht bei jeder Einrichtung erneut.
+update public.round set game_deadline = words_started_at + make_interval(mins => game_minutes)
+ where phase = 'wortaufgabe_aktiv' and game_deadline is null and words_started_at is not null;
+update public.round set finished_at = updated_at
+ where phase = 'aufgabe_abgeschlossen' and finished_at is null;
+create table if not exists public.display_tokens (
+  token_hash bytea primary key,
+  created_at timestamptz not null default now()
+);
+
+-- OFF-001: Gruppengröße einstellbar (Standard 4 bis 6)
+alter table public.round add column if not exists group_min integer not null default 4;
+alter table public.round add column if not exists group_max integer not null default 6;
+alter table public.round add column if not exists config_rev bigint not null default 0;
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'round_group_size_check') then
+    alter table public.round add constraint round_group_size_check
+      check (group_min between 1 and 14 and group_max between 1 and 14 and group_min <= group_max);
+  end if;
+end $$;
+
+-- OFF-003 bis OFF-007: Aufgaben nach dem Gruppenwort
+alter table public.attempts add column if not exists task_id text;
+
+create table if not exists public.tasks (
+  id text primary key,
+  category text not null,
+  title text not null,
+  kind text not null check (kind in ('exact', 'estimate')),
+  sort integer not null,
+  body text not null default '',
+  image_url text,
+  solution text
+);
+
+-- AEN-021 (OFF-008): Auswahlfrage mit genau 4 Namen
+alter table public.tasks add column if not exists needs_choice boolean not null default false;
+alter table public.tasks add column if not exists options text[];
+alter table public.tasks add column if not exists correct_option text;
+alter table public.tasks add column if not exists difficulty text not null default 'mittel'
+  check (difficulty in ('leicht', 'mittel', 'schwer'));
+alter table public.tasks add column if not exists public_id uuid not null default gen_random_uuid();
+create unique index if not exists tasks_public_id_idx on public.tasks(public_id);
+
+-- AEN-021: Plätze und Punkte werden berechnet; die frühere Ergebnistabelle entfällt.
+drop table if exists public.task_results;
+
+create table if not exists public.task_answers (
+  task_id text not null references public.tasks(id) on delete cascade,
+  group_id integer not null references public.groups(id) on delete cascade,
+  player_id uuid not null references public.players(id) on delete cascade,
+  at timestamptz not null,
+  guess bigint,
+  primary key (task_id, group_id)
+);
+alter table public.task_answers alter column guess drop not null;
+alter table public.task_answers add column if not exists answer text;
+alter table public.task_answers add column if not exists choice text;
+alter table public.task_answers add column if not exists correct boolean not null default false;
+alter table public.task_answers add column if not exists duration_ms bigint not null default 0;
+alter table public.task_answers add column if not exists given_up boolean not null default false;
+
+create table if not exists public.task_attempts (
+  task_id text not null references public.tasks(id) on delete cascade,
+  group_id integer not null references public.groups(id) on delete cascade,
+  attempt_no integer not null check (attempt_no between 1 and 3),
+  player_id uuid not null references public.players(id) on delete cascade,
+  at timestamptz not null,
+  answer text not null,
+  correct boolean not null,
+  duration_ms bigint not null,
+  primary key (task_id, group_id, attempt_no)
+);
+-- Vorhandene Abschlüsse bleiben abgeschlossen, auch frühere falsche Einmal-Abgaben.
+insert into public.task_attempts (task_id, group_id, attempt_no, player_id, at, answer, correct, duration_ms)
+  select a.task_id, a.group_id, 1, a.player_id, a.at, coalesce(a.answer, ''), a.correct, a.duration_ms
+    from public.task_answers a join public.tasks t on t.id = a.task_id
+   where t.kind = 'exact' and not a.given_up
+     and not exists (select 1 from public.task_attempts x where x.task_id = a.task_id and x.group_id = a.group_id)
+  on conflict do nothing;
+
+create table if not exists public.task_starts (
+  task_id text not null references public.tasks(id) on delete cascade,
+  group_id integer not null references public.groups(id) on delete cascade,
+  started_at timestamptz not null,
+  primary key (task_id, group_id)
+);
 
 -- ---------------------------------------------------------------- Stammdaten
-insert into public.words (word) values
-  ('AKKU'),('MOTOR'),('RADAR'),('TURBO'),('REIFEN'),('BREMSE'),('HYBRID'),('SENSOR'),
-  ('INVERTER'),('BATTERIE'),('WALLBOX'),('GETRIEBE'),('KUPPLUNG'),('LENKRAD'),('FAHRWERK'),
-  ('LADEKABEL'),('LADESAEULE'),('KAROSSERIE'),('REICHWEITE'),('REKUPERATION'),('ELEKTROMOTOR'),
-  ('STROMLADER'),('SCHEINWERFER'),('WECHSELRICHTER'),('STEUERGERAET')
-on conflict (word) do nothing;
+insert into public.tasks (id, category, title, kind, sort, body) values
+  ('schach', 'Schach', 'Matt in drei Zügen', 'exact', 10,
+   'Alle Teams lösen dieselbe Stellung. Tragt die 3 Zielfelder der ziehenden Figur in Reihenfolge ein, z. B. e4 d5 h5.'),
+  ('sudoku', 'Sudoku', 'Sudoku (mittel bis schwer)', 'exact', 20,
+   'Löst das Sudoku und tragt die markierten Felder ein.'),
+  ('schaetz-vorname', 'Schätzquiz', 'Häufigster Vorname in ETE/ETS', 'estimate', 30,
+   'Wie viele Personen in ETE/ETS tragen den häufigsten Vornamen? Wählt einen Namen und tragt eure Schätzung der Anzahl ein.'),
+  ('schaetz-locker', 'Schätzquiz', 'Anzahl Locker im 1. OG (Gebäude 20/1)', 'estimate', 31,
+   'Wie viele Locker gibt es im 1. OG, Gebäude 20/1? Tragt eure Schätzung als Zahl ein.'),
+  ('schaetz-lampen', 'Schätzquiz', 'Anzahl Deckenlampeneinheiten im 1. OG (Gebäude 20/1)', 'estimate', 32,
+   'Wie viele Deckenlampeneinheiten gibt es im 1. OG, Gebäude 20/1? Tragt eure Schätzung als Zahl ein.'),
+  ('geo-saeule', 'Geocaching', 'Finde die MBRDI-Säule', 'exact', 40,
+   'Findet die Säule (siehe Foto). Unter der Säule steht ein Code. Tragt ihn ein.'),
+  ('geo-baum', 'Geocaching', 'Finde den Ganzjahres-Weihnachtsbaum', 'exact', 41,
+   'Findet den Baum (siehe Foto). Dort steht ein Code. Tragt ihn ein.'),
+  ('wissen', 'Wissensquiz', 'Wissensquiz', 'exact', 50,
+   'Folgt.')
+on conflict (id) do nothing;
+
+update public.tasks set needs_choice = true where id = 'schaetz-vorname';
+
+-- Wortliste wird ausschließlich im geschützten Admin aus einer lokalen Datei importiert.
+
+-- OFF-016: Wörter höchstens 9 Buchstaben; vorhandene längere Wörter entfallen (außer in einer laufenden Einteilung)
+delete from public.words w
+ where char_length(w.word) > 9
+   and not exists (select 1 from public.group_tasks g where g.word_id = w.id);
+
+-- OFF-018: Bildadressen von Schach und Sudoku vorausfüllen, gespeicherte Adressen bleiben
+update public.tasks set image_url = 'aufgaben/schach.svg' where id = 'schach' and image_url is null;
+update public.tasks set image_url = 'aufgaben/sudoku.svg' where id = 'sudoku' and image_url is null;
 
 insert into public.group_names (name) values
   ('Rentiere'),('Lebkuchen'),('Zimtsterne'),('Schneeflocken'),('Christbaumkugeln'),
@@ -104,6 +229,11 @@ alter table public.group_tasks  enable row level security;
 alter table public.letters      enable row level security;
 alter table public.attempts     enable row level security;
 alter table public.results      enable row level security;
+alter table public.tasks        enable row level security;
+alter table public.task_starts  enable row level security;
+alter table public.task_answers enable row level security;
+alter table public.task_attempts enable row level security;
+alter table public.display_tokens enable row level security;
 
 drop policy if exists round_select on public.round;
 create policy round_select on public.round for select to anon, authenticated using (true);
@@ -113,9 +243,15 @@ grant usage on schema public to anon, authenticated;
 grant select (phase, registration_deadline, closed_early, updated_at) on public.round to anon, authenticated;
 
 -- ---------------------------------------------------------------- Hilfsfunktionen
+-- Testmodus-Funktion (AEN-011) entfällt (OFF-001): Min = Max = 1 ersetzt sie.
+drop function if exists public.admin_form_test_groups(text);
+-- AEN-021: alte Signaturen entfallen (Auswahl, Bewertung per Berechnung).
+drop function if exists public.submit_task_answer(text, text);
+drop function if exists public.admin_set_task(text, text, text, text, text, text);
+drop function if exists public.admin_score_estimates(text, text);
 create or replace function public.app_now() returns timestamptz
-language sql stable
-as $$ select coalesce(nullif(current_setting('app.fake_now', true), '')::timestamptz, now()) $$;
+language sql volatile
+as $$ select coalesce(nullif(current_setting('app.fake_now', true), '')::timestamptz, clock_timestamp()) $$;
 
 create or replace function public.admin_set_code(p_code text) returns void
 language plpgsql security definer set search_path = public, extensions, pg_temp
@@ -126,6 +262,7 @@ begin
   end if;
   insert into public.admin_config (id, code_hash) values (1, crypt(p_code, gen_salt('bf')))
   on conflict (id) do update set code_hash = excluded.code_hash;
+  delete from public.display_tokens where true;
 end $$;
 
 create or replace function public.is_admin_code(p_code text) returns boolean
@@ -142,9 +279,159 @@ create or replace function public.epoch_ms(t timestamptz) returns bigint
 language sql immutable
 as $$ select case when t is null then null else floor(extract(epoch from t) * 1000)::bigint end $$;
 
-create or replace function public.points_for_rank(p_rank int) returns int
+drop function if exists public.points_for_rank(int);
+create or replace function public.valid_schedules(p_schedules jsonb) returns boolean
+language plpgsql immutable
+as $$
+declare k text; v jsonb; previous int; n int;
+begin
+  if p_schedules is null or jsonb_typeof(p_schedules) <> 'object' then return false; end if;
+  if (select count(*) from jsonb_object_keys(p_schedules)) <> 3 then return false; end if;
+  foreach k in array array['leicht','mittel','schwer'] loop
+    if jsonb_typeof(p_schedules->k) is distinct from 'array' then return false; end if;
+    if jsonb_array_length(p_schedules->k) <> 9 then return false; end if;
+    previous := 10000;
+    for v in select value from jsonb_array_elements(p_schedules->k) loop
+      if jsonb_typeof(v) <> 'number' or (v #>> '{}') !~ '^[0-9]+$' then return false; end if;
+      if (v #>> '{}')::numeric > previous then return false; end if;
+      n := (v #>> '{}')::int;
+      previous := n;
+    end loop;
+  end loop;
+  return true;
+end $$;
+
+create or replace function public.points_for_rank(p_rank int, p_difficulty text default 'mittel') returns int
+language plpgsql stable security definer set search_path = public, extensions, pg_temp
+as $$
+declare schedules jsonb;
+begin
+  if p_rank is null or p_rank < 1 or p_difficulty is null
+     or p_difficulty not in ('leicht','mittel','schwer') then raise exception 'ungueltige_wertung'; end if;
+  select point_schedules into schedules from public.round where id = 1;
+  if not public.valid_schedules(schedules) then raise exception 'ungueltige_punktestaffel'; end if;
+  return (schedules -> p_difficulty ->> least(p_rank - 1, 8))::int;
+end $$;
+
+create or replace function public.automatic_end_ready() returns boolean
+language plpgsql stable security definer set search_path = public, extensions, pg_temp
+as $$
+declare ready boolean;
+begin
+  if to_regclass('cron.job') is null then return false; end if;
+  execute 'select exists(select 1 from cron.job where jobname = ''raetsel-game-end''
+    and command = ''select public.expire_game();''
+    and schedule = ''1 second''
+    and (active or not exists(select 1 from public.round where phase = ''wortaufgabe_aktiv'')))'
+    into ready;
+  return ready;
+end $$;
+
+create or replace function public.set_game_job_active(p_active boolean) returns void
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+begin
+  if to_regclass('cron.job') is not null then
+    execute 'select cron.alter_job(jobid, active := $1) from cron.job where jobname = ''raetsel-game-end'''
+      using p_active;
+  end if;
+end $$;
+
+-- OFF-058: Spielaktionen nutzen die exklusive Variante (Rundensperre, dann Advisory-Lock).
+create or replace function public.expire_game_exclusive() returns void
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare r public.round;
+begin
+  select * into r from public.round where id = 1 for update;
+  perform pg_advisory_xact_lock(hashtext('raetsel_answer'));
+  if r.phase = 'wortaufgabe_aktiv' and r.game_deadline is not null and public.app_now() >= r.game_deadline then
+    update public.round set phase = 'aufgabe_abgeschlossen', finished_at = game_deadline,
+      updated_at = public.app_now() where id = 1;
+    perform public.set_game_job_active(false);
+  end if;
+end $$;
+
+-- OFF-058: Statusabrufe und Cron sperren nur, wenn die Frist wirklich fällig ist.
+create or replace function public.expire_game() returns void
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+begin
+  if exists (select 1 from public.round where id = 1 and phase = 'wortaufgabe_aktiv'
+                and game_deadline is not null and public.app_now() >= game_deadline) then
+    perform public.expire_game_exclusive();
+  end if;
+end $$;
+
+-- OFF-001: Anzahl Gruppen so, dass die Größen in [min, max] liegen und der Durchschnitt
+-- möglichst nah an der Mitte von min und max; bei Gleichstand die größere Anzahl (kleinere Gruppen).
+create or replace function public.group_count(p_n int, p_min int, p_max int) returns int
 language sql immutable
-as $$ select case when p_rank between 1 and 8 then (array[10,8,6,5,4,3,2,1])[p_rank] else 1 end $$;
+as $$
+  select k from generate_series(ceil(p_n::numeric / p_max)::int, floor(p_n::numeric / p_min)::int) k
+   where k >= 1
+   order by abs(p_n::numeric / k - (p_min + p_max) / 2.0), k desc
+   limit 1
+$$;
+
+create or replace function public.normalize_task_answer(p_text text) returns text
+language sql immutable
+as $$ select upper(regexp_replace(coalesce(p_text, ''), '[\s,;.\-]+', '', 'g')) $$;
+
+-- AEN-021: Aufgabe ist freigegeben, wenn die Lösung (bei Auswahlfragen auch 4 Namen und der richtige Name) gepflegt ist.
+create or replace function public.task_ready(t public.tasks) returns boolean
+language sql immutable
+as $$
+  select t.solution is not null
+     and (not t.needs_choice
+          or (coalesce(cardinality(t.options), 0) = 4 and t.correct_option is not null
+              and t.correct_option = any(t.options)))
+$$;
+
+-- AEN-021: Plätze und Punkte aller Gruppen, bei jeder Abfrage aus den Abgaben berechnet.
+-- Wort: nach Lösungszeit seit der Gruppeneinteilung. Exakte Aufgaben: nur richtige, nach Dauer.
+-- Schätzung: nur bei richtigem Namen, nach Abstand, dann Dauer. Danach früherer Eingang, dann Gruppe.
+create or replace function public.ranking() returns table(t_id text, g_id int, rk int, pts int)
+language sql stable security definer set search_path = public, extensions, pg_temp
+as $$
+  with word as (
+    select 'wort'::text as t_id, rs.group_id as g_id,
+           (row_number() over (order by rs.solved_at - coalesce(r.words_started_at, rs.solved_at), rs.solved_at, rs.group_id))::int as rk
+      from public.results rs cross join public.round r where r.id = 1 and rs.outcome = 'solved'
+  ), ex as (
+    select a.task_id as t_id, a.group_id as g_id,
+           (row_number() over (partition by a.task_id order by a.duration_ms, a.at, a.group_id))::int as rk
+      from public.task_answers a join public.tasks t on t.id = a.task_id
+     where t.kind = 'exact' and a.correct and not a.given_up
+  ), es as (
+    select a.task_id as t_id, a.group_id as g_id,
+           (row_number() over (partition by a.task_id
+                               order by abs(a.guess - t.solution::bigint), a.duration_ms, a.at, a.group_id))::int as rk
+      from public.task_answers a join public.tasks t on t.id = a.task_id
+     where t.kind = 'estimate' and a.correct and not a.given_up and t.solution ~ '^[0-9]{1,9}$'
+  ), cfg as (
+    select point_schedules as sch, word_difficulty as wd from public.round where id = 1
+  )
+  select u.t_id, u.g_id, u.rk,
+         (c.sch -> (case when u.t_id = 'wort' then c.wd else tk.difficulty end) ->> least(u.rk - 1, 8))::int
+    from (select * from word union all select * from ex union all select * from es) u
+    cross join cfg c left join public.tasks tk on tk.id = u.t_id
+$$;
+
+-- OFF-059: Ranking je Statusabruf einmal berechnen und als jsonb wiederverwenden.
+create or replace function public.ranking_json() returns jsonb
+language sql stable security definer set search_path = public, extensions, pg_temp
+as $$
+  select coalesce(jsonb_agg(jsonb_build_object('t_id', x.t_id, 'g_id', x.g_id, 'rk', x.rk, 'pts', x.pts)), '[]'::jsonb)
+    from public.ranking() x
+$$;
+
+create or replace function public.rank_rows(p_rows jsonb) returns table(t_id text, g_id int, rk int, pts int)
+language sql immutable
+as $$
+  select z.t_id, z.g_id, z.rk, z.pts
+    from jsonb_to_recordset(coalesce(p_rows, '[]'::jsonb)) as z(t_id text, g_id int, rk int, pts int)
+$$;
 
 -- ---------------------------------------------------------------- Spieler-RPCs
 create or replace function public.join_round(p_name text) returns jsonb
@@ -188,7 +475,7 @@ begin
 end $$;
 
 create or replace function public.get_state() returns jsonb
-language plpgsql stable security definer set search_path = public, extensions, pg_temp
+language plpgsql security definer set search_path = public, extensions, pg_temp
 as $$
 declare
   uid uuid := auth.uid();
@@ -197,24 +484,92 @@ declare
   grp jsonb := null;
   lt jsonb := '[]'::jsonb;
   sv jsonb := null;
+  is_leader boolean := false;
+  leader_nm text := null;
+  tk jsonb := '[]'::jsonb;
+  fin jsonb := null;
+  wr public.results;
+  meta jsonb;
+  rk_all jsonb;
 begin
+  perform public.expire_game();
+  rk_all := public.ranking_json();
   select * into r from public.round where id = 1;
+  meta := jsonb_build_object('closed_early', r.closed_early,
+    'game_deadline_ms', public.epoch_ms(r.game_deadline), 'finished_at_ms', public.epoch_ms(r.finished_at),
+    'game_minutes', r.game_minutes, 'word_difficulty', r.word_difficulty);
   if uid is not null then select * into p from public.players where id = uid; end if;
 
   if p.id is null then
     return jsonb_build_object('ok', true, 'phase', r.phase,
       'deadline_ms', public.epoch_ms(r.registration_deadline),
       'server_now_ms', public.epoch_ms(public.app_now()),
-      'joined', false, 'name', null, 'group', null, 'letters', '[]'::jsonb, 'solved', null);
+      'joined', false, 'name', null, 'group', null, 'letters', '[]'::jsonb, 'solved', null,
+      'leader', false, 'leader_name', null, 'word_completed', false,
+      'word_outcome', null, 'word_started_ms', null, 'word_duration_ms', null, 'tasks', '[]'::jsonb) || meta;
   end if;
 
   if p.group_id is not null then
+    select * into wr from public.results where group_id = p.group_id;
     select jsonb_build_object('name', g.name,
              'members', coalesce((select jsonb_agg(m.name order by m.joined_at, m.name)
                                   from public.players m where m.group_id = g.id), '[]'::jsonb))
       into grp from public.groups g where g.id = p.group_id;
-    select jsonb_build_object('rank', rs.rank, 'points', rs.points)
-      into sv from public.results rs where rs.group_id = p.group_id;
+    select jsonb_build_object('rank', (select x.rk from public.rank_rows(rk_all) x where x.t_id = 'wort' and x.g_id = p.group_id))
+             || case when r.phase = 'aufgabe_abgeschlossen'
+                     then jsonb_build_object('points', (select x.pts from public.rank_rows(rk_all) x where x.t_id = 'wort' and x.g_id = p.group_id))
+                     else '{}'::jsonb end,
+           (rs.player_id = uid),
+           (select lp.name from public.players lp where lp.id = rs.player_id)
+      into sv, is_leader, leader_nm from public.results rs where rs.group_id = p.group_id and rs.outcome = 'solved';
+    if wr.group_id is not null then
+      is_leader := wr.player_id = uid;
+      select name into leader_nm from public.players where id = wr.player_id;
+      select coalesce(jsonb_agg(jsonb_build_object(
+               'id', case when t.category = 'Geocaching' then t.public_id::text else t.id end,
+               'category', t.category,
+               'title', case when t.category = 'Geocaching' then 'Aufgabe ' ||
+                 (select count(*) from public.tasks z where z.category = 'Geocaching'
+                    and (z.sort, z.id) <= (t.sort, t.id))::text else t.title end,
+               'detail_title', case when st.started_at is not null then t.title end,
+               'kind', t.kind, 'difficulty', t.difficulty,
+               'needs_choice', t.needs_choice,
+               'available', public.task_ready(t),
+               'started', st.started_at is not null,
+               'started_at_ms', public.epoch_ms(st.started_at),
+               'duration_ms', (select a.duration_ms from public.task_answers a where a.task_id = t.id and a.group_id = p.group_id),
+               'given_up', coalesce((select a.given_up from public.task_answers a where a.task_id = t.id and a.group_id = p.group_id), false),
+               'submitted', exists (select 1 from public.task_answers a
+                                     where a.task_id = t.id and a.group_id = p.group_id),
+               'correct', (select a.correct from public.task_attempts a
+                            where t.kind = 'exact' and a.task_id = t.id and a.group_id = p.group_id
+                            order by a.attempt_no desc limit 1),
+               'max_attempts', case when t.kind = 'exact' then 3 else 1 end,
+               'attempts_used', case when t.kind = 'exact'
+                    then (select count(*) from public.task_attempts a where a.task_id = t.id and a.group_id = p.group_id)
+                    else (select count(*) from public.task_answers a where a.task_id = t.id and a.group_id = p.group_id) end,
+               'attempts_remaining', case
+                    when exists (select 1 from public.task_answers a where a.task_id = t.id and a.group_id = p.group_id) then 0
+                    when t.kind = 'exact' then 3 - (select count(*) from public.task_attempts a where a.task_id = t.id and a.group_id = p.group_id)
+                    else 1 end,
+               'body', case when st.started_at is not null then t.body end,
+               'image_url', case when st.started_at is not null then t.image_url end,
+               'options', case when st.started_at is not null and t.needs_choice then to_jsonb(t.options) end,
+               'placement', (select jsonb_build_object('rank', x.rk)
+                                      || case when r.phase = 'aufgabe_abgeschlossen'
+                                              then jsonb_build_object('points', x.pts) else '{}'::jsonb end
+                               from public.rank_rows(rk_all) x where x.t_id = t.id and x.g_id = p.group_id)
+             ) order by t.sort), '[]'::jsonb)
+        into tk from public.tasks t
+        left join public.task_starts st on st.task_id = t.id and st.group_id = p.group_id;
+    end if;
+    if r.phase = 'aufgabe_abgeschlossen' then
+      select jsonb_build_object('points', s.pts, 'rank', s.rnk) into fin
+        from (select g.id as gid, coalesce(sum(x.pts), 0)::int as pts,
+                     (rank() over (order by coalesce(sum(x.pts), 0) desc))::int as rnk
+                from public.groups g left join public.rank_rows(rk_all) x on x.g_id = g.id
+               group by g.id) s where s.gid = p.group_id;
+    end if;
   end if;
 
   select coalesce(jsonb_agg(l.letter order by l.position), '[]'::jsonb)
@@ -223,7 +578,12 @@ begin
   return jsonb_build_object('ok', true, 'phase', r.phase,
     'deadline_ms', public.epoch_ms(r.registration_deadline),
     'server_now_ms', public.epoch_ms(public.app_now()),
-    'joined', true, 'name', p.name, 'group', grp, 'letters', lt, 'solved', sv);
+    'joined', true, 'name', p.name, 'group', grp, 'letters', lt, 'solved', sv,
+    'leader', coalesce(is_leader, false), 'leader_name', leader_nm, 'tasks', tk, 'final', fin,
+    'word_completed', wr.group_id is not null, 'word_outcome', wr.outcome,
+    'word_started_ms', case when p.group_id is not null then public.epoch_ms(r.words_started_at) end,
+    'word_duration_ms', case when wr.group_id is not null
+      then public.epoch_ms(wr.solved_at) - public.epoch_ms(coalesce(r.words_started_at, wr.solved_at)) end) || meta;
 end $$;
 
 create or replace function public.submit_answer(p_answer text) returns jsonb
@@ -235,7 +595,7 @@ declare
   ph text;
   sol text;
   last_at timestamptz;
-  now_ts timestamptz := public.app_now();
+  now_ts timestamptz;
   ans text;
   rk int;
   pts int;
@@ -245,7 +605,9 @@ begin
   if p.id is null then return jsonb_build_object('ok', false, 'reason', 'nicht_angemeldet'); end if;
   if p.group_id is null then return jsonb_build_object('ok', false, 'reason', 'keine_gruppe'); end if;
 
+  perform public.expire_game_exclusive();
   perform pg_advisory_xact_lock(hashtext('raetsel_answer'));
+  now_ts := public.app_now();
 
   select phase into ph from public.round where id = 1;
   if ph <> 'wortaufgabe_aktiv' then return jsonb_build_object('ok', false, 'reason', 'falsche_phase'); end if;
@@ -266,14 +628,207 @@ begin
   end if;
 
   insert into public.attempts (group_id, player_id, at, correct) values (p.group_id, uid, now_ts, true);
-  select count(*) + 1 into rk from public.results;
-  pts := public.points_for_rank(rk);
-  insert into public.results (group_id, rank, points, player_id, solved_at)
-    values (p.group_id, rk, pts, uid, now_ts);
-  return jsonb_build_object('ok', true, 'correct', true, 'rank', rk, 'points', pts);
+  insert into public.results (group_id, player_id, solved_at) values (p.group_id, uid, now_ts);
+  select x.rk into rk from public.ranking() x where x.t_id = 'wort' and x.g_id = p.group_id;
+  return jsonb_build_object('ok', true, 'correct', true, 'rank', rk);
+end $$;
+
+-- OFF-002/OFF-003 bis OFF-006: Aufgabenantwort; nur der Spielleiter (wer das Gruppenwort zuerst richtig eingab).
+create or replace function public.submit_task_answer(p_task_id text, p_answer text, p_choice text default null) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  p public.players;
+  ph text;
+  wr public.results;
+  t public.tasks;
+  st timestamptz;
+  now_ts timestamptz;
+  ans text;
+  ch text;
+  ok boolean;
+  gs bigint := null;
+  used int;
+  done boolean;
+begin
+  if uid is null then return jsonb_build_object('ok', false, 'reason', 'nicht_angemeldet'); end if;
+  select * into p from public.players where id = uid;
+  if p.id is null then return jsonb_build_object('ok', false, 'reason', 'nicht_angemeldet'); end if;
+  if p.group_id is null then return jsonb_build_object('ok', false, 'reason', 'keine_gruppe'); end if;
+
+  perform public.expire_game_exclusive();
+  perform pg_advisory_xact_lock(hashtext('raetsel_answer'));
+  now_ts := public.app_now();
+
+  select phase into ph from public.round where id = 1;
+  if ph <> 'wortaufgabe_aktiv' then return jsonb_build_object('ok', false, 'reason', 'falsche_phase'); end if;
+  select * into wr from public.results where group_id = p.group_id;
+  if wr.group_id is null then return jsonb_build_object('ok', false, 'reason', 'wort_nicht_geloest'); end if;
+  if wr.player_id <> uid then return jsonb_build_object('ok', false, 'reason', 'nicht_spielleiter'); end if;
+
+  select * into t from public.tasks where id = p_task_id or public_id::text = p_task_id;
+  if t.id is null then return jsonb_build_object('ok', false, 'reason', 'unbekannte_aufgabe'); end if;
+  if not public.task_ready(t) then return jsonb_build_object('ok', false, 'reason', 'nicht_verfuegbar'); end if;
+  if exists (select 1 from public.task_answers where task_id = t.id and group_id = p.group_id) then
+    return jsonb_build_object('ok', false, 'reason', 'bereits_abgegeben');
+  end if;
+  select started_at into st from public.task_starts where task_id = t.id and group_id = p.group_id;
+  if st is null then return jsonb_build_object('ok', false, 'reason', 'nicht_gestartet'); end if;
+
+  if t.kind = 'estimate' then
+    ans := regexp_replace(coalesce(p_answer, ''), '^\s+|\s+$', '', 'g');
+    if ans !~ '^[0-9]{1,9}$' then return jsonb_build_object('ok', false, 'reason', 'ungueltige_zahl'); end if;
+    gs := ans::bigint;
+    ok := true;
+    if t.needs_choice then
+      select o into ch from unnest(t.options) o where lower(o) = lower(btrim(coalesce(p_choice, ''))) limit 1;
+      if ch is null then return jsonb_build_object('ok', false, 'reason', 'ungueltige_auswahl'); end if;
+      ok := ch = t.correct_option;
+    end if;
+    insert into public.task_answers (task_id, group_id, player_id, at, guess, answer, choice, correct, duration_ms)
+      values (t.id, p.group_id, uid, now_ts, gs, ans, ch, ok,
+              public.epoch_ms(now_ts) - public.epoch_ms(st));
+    return jsonb_build_object('ok', true, 'submitted', true);
+  end if;
+
+  ans := public.normalize_task_answer(p_answer);
+  ok := ans <> '' and ans = public.normalize_task_answer(t.solution);
+  select count(*) into used from public.task_attempts where task_id = t.id and group_id = p.group_id;
+  if used >= 3 then return jsonb_build_object('ok', false, 'reason', 'bereits_abgegeben'); end if;
+  used := used + 1;
+  insert into public.task_attempts (task_id, group_id, attempt_no, player_id, at, answer, correct, duration_ms)
+    values (t.id, p.group_id, used, uid, now_ts, ans, ok, public.epoch_ms(now_ts) - public.epoch_ms(st));
+  done := ok or used = 3;
+  if done then
+    insert into public.task_answers (task_id, group_id, player_id, at, answer, correct, duration_ms)
+      values (t.id, p.group_id, uid, now_ts, ans, ok, public.epoch_ms(now_ts) - public.epoch_ms(st));
+  end if;
+  return jsonb_build_object('ok', true, 'submitted', done, 'correct', ok,
+                           'attempts_used', used, 'attempts_remaining', case when done then 0 else 3 - used end,
+                           'max_attempts', 3);
+end $$;
+
+-- AEN-021: Der Spielleiter öffnet eine Aufgabe; ab dann läuft die Zeit für die Gruppe.
+create or replace function public.start_task(p_task_id text) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare
+  uid uuid := auth.uid();
+  p public.players;
+  ph text;
+  wr public.results;
+  t public.tasks;
+begin
+  if uid is null then return jsonb_build_object('ok', false, 'reason', 'nicht_angemeldet'); end if;
+  select * into p from public.players where id = uid;
+  if p.id is null then return jsonb_build_object('ok', false, 'reason', 'nicht_angemeldet'); end if;
+  if p.group_id is null then return jsonb_build_object('ok', false, 'reason', 'keine_gruppe'); end if;
+
+  perform public.expire_game_exclusive();
+  perform pg_advisory_xact_lock(hashtext('raetsel_answer'));
+
+  select phase into ph from public.round where id = 1;
+  if ph <> 'wortaufgabe_aktiv' then return jsonb_build_object('ok', false, 'reason', 'falsche_phase'); end if;
+  select * into wr from public.results where group_id = p.group_id;
+  if wr.group_id is null then return jsonb_build_object('ok', false, 'reason', 'wort_nicht_geloest'); end if;
+  if wr.player_id <> uid then return jsonb_build_object('ok', false, 'reason', 'nicht_spielleiter'); end if;
+
+  select * into t from public.tasks where id = p_task_id or public_id::text = p_task_id;
+  if t.id is null then return jsonb_build_object('ok', false, 'reason', 'unbekannte_aufgabe'); end if;
+  if not public.task_ready(t) then return jsonb_build_object('ok', false, 'reason', 'nicht_verfuegbar'); end if;
+  if exists (select 1 from public.task_answers where task_id = t.id and group_id = p.group_id) then
+    return jsonb_build_object('ok', false, 'reason', 'bereits_abgegeben');
+  end if;
+  insert into public.task_starts (task_id, group_id, started_at) values (t.id, p.group_id, public.app_now())
+    on conflict (task_id, group_id) do nothing;
+  return jsonb_build_object('ok', true);
 end $$;
 
 -- ---------------------------------------------------------------- Admin-RPCs
+create or replace function public.give_up(p_task_id text default 'wort') returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare uid uuid := auth.uid(); p public.players; r public.round; wr public.results;
+  t public.tasks; st timestamptz; now_ts timestamptz;
+begin
+  if uid is null then return jsonb_build_object('ok', false, 'reason', 'nicht_angemeldet'); end if;
+  select * into p from public.players where id = uid;
+  if p.id is null then return jsonb_build_object('ok', false, 'reason', 'nicht_angemeldet'); end if;
+  if p.group_id is null then return jsonb_build_object('ok', false, 'reason', 'keine_gruppe'); end if;
+  perform public.expire_game_exclusive();
+  perform pg_advisory_xact_lock(hashtext('raetsel_answer'));
+  select * into r from public.round where id = 1;
+  now_ts := public.app_now();
+  if r.phase <> 'wortaufgabe_aktiv' then return jsonb_build_object('ok', false, 'reason', 'falsche_phase'); end if;
+  select * into wr from public.results where group_id = p.group_id;
+  if p_task_id = 'wort' then
+    if wr.group_id is not null then return jsonb_build_object('ok', false, 'reason', 'bereits_geloest'); end if;
+    insert into public.results(group_id, player_id, solved_at, outcome)
+      values(p.group_id, uid, now_ts, 'given_up');
+    return jsonb_build_object('ok', true, 'given_up', true, 'submitted', true);
+  end if;
+  if wr.group_id is null then return jsonb_build_object('ok', false, 'reason', 'wort_nicht_geloest'); end if;
+  if wr.player_id <> uid then return jsonb_build_object('ok', false, 'reason', 'nicht_spielleiter'); end if;
+  select * into t from public.tasks where id = p_task_id or public_id::text = p_task_id;
+  if t.id is null then return jsonb_build_object('ok', false, 'reason', 'unbekannte_aufgabe'); end if;
+  if exists(select 1 from public.task_answers where task_id = t.id and group_id = p.group_id) then
+    return jsonb_build_object('ok', false, 'reason', 'bereits_abgegeben');
+  end if;
+  select started_at into st from public.task_starts where task_id = t.id and group_id = p.group_id;
+  if st is null then return jsonb_build_object('ok', false, 'reason', 'nicht_gestartet'); end if;
+  insert into public.task_answers(task_id,group_id,player_id,at,correct,given_up,duration_ms)
+    values(t.id,p.group_id,uid,now_ts,false,true,public.epoch_ms(now_ts)-public.epoch_ms(st));
+  return jsonb_build_object('ok',true,'submitted',true,'given_up',true);
+end $$;
+
+create or replace function public.admin_set_game_config(p_code text, p_minutes int, p_word_difficulty text, p_schedules jsonb) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare ph text;
+begin
+  if not public.is_admin_code(p_code) then return jsonb_build_object('ok',false,'reason','nicht_berechtigt'); end if;
+  select phase into ph from public.round where id = 1 for update;
+  if ph not in ('vorbereitet','anmeldung') then return jsonb_build_object('ok',false,'reason','falsche_phase'); end if;
+  if p_minutes is null or p_minutes not between 1 and 35791394 then
+    return jsonb_build_object('ok',false,'reason','ungueltige_dauer');
+  end if;
+  if p_word_difficulty is null or p_word_difficulty not in ('leicht','mittel','schwer') then
+    return jsonb_build_object('ok',false,'reason','ungueltige_schwierigkeit');
+  end if;
+  if not public.valid_schedules(p_schedules) then return jsonb_build_object('ok',false,'reason','ungueltige_punktestaffel'); end if;
+  update public.round set game_minutes=p_minutes, word_difficulty=p_word_difficulty,
+    point_schedules=p_schedules, config_rev=config_rev+1, updated_at=public.app_now() where id=1;
+  return jsonb_build_object('ok',true);
+end $$;
+
+create or replace function public.admin_set_words(p_code text, p_words text[]) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare ph text; ws text[];
+begin
+  if not public.is_admin_code(p_code) then return jsonb_build_object('ok',false,'reason','nicht_berechtigt'); end if;
+  select phase into ph from public.round where id=1 for update;
+  if ph not in ('vorbereitet','anmeldung') then return jsonb_build_object('ok',false,'reason','falsche_phase'); end if;
+  if p_words is null or cardinality(p_words)=0 or exists(select 1 from unnest(p_words) w
+    where w is null or upper(btrim(w)) !~ '^[A-Z]{1,9}$') then
+    return jsonb_build_object('ok',false,'reason','ungueltige_wortliste');
+  end if;
+  select array_agg(upper(btrim(w))) into ws from unnest(p_words) w;
+  if (select count(distinct w) from unnest(ws) w) <> cardinality(ws) then
+    return jsonb_build_object('ok',false,'reason','ungueltige_wortliste');
+  end if;
+  delete from public.words where true;
+  insert into public.words(word) select unnest(ws);
+  update public.round set config_rev = config_rev + 1 where id = 1;
+  return jsonb_build_object('ok',true);
+end $$;
+
+create or replace function public.game_config() returns jsonb
+language sql stable security definer set search_path = public, extensions, pg_temp
+as $$ select jsonb_build_object('ok',true,'game_minutes',game_minutes,
+  'word_difficulty',word_difficulty,'point_schedules',point_schedules) from public.round where id=1 $$;
+
 create or replace function public.admin_start_registration(p_code text, p_seconds int default 300) returns jsonb
 language plpgsql security definer set search_path = public, extensions, pg_temp
 as $$
@@ -310,8 +865,8 @@ declare
   n int; k int; base int; rem int; sz int;
   pids uuid[];
   gnames text[];
-  gid int; wid int; w text;
-  pos int; i int; j int; e int;
+  gid int; wid int; w text; nm text;
+  pos int; i int; j int; e int; mi int; q int; cnt int;
   members uuid[];
   lets text[];
   tmp text;
@@ -326,17 +881,12 @@ begin
   end if;
 
   select count(*) into n from public.players;
-  if n < 4 then return jsonb_build_object('ok', false, 'reason', 'zu_wenige'); end if;
-  if n = 7 then return jsonb_build_object('ok', false, 'reason', 'nicht_teilbar'); end if;
-  k := ceil(n / 5.0)::int;
-  if 4 * k > n then k := k - 1; end if;
-  if k < 1 or n > 6 * k then return jsonb_build_object('ok', false, 'reason', 'nicht_teilbar'); end if;
+  if n < r.group_min then return jsonb_build_object('ok', false, 'reason', 'zu_wenige'); end if;
+  k := public.group_count(n, r.group_min, r.group_max);
+  if k is null then return jsonb_build_object('ok', false, 'reason', 'nicht_teilbar'); end if;
 
   select array_agg(id order by random()) into pids from public.players;
-  select array_agg(name) into gnames from (select name from public.group_names order by random() limit k) s;
-  if gnames is null or array_length(gnames, 1) < k then
-    return jsonb_build_object('ok', false, 'reason', 'zu_wenige_namen');
-  end if;
+  select coalesce(array_agg(name), '{}') into gnames from (select name from public.group_names order by random() limit k) s;
 
   base := n / k; rem := n % k; pos := 1; used := '{}';
   for i in 1..k loop
@@ -344,15 +894,18 @@ begin
     members := pids[pos:pos + sz - 1];
     pos := pos + sz;
 
-    insert into public.groups (name) values (gnames[i]) returning id into gid;
+    nm := case when i <= coalesce(array_length(gnames, 1), 0) then gnames[i] else 'Gruppe ' || i end;
+    insert into public.groups (name) values (nm) returning id into gid;
     update public.players set group_id = gid where id = any(members);
 
+    -- Gruppengröße 1 (Testbetrieb): Wortlänge frei
+    wid := null;
     select id, word into wid, w from public.words
-     where char_length(word) between sz and 2 * sz and id <> all(used)
+     where (sz = 1 or char_length(word) between sz and least(2 * sz, 9)) and id <> all(used)
      order by random() limit 1;
     if wid is null then
       select id, word into wid, w from public.words
-       where char_length(word) between sz and 2 * sz order by random() limit 1;
+       where sz = 1 or char_length(word) between sz and least(2 * sz, 9) order by random() limit 1;
     end if;
     if wid is null then raise exception 'kein passendes wort fuer gruppengroesse %', sz; end if;
     used := used || wid;
@@ -363,30 +916,261 @@ begin
     select array_agg(m order by random()) into members from unnest(members) m;
     e := char_length(w) - sz;
     j := 1;
-    for i in 1..sz loop
-      declare cnt int := case when i <= e then 2 else 1 end; q int;
-      begin
-        for q in 1..cnt loop
-          insert into public.letters (player_id, position, letter) values (members[i], q, lets[j]);
-          j := j + 1;
-        end loop;
-      end;
+    for mi in 1..sz loop
+      cnt := case when sz = 1 then char_length(w) when mi <= e then 2 else 1 end;
+      for q in 1..cnt loop
+        insert into public.letters (player_id, position, letter) values (members[mi], q, lets[j]);
+        j := j + 1;
+      end loop;
     end loop;
   end loop;
 
-  update public.round set phase = 'wortaufgabe_aktiv', updated_at = public.app_now() where id = 1;
+  update public.round set phase = 'wortaufgabe_aktiv', words_started_at = public.app_now(),
+    game_deadline = public.app_now() + make_interval(mins => game_minutes), finished_at = null,
+    registration_deadline = null, updated_at = public.app_now() where id = 1;
+  perform public.set_game_job_active(true);
   return jsonb_build_object('ok', true, 'groups', k);
 end $$;
 
-create or replace function public.admin_overview(p_code text) returns jsonb
+create or replace function public.admin_set_group_size(p_code text, p_min int, p_max int) returns jsonb
 language plpgsql security definer set search_path = public, extensions, pg_temp
 as $$
-declare r public.round;
+declare ph text;
 begin
   if not public.is_admin_code(p_code) then return jsonb_build_object('ok', false, 'reason', 'nicht_berechtigt'); end if;
+  if p_min is null or p_max is null or p_min < 1 or p_max > 14 or p_min > p_max then
+    return jsonb_build_object('ok', false, 'reason', 'ungueltige_groesse');
+  end if;
+  select phase into ph from public.round where id = 1 for update;
+  if ph not in ('vorbereitet', 'anmeldung') then return jsonb_build_object('ok', false, 'reason', 'falsche_phase'); end if;
+  update public.round set group_min = p_min, group_max = p_max, config_rev = config_rev + 1, updated_at = public.app_now() where id = 1;
+  return jsonb_build_object('ok', true, 'group_min', p_min, 'group_max', p_max);
+end $$;
+
+drop function if exists public.admin_set_task(text,text,text,text,text,text,text[],text);
+create or replace function public.admin_set_task(p_code text, p_id text, p_title text, p_body text,
+                                                 p_image_url text, p_solution text,
+                                                 p_options text[] default null,
+                                                 p_correct_option text default null,
+                                                 p_difficulty text default null) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare
+  t public.tasks;
+  sol text;
+  img text;
+  opts text[];
+  cor text;
+  ph text;
+begin
+  if not public.is_admin_code(p_code) then return jsonb_build_object('ok', false, 'reason', 'nicht_berechtigt'); end if;
+  select phase into ph from public.round where id=1 for update;
+  if ph not in ('vorbereitet','anmeldung') then return jsonb_build_object('ok',false,'reason','falsche_phase'); end if;
+  if p_difficulty is not null and p_difficulty not in ('leicht','mittel','schwer') then
+    return jsonb_build_object('ok',false,'reason','ungueltige_schwierigkeit');
+  end if;
+  select * into t from public.tasks where id = p_id for update;
+  if t.id is null then return jsonb_build_object('ok', false, 'reason', 'unbekannte_aufgabe'); end if;
+
+  sol := case when p_solution is null then t.solution else nullif(btrim(p_solution), '') end;
+  if t.kind = 'estimate' and sol is not null and sol !~ '^[0-9]{1,9}$' then
+    return jsonb_build_object('ok', false, 'reason', 'ungueltige_loesung');
+  end if;
+  img := case when p_image_url is null then t.image_url else nullif(btrim(p_image_url), '') end;
+  if img is not null and img !~ '^(https://[^[:space:]"<>]+|[A-Za-z0-9_./-]+)$' then
+    return jsonb_build_object('ok', false, 'reason', 'ungueltiges_bild');
+  end if;
+
+  opts := t.options;
+  cor := t.correct_option;
+  if t.needs_choice then
+    if p_options is not null then
+      select coalesce(array_agg(o order by ord), '{}') into opts
+        from (select btrim(o) as o, ord from unnest(p_options) with ordinality as u(o, ord) where btrim(o) <> '') s;
+      if cardinality(opts) = 0 then
+        opts := null;
+      elsif cardinality(opts) <> 4 or (select count(distinct lower(x)) from unnest(opts) x) <> 4 then
+        return jsonb_build_object('ok', false, 'reason', 'ungueltige_optionen');
+      end if;
+    end if;
+    if p_correct_option is not null then cor := nullif(btrim(p_correct_option), ''); end if;
+    if cor is not null then
+      select o into cor from unnest(coalesce(opts, '{}')) o where lower(o) = lower(cor) limit 1;
+      if cor is null then return jsonb_build_object('ok', false, 'reason', 'ungueltige_optionen'); end if;
+    end if;
+    if opts is null then cor := null; end if;
+  end if;
+
+  update public.tasks
+     set title = coalesce(nullif(btrim(p_title), ''), title),
+         body = coalesce(p_body, body),
+         image_url = img,
+         solution = sol,
+         options = opts,
+         correct_option = cor,
+         difficulty = coalesce(p_difficulty,difficulty)
+   where id = p_id;
+  update public.round set config_rev = config_rev + 1 where id = 1;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- OFF-062/063: Aufgabensatz aus Schema-Markdown (vom Browser geparst), serverseitig revalidiert.
+create or replace function public.admin_import_tasks(p_code text, p_tasks jsonb, p_apply boolean default false) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare
+  ph text;
+  e jsonb; ord bigint;
+  errs jsonb := '[]'::jsonb;
+  warns jsonb := '[]'::jsonb;
+  ids text[] := '{}';
+  cat_keys text[] := '{}';
+  cat_pos int[] := '{}';
+  v_id text; v_cat text; v_title text; v_type text; v_diff text; v_body text; v_img text; v_sol text; v_cor text;
+  v_opts text[]; v_idx int; v_n int; v_sort int; v_ok boolean;
+  n_new int := 0; n_repl int := 0; n_rem int := 0; n_unready int := 0;
+begin
+  if not public.is_admin_code(p_code) then return jsonb_build_object('ok', false, 'reason', 'nicht_berechtigt'); end if;
+  if p_tasks is null or jsonb_typeof(p_tasks) <> 'array' or jsonb_array_length(p_tasks) = 0
+     or jsonb_array_length(p_tasks) > 60 then
+    return jsonb_build_object('ok', false, 'reason', 'ungueltige_aufgaben');
+  end if;
+  if p_apply then
+    select phase into ph from public.round where id = 1 for update;
+    if ph not in ('vorbereitet', 'anmeldung') then return jsonb_build_object('ok', false, 'reason', 'falsche_phase'); end if;
+  end if;
+  create temporary table if not exists pg_temp.import_tasks (
+    id text, category text, title text, kind text, sort int, body text, image_url text, solution text,
+    needs_choice boolean, options text[], correct_option text, difficulty text) on commit drop;
+  delete from pg_temp.import_tasks where true;
+
+  for e, ord in select value, ordinality from jsonb_array_elements(p_tasks) with ordinality loop
+    v_ok := true;
+    v_id := e ->> 'id';
+    if jsonb_typeof(e) <> 'object' or v_id is null or v_id !~ '^[a-z0-9][a-z0-9-]{0,39}$' then
+      errs := errs || jsonb_build_object('task', coalesce(v_id, '#' || ord), 'reason', 'ungueltige_id'); continue;
+    end if;
+    if v_id = any(ids) then
+      errs := errs || jsonb_build_object('task', v_id, 'reason', 'doppelte_id'); continue;
+    end if;
+    ids := ids || v_id;
+    v_cat := btrim(coalesce(e ->> 'category', ''));
+    v_title := btrim(coalesce(e ->> 'title', ''));
+    v_type := e ->> 'type';
+    v_diff := coalesce(nullif(btrim(e ->> 'difficulty'), ''), 'mittel');
+    v_body := coalesce(e ->> 'body', '');
+    v_img := nullif(btrim(coalesce(e ->> 'image', '')), '');
+    v_sol := nullif(btrim(coalesce(e ->> 'solution', '')), '');
+    v_cor := nullif(btrim(coalesce(e ->> 'correct_option', '')), '');
+    if v_cat = '' or char_length(v_cat) > 40 then
+      errs := errs || jsonb_build_object('task', v_id, 'reason', 'ungueltige_kategorie'); v_ok := false; end if;
+    if v_title = '' or char_length(v_title) > 120 then
+      errs := errs || jsonb_build_object('task', v_id, 'reason', 'ungueltiger_titel'); v_ok := false; end if;
+    if v_type is null or v_type not in ('exakt', 'schaetzung', 'auswahl') then
+      errs := errs || jsonb_build_object('task', v_id, 'reason', 'ungueltiger_typ'); v_ok := false; end if;
+    if v_diff not in ('leicht', 'mittel', 'schwer') then
+      errs := errs || jsonb_build_object('task', v_id, 'reason', 'ungueltige_schwierigkeit'); v_ok := false; end if;
+    if btrim(v_body) = '' or char_length(v_body) > 4000 then
+      errs := errs || jsonb_build_object('task', v_id, 'reason', 'ungueltiger_text'); v_ok := false; end if;
+    if v_img is not null and (v_img !~ '^(https://[^[:space:]"<>]+|[A-Za-z0-9_./-]+)$'
+                              or v_img like '%..%' or v_img like '/%') then
+      errs := errs || jsonb_build_object('task', v_id, 'reason', 'ungueltiges_bild'); v_ok := false; end if;
+    if v_sol is not null and (char_length(v_sol) > 200
+         or (v_type in ('schaetzung', 'auswahl') and v_sol !~ '^[0-9]{1,9}$')) then
+      errs := errs || jsonb_build_object('task', v_id, 'reason', 'ungueltige_loesung'); v_ok := false; end if;
+    v_opts := null;
+    if jsonb_typeof(e -> 'options') = 'array' and jsonb_array_length(e -> 'options') > 0 then
+      select array_agg(btrim(o) order by ord2) into v_opts from jsonb_array_elements_text(e -> 'options') with ordinality as u(o, ord2);
+    end if;
+    if v_type = 'auswahl' then
+      if v_opts is null or cardinality(v_opts) <> 4 or exists (select 1 from unnest(v_opts) x where x = '')
+         or (select count(distinct lower(x)) from unnest(v_opts) x) <> 4 then
+        errs := errs || jsonb_build_object('task', v_id, 'reason', 'ungueltige_optionen'); v_ok := false;
+      elsif v_cor is not null then
+        select o into v_cor from unnest(v_opts) o where lower(o) = lower(v_cor) limit 1;
+        if v_cor is null then
+          errs := errs || jsonb_build_object('task', v_id, 'reason', 'ungueltige_optionen'); v_ok := false; end if;
+      end if;
+    elsif v_opts is not null or v_cor is not null then
+      errs := errs || jsonb_build_object('task', v_id, 'reason', 'optionen_nicht_erlaubt'); v_ok := false;
+    end if;
+    if not v_ok then continue; end if;
+
+    v_idx := array_position(cat_keys, lower(v_cat));
+    if v_idx is null then
+      cat_keys := cat_keys || lower(v_cat); cat_pos := cat_pos || 0; v_idx := cardinality(cat_keys);
+    end if;
+    if exists (select 1 from pg_temp.import_tasks z where lower(z.category) = lower(v_cat) and z.category <> v_cat) then
+      errs := errs || jsonb_build_object('task', v_id, 'reason', 'kategorie_schreibweise'); continue;
+    end if;
+    cat_pos[v_idx] := cat_pos[v_idx] + 1;
+    v_sort := 1000 * v_idx + 10 * cat_pos[v_idx];
+    if v_sol is null then
+      warns := warns || jsonb_build_object('task', v_id, 'reason', 'keine_loesung'); n_unready := n_unready + 1;
+    elsif v_type = 'auswahl' and v_cor is null then
+      warns := warns || jsonb_build_object('task', v_id, 'reason', 'keine_richtige_option'); n_unready := n_unready + 1;
+    end if;
+    insert into pg_temp.import_tasks values (v_id, v_cat, v_title, case when v_type = 'exakt' then 'exact' else 'estimate' end,
+      v_sort, v_body, v_img, v_sol, v_type = 'auswahl', v_opts, v_cor, v_diff);
+  end loop;
+
+  select count(*) filter (where exists (select 1 from public.tasks t where t.id = i.id)),
+         count(*) filter (where not exists (select 1 from public.tasks t where t.id = i.id))
+    into n_repl, n_new from pg_temp.import_tasks i;
+  select count(*) into n_rem from public.tasks t where not exists (select 1 from pg_temp.import_tasks i where i.id = t.id);
+
+  if jsonb_array_length(errs) > 0 then
+    return jsonb_build_object('ok', false, 'reason', 'ungueltige_aufgaben', 'applied', false, 'errors', errs, 'warnings', warns,
+      'counts', jsonb_build_object('new', n_new, 'replaced', n_repl, 'removed', n_rem, 'unready', n_unready));
+  end if;
+  if p_apply then
+    insert into public.tasks (id, category, title, kind, sort, body, image_url, solution, needs_choice, options, correct_option, difficulty)
+      select i.id, i.category, i.title, i.kind, i.sort, i.body, i.image_url, i.solution, i.needs_choice, i.options, i.correct_option, i.difficulty
+        from pg_temp.import_tasks i
+      on conflict (id) do update set category = excluded.category, title = excluded.title, kind = excluded.kind,
+        sort = excluded.sort, body = excluded.body, image_url = excluded.image_url, solution = excluded.solution,
+        needs_choice = excluded.needs_choice, options = excluded.options, correct_option = excluded.correct_option,
+        difficulty = excluded.difficulty;
+    delete from public.tasks t where not exists (select 1 from pg_temp.import_tasks i where i.id = t.id);
+    update public.round set config_rev = config_rev + 1, updated_at = public.app_now() where id = 1;
+  end if;
+  return jsonb_build_object('ok', true, 'applied', p_apply, 'errors', errs, 'warnings', warns,
+    'counts', jsonb_build_object('new', n_new, 'replaced', n_repl, 'removed', n_rem, 'unready', n_unready));
+end $$;
+
+drop function if exists public.admin_overview(text);
+create or replace function public.admin_overview(p_code text, p_known_rev bigint default null) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare r public.round; rk_all jsonb; cfg jsonb;
+begin
+  if not public.is_admin_code(p_code) then return jsonb_build_object('ok', false, 'reason', 'nicht_berechtigt'); end if;
+  perform public.expire_game();
   select * into r from public.round where id = 1;
-  return jsonb_build_object(
-    'ok', true, 'phase', r.phase,
+  rk_all := public.ranking_json();
+  if p_known_rev is not distinct from r.config_rev then
+    cfg := jsonb_build_object('config_unchanged', true);
+  else
+    cfg := jsonb_build_object('config_unchanged', false,
+      'point_schedules', r.point_schedules,
+      'words', coalesce((select jsonb_agg(word order by id) from public.words), '[]'::jsonb),
+      'tasks', coalesce((select jsonb_agg(jsonb_build_object(
+                 'id', t.id, 'category', t.category, 'title', t.title, 'kind', t.kind,
+                 'difficulty', t.difficulty,
+                 'body', t.body, 'image_url', t.image_url, 'solution', t.solution,
+                 'needs_choice', t.needs_choice, 'options', to_jsonb(t.options), 'correct_option', t.correct_option,
+                 'available', public.task_ready(t)
+               ) order by t.sort) from public.tasks t), '[]'::jsonb));
+  end if;
+  return cfg || jsonb_build_object(
+    'ok', true, 'phase', r.phase, 'config_rev', r.config_rev,
+    'group_min', r.group_min, 'group_max', r.group_max,
+    'closed_early', r.closed_early, 'game_minutes', r.game_minutes,
+    'word_difficulty', r.word_difficulty,
+    'task_answers', coalesce((select jsonb_object_agg(a.task_id, a.n)
+                               from (select task_id, count(*) as n from public.task_answers group by task_id) a), '{}'::jsonb),
+    'automatic_end_ready', public.automatic_end_ready(),
+    'game_deadline_ms', public.epoch_ms(r.game_deadline), 'finished_at_ms', public.epoch_ms(r.finished_at),
     'deadline_ms', public.epoch_ms(r.registration_deadline),
     'server_now_ms', public.epoch_ms(public.app_now()),
     'players', coalesce((select jsonb_agg(jsonb_build_object('name', p.name, 'group', g.name) order by p.joined_at, p.name)
@@ -395,15 +1179,50 @@ begin
                  'name', g.name,
                  'members', coalesce((select jsonb_agg(m.name order by m.joined_at, m.name)
                                       from public.players m where m.group_id = g.id), '[]'::jsonb),
-                 'solved', rs.group_id is not null,
-                 'rank', rs.rank, 'points', rs.points,
-                 'solution', t.solution) order by g.name)
+                 'solved', rs.group_id is not null and rs.outcome = 'solved',
+                 'word_completed', rs.group_id is not null, 'word_outcome', rs.outcome,
+                 'rank', (select x.rk from public.rank_rows(rk_all) x where x.t_id = 'wort' and x.g_id = g.id),
+                 'points', (select x.pts from public.rank_rows(rk_all) x where x.t_id = 'wort' and x.g_id = g.id),
+                 'leader', (select lp.name from public.players lp where lp.id = rs.player_id),
+                 'solution', t.solution,
+                 'details', coalesce((select jsonb_agg(d.rw order by d.srt, d.num) from (
+                     select 0 as srt, 0 as num, jsonb_build_object('title', 'Gruppenwort', 'kind', 'word',
+                              'answer', case when rs.outcome = 'solved' then t.solution else 'Aufgegeben' end,
+                              'correct', rs.outcome = 'solved', 'given_up', rs.outcome = 'given_up',
+                              'duration_ms', (public.epoch_ms(rs.solved_at) - public.epoch_ms(coalesce(r.words_started_at, rs.solved_at)))) as rw
+                      where rs.group_id is not null
+                     union all
+                     select k.sort + 1, 1, jsonb_build_object('title', k.title, 'kind', k.kind,
+                              'answer', case when a.choice is not null then a.choice || ' / ' || a.answer else a.answer end,
+                              'correct', case when k.kind = 'exact' then a.correct end, 'given_up', a.given_up,
+                              'duration_ms', a.duration_ms)
+                       from public.task_answers a join public.tasks k on k.id = a.task_id
+                      where a.group_id = g.id and (k.kind = 'estimate' or a.given_up)
+                     union all
+                     select k.sort + 1, a.attempt_no, jsonb_build_object('title', k.title, 'kind', k.kind,
+                              'answer', a.answer, 'correct', a.correct, 'duration_ms', a.duration_ms,
+                              'attempt_no', a.attempt_no)
+                       from public.task_attempts a join public.tasks k on k.id = a.task_id
+                      where a.group_id = g.id) d), '[]'::jsonb)) order by g.name)
                from public.groups g
                left join public.results rs on rs.group_id = g.id
                left join public.group_tasks t on t.group_id = g.id), '[]'::jsonb),
-    'ranking', coalesce((select jsonb_agg(jsonb_build_object('rank', rs.rank, 'group', g.name, 'points', rs.points)
-                                          order by rs.rank)
-                         from public.results rs join public.groups g on g.id = rs.group_id), '[]'::jsonb));
+    'finished', r.phase = 'aufgabe_abgeschlossen',
+    'ranking', coalesce((select jsonb_agg(jsonb_build_object('rank', s.rnk, 'group', s.name, 'points', s.pts)
+                                          order by s.rnk, s.name)
+               from (select g.name, coalesce(sum(x.pts), 0)::int as pts,
+                            (rank() over (order by coalesce(sum(x.pts), 0) desc))::int as rnk
+                       from public.groups g left join public.rank_rows(rk_all) x on x.g_id = g.id
+                      group by g.id, g.name) s), '[]'::jsonb),
+    'task_results', coalesce((select jsonb_agg(jsonb_build_object(
+                 'task', t.id, 'group', g.name, 'rank', x.rk, 'points', x.pts) order by t.sort, x.rk)
+               from public.rank_rows(rk_all) x
+               join public.tasks t on t.id = x.t_id
+               join public.groups g on g.id = x.g_id), '[]'::jsonb),
+    'totals', coalesce((select jsonb_agg(jsonb_build_object('group', s.name, 'points', s.pts) order by s.pts desc, s.name)
+               from (select g.name, coalesce(sum(x.pts), 0)::int as pts
+                       from public.groups g left join public.rank_rows(rk_all) x on x.g_id = g.id
+                      group by g.id, g.name) s), '[]'::jsonb));
 end $$;
 
 create or replace function public.admin_finish(p_code text) returns jsonb
@@ -412,9 +1231,13 @@ as $$
 declare ph text;
 begin
   if not public.is_admin_code(p_code) then return jsonb_build_object('ok', false, 'reason', 'nicht_berechtigt'); end if;
+  perform public.expire_game_exclusive();
+  perform pg_advisory_xact_lock(hashtext('raetsel_answer'));
   select phase into ph from public.round where id = 1 for update;
+  if ph = 'aufgabe_abgeschlossen' then return jsonb_build_object('ok',true); end if;
   if ph <> 'wortaufgabe_aktiv' then return jsonb_build_object('ok', false, 'reason', 'falsche_phase'); end if;
-  update public.round set phase = 'aufgabe_abgeschlossen', updated_at = public.app_now() where id = 1;
+  update public.round set phase = 'aufgabe_abgeschlossen', finished_at = public.app_now(), updated_at = public.app_now() where id = 1;
+  perform public.set_game_job_active(false);
   return jsonb_build_object('ok', true);
 end $$;
 
@@ -424,7 +1247,13 @@ as $$
 begin
   if not public.is_admin_code(p_code) then return jsonb_build_object('ok', false, 'reason', 'nicht_berechtigt'); end if;
   perform pg_advisory_xact_lock(hashtext('raetsel_join'));
+  perform 1 from public.round where id = 1 for update;
   perform pg_advisory_xact_lock(hashtext('raetsel_answer'));
+  perform public.set_game_job_active(false);
+  delete from public.display_tokens where true;
+  delete from public.task_starts where true;
+  delete from public.task_attempts where true;
+  delete from public.task_answers where true;
   delete from public.results where true;
   delete from public.attempts where true;
   delete from public.letters where true;
@@ -432,9 +1261,98 @@ begin
   delete from public.players where true;
   delete from public.groups where true;
   update public.round
-     set phase = 'vorbereitet', registration_deadline = null, closed_early = false, updated_at = public.app_now()
+     set phase = 'vorbereitet', registration_deadline = null, closed_early = false, words_started_at = null,
+         game_deadline = null, finished_at = null, updated_at = public.app_now()
    where id = 1;
   return jsonb_build_object('ok', true);
+end $$;
+
+create or replace function public.admin_open_beamer(p_code text) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare token text;
+begin
+  if not public.is_admin_code(p_code) then return jsonb_build_object('ok',false,'reason','nicht_berechtigt'); end if;
+  perform 1 from public.round where id=1 for update;
+  token := encode(gen_random_bytes(32),'hex');
+  insert into public.display_tokens(token_hash) values(digest(token,'sha256'));
+  return jsonb_build_object('ok',true,'token',token);
+end $$;
+
+create or replace function public.beamer_state(p_token text) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare r public.round; rk_all jsonb;
+begin
+  if p_token is null or not exists(select 1 from public.display_tokens where token_hash=digest(p_token,'sha256')) then
+    return jsonb_build_object('ok',false,'reason','nicht_berechtigt');
+  end if;
+  perform public.expire_game();
+  rk_all := public.ranking_json();
+  select * into r from public.round where id=1;
+  return jsonb_build_object('ok',true,'phase',r.phase,'closed_early',r.closed_early,
+    'deadline_ms',public.epoch_ms(r.registration_deadline),'game_deadline_ms',public.epoch_ms(r.game_deadline),
+    'finished_at_ms',public.epoch_ms(r.finished_at),'server_now_ms',public.epoch_ms(public.app_now()),
+    'finished',r.phase='aufgabe_abgeschlossen','participants_count',(select count(*) from public.players),
+    'groups',coalesce((select jsonb_agg(jsonb_build_object('name',g.name,
+      'solved',coalesce(rs.outcome='solved',false),'word_completed',rs.group_id is not null,
+      'members',case when rs.group_id is null then
+        coalesce((select jsonb_agg(p.name order by p.joined_at,p.name) from public.players p where p.group_id=g.id),'[]'::jsonb)
+        else '[]'::jsonb end) order by g.name)
+      from public.groups g left join public.results rs on rs.group_id=g.id),'[]'::jsonb),
+    'ranking',coalesce((select jsonb_agg(jsonb_build_object('group',z.name,'points',z.points,'rank',z.rank) order by z.rank,z.name)
+      from (select g.name,coalesce(sum(x.pts),0)::int as points,
+        rank() over(order by coalesce(sum(x.pts),0) desc) as rank
+        from public.groups g left join public.rank_rows(rk_all) x on x.g_id=g.id group by g.id,g.name) z),'[]'::jsonb));
+end $$;
+
+create or replace function public.admin_export(p_code text) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp
+as $$
+declare r public.round; rows jsonb; rk_all jsonb;
+begin
+  if not public.is_admin_code(p_code) then return jsonb_build_object('ok',false,'reason','nicht_berechtigt'); end if;
+  perform public.expire_game();
+  rk_all := public.ranking_json();
+  select * into r from public.round where id=1;
+  if r.phase <> 'aufgabe_abgeschlossen' then return jsonb_build_object('ok',false,'reason','falsche_phase'); end if;
+  with totals as (
+    select g.id,g.name,coalesce(sum(x.pts),0)::int as points,
+      rank() over(order by coalesce(sum(x.pts),0) desc) as rank
+      from public.groups g left join public.rank_rows(rk_all) x on x.g_id=g.id group by g.id,g.name
+  ), all_rows as (
+    select g.name as "group",g.rank,g.points,'Gruppenwort'::text as task,0 as sort,
+      x.rk as task_rank,coalesce(x.pts,0) as task_points,
+      coalesce(rs.outcome,case when r.words_started_at is null then 'not_started' else 'open' end) as status,
+      case when r.words_started_at is not null then greatest(0,public.epoch_ms(coalesce(rs.solved_at,r.finished_at))-public.epoch_ms(r.words_started_at)) end as duration_ms
+      from totals g left join public.results rs on rs.group_id=g.id
+      left join public.rank_rows(rk_all) x on x.g_id=g.id and x.t_id='wort'
+    union all
+    select g.name,g.rank,g.points,t.title,t.sort,x.rk,coalesce(x.pts,0),
+      case when a.given_up then 'given_up' when a.task_id is not null then
+        case when t.kind='estimate' then 'estimated' when a.correct then 'solved' else 'wrong' end
+        when st.started_at is null then 'not_started' else 'open' end,
+      coalesce(a.duration_ms,case when st.started_at is not null then
+        greatest(0,public.epoch_ms(r.finished_at)-public.epoch_ms(st.started_at)) end)
+      from totals g cross join public.tasks t
+      left join public.task_answers a on a.group_id=g.id and a.task_id=t.id
+      left join public.task_starts st on st.group_id=g.id and st.task_id=t.id
+      left join public.rank_rows(rk_all) x on x.g_id=g.id and x.t_id=t.id
+  )
+  select coalesce(jsonb_agg(to_jsonb(z)-'sort' order by z.rank,z."group",z.sort,z.task),'[]'::jsonb) into rows from all_rows z;
+  return jsonb_build_object('ok',true,'rows',rows);
+end $$;
+
+-- Cron ist eine explizite Betriebsvoraussetzung. Standby vermeidet leere Jobläufe.
+do $$
+begin
+  if exists(select 1 from pg_available_extensions where name='pg_cron') then
+    create extension if not exists pg_cron;
+    perform cron.schedule('raetsel-game-end','1 second','select public.expire_game();');
+    perform public.set_game_job_active(exists(select 1 from public.round where phase='wortaufgabe_aktiv'));
+  else
+    raise warning 'Automatisches Spielende: Supabase Cron aktivieren; automatic_end_ready ist false.';
+  end if;
 end $$;
 
 -- ---------------------------------------------------------------- Funktionsrechte
@@ -442,14 +1360,37 @@ revoke all on function public.app_now() from public, anon, authenticated;
 revoke all on function public.admin_set_code(text) from public, anon, authenticated;
 revoke all on function public.is_admin_code(text) from public, anon, authenticated;
 revoke all on function public.epoch_ms(timestamptz) from public, anon, authenticated;
-revoke all on function public.points_for_rank(int) from public, anon, authenticated;
+revoke all on function public.points_for_rank(int,text) from public, anon, authenticated;
+revoke all on function public.valid_schedules(jsonb) from public, anon, authenticated;
+revoke all on function public.automatic_end_ready() from public, anon, authenticated;
+revoke all on function public.set_game_job_active(boolean) from public, anon, authenticated;
+revoke all on function public.expire_game() from public, anon, authenticated;
+revoke all on function public.give_up(text) from public, anon, authenticated;
+revoke all on function public.admin_set_game_config(text,int,text,jsonb) from public, anon, authenticated;
+revoke all on function public.admin_set_words(text,text[]) from public, anon, authenticated;
+revoke all on function public.game_config() from public, anon, authenticated;
+revoke all on function public.admin_open_beamer(text) from public, anon, authenticated;
+revoke all on function public.beamer_state(text) from public, anon, authenticated;
+revoke all on function public.admin_export(text) from public, anon, authenticated;
 revoke all on function public.join_round(text) from public, anon, authenticated;
 revoke all on function public.get_state() from public, anon, authenticated;
 revoke all on function public.submit_answer(text) from public, anon, authenticated;
 revoke all on function public.admin_start_registration(text, int) from public, anon, authenticated;
 revoke all on function public.admin_close_registration(text) from public, anon, authenticated;
 revoke all on function public.admin_form_groups(text) from public, anon, authenticated;
-revoke all on function public.admin_overview(text) from public, anon, authenticated;
+revoke all on function public.group_count(int, int, int) from public, anon, authenticated;
+revoke all on function public.normalize_task_answer(text) from public, anon, authenticated;
+revoke all on function public.ranking() from public, anon, authenticated;
+revoke all on function public.task_ready(public.tasks) from public, anon, authenticated;
+revoke all on function public.start_task(text) from public, anon, authenticated;
+revoke all on function public.submit_task_answer(text, text, text) from public, anon, authenticated;
+revoke all on function public.admin_set_group_size(text, int, int) from public, anon, authenticated;
+revoke all on function public.admin_set_task(text, text, text, text, text, text, text[], text,text) from public, anon, authenticated;
+revoke all on function public.admin_overview(text, bigint) from public, anon, authenticated;
+revoke all on function public.admin_import_tasks(text, jsonb, boolean) from public, anon, authenticated;
+revoke all on function public.expire_game_exclusive() from public, anon, authenticated;
+revoke all on function public.ranking_json() from public, anon, authenticated;
+revoke all on function public.rank_rows(jsonb) from public, anon, authenticated;
 revoke all on function public.admin_finish(text) from public, anon, authenticated;
 revoke all on function public.admin_reset(text) from public, anon, authenticated;
 
@@ -459,9 +1400,21 @@ grant execute on function public.submit_answer(text) to authenticated;
 grant execute on function public.admin_start_registration(text, int) to authenticated;
 grant execute on function public.admin_close_registration(text) to authenticated;
 grant execute on function public.admin_form_groups(text) to authenticated;
-grant execute on function public.admin_overview(text) to authenticated;
+grant execute on function public.start_task(text) to authenticated;
+grant execute on function public.submit_task_answer(text, text, text) to authenticated;
+grant execute on function public.admin_set_group_size(text, int, int) to authenticated;
+grant execute on function public.admin_set_task(text, text, text, text, text, text, text[], text,text) to authenticated;
+grant execute on function public.admin_overview(text, bigint) to authenticated;
+grant execute on function public.admin_import_tasks(text, jsonb, boolean) to authenticated;
 grant execute on function public.admin_finish(text) to authenticated;
 grant execute on function public.admin_reset(text) to authenticated;
+grant execute on function public.give_up(text) to authenticated;
+grant execute on function public.admin_set_game_config(text,int,text,jsonb) to authenticated;
+grant execute on function public.admin_set_words(text,text[]) to authenticated;
+grant execute on function public.game_config() to anon,authenticated;
+grant execute on function public.admin_open_beamer(text) to authenticated;
+grant execute on function public.beamer_state(text) to anon,authenticated;
+grant execute on function public.admin_export(text) to authenticated;
 
 -- ---------------------------------------------------------------- Realtime (optional)
 do $$

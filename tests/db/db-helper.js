@@ -46,7 +46,20 @@ export async function createDb() {
   await db.exec(sql);
   await db.exec(sql);
   await db.query('SELECT public.admin_set_code($1)', [ADMIN_CODE]);
+  await seedSyntheticWords(db);
   return { db, pgcrypto: !!pgcrypto };
+}
+
+// Synthetische Testwoerter (A-Z, 2 bis 9 Buchstaben); das Schema liefert selbst keine Woerter.
+export const SYNTHETIC_WORDS = [
+  'QU', 'ZEB', 'QUAK', 'PIXE', 'ZEBRA', 'MELON', 'QUADER', 'ZIRKEL', 'XYLOFON', 'TRAUMEN',
+  'KARUSELL', 'PIXELWAN', 'QUARTETTE', 'ZITRONENX', 'SCHNURREN', 'FLIEDERBU',
+];
+
+// Direkte Superuser-Fixture, nicht ueber RPC.
+export async function seedSyntheticWords(db, words = SYNTHETIC_WORDS) {
+  await db.query('DELETE FROM public.words');
+  for (const w of words) await db.query('INSERT INTO public.words (word) VALUES ($1)', [w]);
 }
 
 export function uid(n) {
@@ -130,15 +143,51 @@ export async function startedRound(db, n) {
   return r;
 }
 
-export function expectedSizes(n) {
-  if (n < 4 || n === 7) return null;
-  let k = Math.ceil(n / 5);
-  if (4 * k > n) k -= 1;
-  if (k < 1 || n > 6 * k) return null;
+// Unabhaengige Referenz: alle zulaessigen Gruppenzahlen pruefen, naechste an der Mitte, bei Gleichstand mehr Gruppen.
+export function expectedSizes(n, min = 4, max = 6) {
+  if (n < min) return null;
+  let best = null;
+  for (let k = 1; k <= n; k++) {
+    const lo = Math.floor(n / k);
+    const hi = Math.ceil(n / k);
+    if (lo < min || hi > max) continue;
+    const d = Math.abs(n / k - (min + max) / 2);
+    if (best === null || d <= best.d + 1e-9) best = { k, d };
+  }
+  if (!best) return null;
+  const k = best.k;
   const base = Math.floor(n / k);
   const extra = n % k;
   return Array.from({ length: k }, (_, i) => base + (i < extra ? 1 : 0));
 }
 
 export const POINTS = [10, 8, 6, 5, 4, 3, 2, 1];
-export const pointsForRank = (r) => (r <= 8 ? POINTS[r - 1] : 1);
+export const SCHEDULES = {
+  leicht: [5, 4, 3, 2, 2, 1, 1, 1, 1],
+  mittel: [10, 8, 6, 5, 4, 3, 2, 1, 1],
+  schwer: [20, 16, 12, 10, 8, 6, 4, 2, 2],
+};
+export const pointsForRank = (r, difficulty = 'mittel') => SCHEDULES[difficulty][Math.min(r, 9) - 1];
+
+// admin_set_task ist nur vor der Gruppenbildung erlaubt; fuer Alt-Tests Phase kurz auf 'vorbereitet' setzen (Superuser-Fixture).
+export async function setTaskPre(db, id, patch = {}) {
+  const phase = (await q(db, 'SELECT phase FROM public.round'))[0].phase;
+  await q(db, "UPDATE public.round SET phase = 'vorbereitet'");
+  try {
+    return await admin(db, 'admin_set_task', id, patch.title ?? null, patch.body ?? null, patch.image ?? null, patch.solution ?? null,
+      patch.options ?? null, patch.correct ?? null);
+  } finally {
+    await q(db, 'UPDATE public.round SET phase = $1', [phase]);
+  }
+}
+
+export const publicIdOf = async (db, id) => (await q(db, 'SELECT public_id::text AS p FROM public.tasks WHERE id = $1', [id]))[0].p;
+
+// Aufgabe aus einem get_state ueber ihre oeffentliche UUID (interne IDs sind fuer Spieler nicht sichtbar).
+export async function taskIn(db, state, internalId) {
+  // Nur Geocaching-Aufgaben haben fuer Spieler eine oeffentliche UUID, alle anderen behalten ihre ID.
+  const direct = state.tasks.find((x) => x.id === internalId);
+  if (direct) return direct;
+  const pid = await publicIdOf(db, internalId);
+  return state.tasks.find((x) => x.id === pid);
+}

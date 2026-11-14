@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { normalizeAnswer, checkAnswer, ATTEMPT_INTERVAL_MS, canSubmit } from '../src/core/index.js';
 
 test('TST-U-006: normalizeAnswer trimmt und macht Großbuchstaben', () => {
-  assert.equal(normalizeAnswer('  akku '), 'AKKU');
-  assert.equal(normalizeAnswer('Wallbox'), 'WALLBOX');
-  assert.equal(normalizeAnswer('AKKU'), 'AKKU');
-  assert.equal(normalizeAnswer('\tmotor\n'), 'MOTOR');
+  assert.equal(normalizeAnswer('  zebra '), 'ZEBRA');
+  assert.equal(normalizeAnswer('Pixelwand'), 'PIXELWAND');
+  assert.equal(normalizeAnswer('ZEBRA'), 'ZEBRA');
+  assert.equal(normalizeAnswer('\tpixel\n'), 'PIXEL');
 });
 
 test('TST-U-006: normalizeAnswer liefert für Nicht-Strings leeren String', () => {
@@ -18,24 +18,24 @@ test('TST-U-006: normalizeAnswer liefert für Nicht-Strings leeren String', () =
 });
 
 test('TST-U-006: checkAnswer richtig, auch bei Groß-/Kleinschreibung und Leerzeichen', () => {
-  assert.equal(checkAnswer('AKKU', 'AKKU'), true);
-  assert.equal(checkAnswer('akku', 'AKKU'), true);
-  assert.equal(checkAnswer('  Akku  ', 'AKKU'), true);
-  assert.equal(checkAnswer('AKKU', 'akku'), true);
+  assert.equal(checkAnswer('ZEBRA', 'ZEBRA'), true);
+  assert.equal(checkAnswer('zebra', 'ZEBRA'), true);
+  assert.equal(checkAnswer('  Zebra  ', 'ZEBRA'), true);
+  assert.equal(checkAnswer('ZEBRA', 'zebra'), true);
 });
 
 test('TST-U-006: checkAnswer falsch bei falscher Antwort', () => {
-  assert.equal(checkAnswer('MOTOR', 'AKKU'), false);
-  assert.equal(checkAnswer('AKK', 'AKKU'), false);
-  assert.equal(checkAnswer('AKKUU', 'AKKU'), false);
-  assert.equal(checkAnswer('AK KU', 'AKKU'), false);
+  assert.equal(checkAnswer('PIXEL', 'ZEBRA'), false);
+  assert.equal(checkAnswer('ZEBR', 'ZEBRA'), false);
+  assert.equal(checkAnswer('ZEBRAA', 'ZEBRA'), false);
+  assert.equal(checkAnswer('ZE BRA', 'ZEBRA'), false);
 });
 
 test('TST-U-006: leere Eingabe ist falsch', () => {
-  assert.equal(checkAnswer('', 'AKKU'), false);
-  assert.equal(checkAnswer('   ', 'AKKU'), false);
-  assert.equal(checkAnswer(null, 'AKKU'), false);
-  assert.equal(checkAnswer(undefined, 'AKKU'), false);
+  assert.equal(checkAnswer('', 'ZEBRA'), false);
+  assert.equal(checkAnswer('   ', 'ZEBRA'), false);
+  assert.equal(checkAnswer(null, 'ZEBRA'), false);
+  assert.equal(checkAnswer(undefined, 'ZEBRA'), false);
 });
 
 test('TST-U-006: Umlaute werden nicht umgeschrieben', () => {

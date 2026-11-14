@@ -99,7 +99,10 @@ describe('DB Phasen und Admin', { skip: !SCHEMA_EXISTS && 'supabase/schema.sql f
     assert.deepEqual(await admin(db, 'admin_form_groups'), { ok: false, reason: 'falsche_phase' });
     assert.equal((await admin(db, 'admin_finish')).ok, true);
     assert.equal(await phase(db), 'aufgabe_abgeschlossen');
-    for (const fn of ['admin_close_registration', 'admin_form_groups', 'admin_finish']) {
+    const done = (await q(db, 'SELECT finished_at FROM public.round WHERE id = 1'))[0].finished_at;
+    assert.equal((await admin(db, 'admin_finish')).ok, true, 'Ende ist idempotent');
+    assert.equal(String((await q(db, 'SELECT finished_at FROM public.round WHERE id = 1'))[0].finished_at), String(done), 'Endzeit unveraendert');
+    for (const fn of ['admin_close_registration', 'admin_form_groups']) {
       assert.deepEqual(await admin(db, fn), { ok: false, reason: 'falsche_phase' }, fn);
     }
     assert.deepEqual(await admin(db, 'admin_start_registration'), { ok: false, reason: 'falsche_phase' });
@@ -121,7 +124,9 @@ describe('DB Phasen und Admin', { skip: !SCHEMA_EXISTS && 'supabase/schema.sql f
     assert.equal(o.players.length, 8);
     assert.equal(o.groups.length, 2);
     assert.ok(Array.isArray(o.ranking));
-    assert.equal(o.ranking.length, 0);
+    assert.equal(o.ranking.length, 2);
+    assert.ok(o.ranking.every((r) => r.points === 0));
+    assert.equal(o.finished, false);
     assert.equal(typeof o.server_now_ms, 'number');
     assert.ok(!JSON.stringify(o).includes(ADMIN_CODE));
   });
@@ -159,7 +164,7 @@ describe('DB admin_form_groups', { skip: !SCHEMA_EXISTS && 'supabase/schema.sql 
       const sizes = expectedSizes(n);
       const r = await admin(db, 'admin_form_groups');
       if (!sizes) {
-        const reason = n === 7 ? 'nicht_teilbar' : 'zu_wenige';
+        const reason = n < 4 ? 'zu_wenige' : 'nicht_teilbar';
         assert.deepEqual(r, { ok: false, reason });
         assert.equal(await phase(db), 'anmeldung');
         assert.equal((await q(db, 'SELECT count(*)::int AS c FROM public.groups'))[0].c, 0);

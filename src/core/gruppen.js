@@ -16,17 +16,38 @@ export function shuffle(array, rng) {
   return a;
 }
 
-export function formGroups(playerIds, rng) {
+export const DEFAULT_GROUP_SIZE = { min: 4, max: 6 };
+export const GROUP_SIZE_LIMITS = { min: 1, max: 14 };
+
+export function validateGroupSize(min, max) {
+  const okInt = (v) => Number.isInteger(v) && v >= GROUP_SIZE_LIMITS.min && v <= GROUP_SIZE_LIMITS.max;
+  if (!okInt(min) || !okInt(max) || min > max) return { ok: false, reason: 'ungueltige_groesse' };
+  return { ok: true };
+}
+
+// Anzahl Gruppen k mit Größen in [min, max]; Durchschnitt möglichst nah an der Mitte, bei Gleichstand größeres k.
+export function chooseGroupCount(n, min, max) {
+  let best = null;
+  const mid = (min + max) / 2;
+  for (let k = Math.ceil(n / max); k <= Math.floor(n / min); k++) {
+    if (k < 1) continue;
+    const d = Math.abs(n / k - mid);
+    if (best === null || d <= best.d + 1e-12) best = { k, d };
+  }
+  return best ? best.k : null;
+}
+
+export function formGroups(playerIds, rng, size = DEFAULT_GROUP_SIZE) {
   if (!Array.isArray(playerIds)) throw new TypeError('playerIds muss ein Array sein');
   if (new Set(playerIds).size !== playerIds.length) {
     throw new TypeError('doppelte IDs');
   }
+  const { min, max } = size;
+  if (!validateGroupSize(min, max).ok) throw new RangeError('ungültige Gruppengröße');
   const n = playerIds.length;
-  if (n < 4) return { ok: false, reason: 'zu_wenige' };
-  if (n === 7) return { ok: false, reason: 'nicht_teilbar' };
-  let k = Math.ceil(n / 5);
-  if (4 * k > n) k -= 1;
-  if (k < 1 || n > 6 * k) return { ok: false, reason: 'nicht_teilbar' };
+  if (n < min) return { ok: false, reason: 'zu_wenige' };
+  const k = chooseGroupCount(n, min, max);
+  if (k === null) return { ok: false, reason: 'nicht_teilbar' };
   const shuffled = shuffle(playerIds, rng);
   const base = Math.floor(n / k);
   const extra = n % k;

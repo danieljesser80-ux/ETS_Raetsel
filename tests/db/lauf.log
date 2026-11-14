@@ -1,0 +1,208 @@
+﻿TAP version 13
+# Subtest: DB OFF-046
+# (node:21284) MaxListenersExceededWarning: Possible EventTarget memory leak detected. 11 abort listeners added to [AbortSignal]. Use events.setMaxListeners() to increase limit
+# (Use `node --trace-warnings ...` to show where the warning was created)
+    # Subtest: Gruppenbildung speichert Wortstart, Spielende (25 min) und loescht die Anmeldefrist
+    ok 1 - Gruppenbildung speichert Wortstart, Spielende (25 min) und loescht die Anmeldefrist
+      ---
+      duration_ms: 129.6305
+      ...
+    # Subtest: Spielzeit folgt der Konfiguration beim Gruppenbilden
+    ok 2 - Spielzeit folgt der Konfiguration beim Gruppenbilden
+      ---
+      duration_ms: 136.4329
+      ...
+    # Subtest: get_state: Anfangswerte vor jeder Abgabe
+    ok 3 - get_state: Anfangswerte vor jeder Abgabe
+      ---
+      duration_ms: 56.4355
+      ...
+    # Subtest: get_state: richtiges Wort -> solved, word_completed, word_outcome solved, Dauer in ms
+    ok 4 - get_state: richtiges Wort -> solved, word_completed, word_outcome solved, Dauer in ms
+      ---
+      duration_ms: 93.1699
+      ...
+    # Subtest: give_up(wort): jedes Mitglied darf, wird Spielleiter, kein solved, Folgeaufgaben frei
+    ok 5 - give_up(wort): jedes Mitglied darf, wird Spielleiter, kein solved, Folgeaufgaben frei
+      ---
+      duration_ms: 79.5913
+      ...
+    # Subtest: give_up(wort) mit explizitem Argument und nur einmal; danach keine Wortabgabe mehr
+    ok 6 - give_up(wort) mit explizitem Argument und nur einmal; danach keine Wortabgabe mehr
+      ---
+      duration_ms: 73.6894
+      ...
+    # Subtest: give_up(wort) nach geloestem Wort nicht moeglich; Wort bleibt geloest
+    ok 7 - give_up(wort) nach geloestem Wort nicht moeglich; Wort bleibt geloest
+      ---
+      duration_ms: 82.6431
+      ...
+    # Subtest: give_up: Rechte, Phase und unbekannte Aufgabe
+    ok 8 - give_up: Rechte, Phase und unbekannte Aufgabe
+      ---
+      duration_ms: 74.1007
+      ...
+    # Subtest: give_up bei Aufgabe: nur Spielleiter, nur nach dem Oeffnen, danach given_up, keine Platzierung, 0 Punkte
+    ok 9 - give_up bei Aufgabe: nur Spielleiter, nur nach dem Oeffnen, danach given_up, keine Platzierung, 0 Punkte
+      ---
+      duration_ms: 85.9067
+      ...
+    # Subtest: give_up akzeptiert auch die oeffentliche Aufgaben-ID; Schaetzaufgabe: correct false, kein Rang
+    not ok 10 - give_up akzeptiert auch die oeffentliche Aufgaben-ID; Schaetzaufgabe: correct false, kein Rang
+      ---
+      duration_ms: 75.4359
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        null !== false
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: false
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Raetsel/tests/db/off046-spielverlauf.test.js:168:12)
+        async Test.run (node:internal/test_runner/test:551:9)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:303:7)
+      ...
+    # Subtest: Aufgegebene Aufgabe gewinnt gegenueber richtiger Abgabe der anderen Gruppe keinen Rang
+    ok 11 - Aufgegebene Aufgabe gewinnt gegenueber richtiger Abgabe der anderen Gruppe keinen Rang
+      ---
+      duration_ms: 85.235
+      ...
+    # Subtest: get_state: Aufgaben-IDs sind oeffentliche UUIDs, Geo-Aufgaben neutral Aufgabe1/Aufgabe2 mit detail_title erst nach dem Start
+    ok 12 - get_state: Aufgaben-IDs sind oeffentliche UUIDs, Geo-Aufgaben neutral Aufgabe1/Aufgabe2 mit detail_title erst nach dem Start
+      ---
+      duration_ms: 72.8098
+      ...
+    # Subtest: get_state: start_task/submit_task_answer mit oeffentlicher ID, Zeitfelder started_at_ms und duration_ms
+    ok 13 - get_state: start_task/submit_task_answer mit oeffentlicher ID, Zeitfelder started_at_ms und duration_ms
+      ---
+      duration_ms: 69.5324
+      ...
+    # Subtest: Spielende zur Frist: get_state beendet die Runde, finished_at ist die Frist, nichts mehr annehmbar
+    ok 14 - Spielende zur Frist: get_state beendet die Runde, finished_at ist die Frist, nichts mehr annehmbar
+      ---
+      duration_ms: 62.6846
+      ...
+    # Subtest: Kein Eingang genau zur Frist; eine Millisekunde davor ist noch erlaubt
+    ok 15 - Kein Eingang genau zur Frist; eine Millisekunde davor ist noch erlaubt
+      ---
+      duration_ms: 69.3671
+      ...
+    # Subtest: Jede Aktion nach der Frist loest das Auslaufen aus: start_task, submit_task_answer, give_up, admin_overview
+    ok 16 - Jede Aktion nach der Frist loest das Auslaufen aus: start_task, submit_task_answer, give_up, admin_overview
+      ---
+      duration_ms: 244.9873
+      ...
+    # Subtest: expire_game ist idempotent, wirkt nicht vor der Frist und ist nur intern aufrufbar
+    ok 17 - expire_game ist idempotent, wirkt nicht vor der Frist und ist nur intern aufrufbar
+      ---
+      duration_ms: 77.2014
+      ...
+    # Subtest: expire_game ohne fake_now nutzt die echte Uhr und laesst eine Zukunftsfrist unberuehrt
+    ok 18 - expire_game ohne fake_now nutzt die echte Uhr und laesst eine Zukunftsfrist unberuehrt
+      ---
+      duration_ms: 65.4779
+      ...
+    # Subtest: Manuelles Beenden: speichert finished_at, ist idempotent, spaetere Aufrufe aendern nichts
+    ok 19 - Manuelles Beenden: speichert finished_at, ist idempotent, spaetere Aufrufe aendern nichts
+      ---
+      duration_ms: 78.7461
+      ...
+    # Subtest: automatic_end_ready ist ohne pg_cron ausdruecklich false
+    ok 20 - automatic_end_ready ist ohne pg_cron ausdruecklich false
+      ---
+      duration_ms: 69.8036
+      ...
+    # Subtest: closed_early wird in get_state gespiegelt
+    ok 21 - closed_early wird in get_state gespiegelt
+      ---
+      duration_ms: 78.4413
+      ...
+    # Subtest: Beenden behaelt geloeste und aufgegebene Woerter unveraendert, aufgegeben ist kein solved
+    ok 22 - Beenden behaelt geloeste und aufgegebene Woerter unveraendert, aufgegeben ist kein solved
+      ---
+      duration_ms: 88.478
+      ...
+    # Subtest: Alle Abgaben, Aufgeben und Beenden verwenden dieselbe Sperre (Funktionen holen raetsel_answer)
+    ok 23 - Alle Abgaben, Aufgeben und Beenden verwenden dieselbe Sperre (Funktionen holen raetsel_answer)
+      ---
+      duration_ms: 56.3927
+      ...
+    1..23
+not ok 1 - DB OFF-046
+  ---
+  duration_ms: 4444.9428
+  type: 'suite'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: DB OFF-051
+    # Subtest: admin_export vor dem Ende: nicht erlaubt; falscher Code und anon abgelehnt
+    ok 1 - admin_export vor dem Ende: nicht erlaubt; falscher Code und anon abgelehnt
+      ---
+      duration_ms: 82.002
+      ...
+    # Subtest: admin_export: Zeilen fuer alle Gruppen x (Wort + Aufgaben) mit genau den vertraglichen Feldern
+    ok 2 - admin_export: Zeilen fuer alle Gruppen x (Wort + Aufgaben) mit genau den vertraglichen Feldern
+      ---
+      duration_ms: 107.3762
+      ...
+    # Subtest: admin_export: Status solved, given_up, wrong, estimated, open mit Zeiten und Punkten
+    ok 3 - admin_export: Status solved, given_up, wrong, estimated, open mit Zeiten und Punkten
+      ---
+      duration_ms: 117.1082
+      ...
+    # Subtest: admin_export enthaelt weder Antworten noch Loesungen noch Spielernamen
+    ok 4 - admin_export enthaelt weder Antworten noch Loesungen noch Spielernamen
+      ---
+      duration_ms: 81.4196
+      ...
+    # Subtest: admin_open_beamer: Token, nur Hash gespeichert, nur mit Admincode
+    ok 5 - admin_open_beamer: Token, nur Hash gespeichert, nur mit Admincode
+      ---
+      duration_ms: 83.2514
+      ...
+    # Subtest: beamer_state: anon liest bereinigte Anzeige ohne Loesungen, Buchstaben und Spielernamen
+    ok 6 - beamer_state: anon liest bereinigte Anzeige ohne Loesungen, Buchstaben und Spielernamen
+      ---
+      duration_ms: 78.2645
+      ...
+    # Subtest: beamer_state: ungueltiges Token wird abgelehnt
+    ok 7 - beamer_state: ungueltiges Token wird abgelehnt
+      ---
+      duration_ms: 63.1409
+      ...
+    # Subtest: beamer_state zeigt nach dem Ende finished und Rangliste mit Punkten
+    ok 8 - beamer_state zeigt nach dem Ende finished und Rangliste mit Punkten
+      ---
+      duration_ms: 97.8512
+      ...
+    # Subtest: beamer_state laeuft zur Frist aus, auch ohne Spieleraktion
+    ok 9 - beamer_state laeuft zur Frist aus, auch ohne Spieleraktion
+      ---
+      duration_ms: 69.9189
+      ...
+    # Subtest: Token werden durch admin_reset und admin_set_code ungueltig
+    ok 10 - Token werden durch admin_reset und admin_set_code ungueltig
+      ---
+      duration_ms: 89.9482
+      ...
+    1..10
+ok 2 - DB OFF-051
+  ---
+  duration_ms: 2361.4451
+  type: 'suite'
+  ...
+1..2
+# tests 33
+# suites 2
+# pass 32
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16996.6578

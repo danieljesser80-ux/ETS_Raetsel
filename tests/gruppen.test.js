@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formGroups, GROUP_NAMES, assignGroupNames } from '../src/core/index.js';
+import { formGroups, GROUP_NAMES, assignGroupNames, validateGroupSize } from '../src/core/index.js';
 import { lcg, SEEDS } from './helpers.js';
 
 const ids = (n) => Array.from({ length: n }, (_, i) => `p${i}`);
@@ -37,7 +37,7 @@ test('TST-U-004: n = 4..100 (außer 7): vollständig, disjunkt, Größen 4..6, U
   }
 });
 
-test('TST-U-004: konkrete Größen laut Vertrag (n=4,5,6,8,11)', () => {
+test('TST-U-004: konkrete Größen laut Vertrag (n=4,5,6,8,11,12,16)', () => {
   const sizesOf = (n) =>
     formGroups(ids(n), lcg(3)).groups.map((g) => g.length).sort((a, b) => b - a);
   assert.deepEqual(sizesOf(4), [4]);
@@ -45,6 +45,41 @@ test('TST-U-004: konkrete Größen laut Vertrag (n=4,5,6,8,11)', () => {
   assert.deepEqual(sizesOf(6), [6]);
   assert.deepEqual(sizesOf(8), [4, 4]);
   assert.deepEqual(sizesOf(11), [6, 5]);
+  assert.deepEqual(sizesOf(12), [4, 4, 4]);
+  assert.deepEqual(sizesOf(16), [6, 5, 5]);
+});
+
+test('TST-U-011: einstellbare Gruppengröße (OFF-001): Größen im Bereich, Mitte bevorzugt', () => {
+  const sizesOf = (n, min, max) =>
+    formGroups(ids(n), lcg(5), { min, max }).groups.map((g) => g.length).sort((a, b) => b - a);
+  assert.deepEqual(sizesOf(10, 2, 3), [3, 3, 2, 2]);
+  assert.deepEqual(sizesOf(7, 3, 4), [4, 3]);
+  assert.deepEqual(sizesOf(9, 3, 3), [3, 3, 3]);
+  assert.deepEqual(sizesOf(14, 7, 7), [7, 7]);
+});
+
+test('TST-U-011: Teilnehmerzahl passt nicht -> nicht_teilbar, zu wenige -> zu_wenige', () => {
+  assert.deepEqual(formGroups(ids(10), lcg(1), { min: 4, max: 4 }), { ok: false, reason: 'nicht_teilbar' });
+  assert.deepEqual(formGroups(ids(7), lcg(1)), { ok: false, reason: 'nicht_teilbar' });
+  assert.deepEqual(formGroups(ids(2), lcg(1), { min: 3, max: 5 }), { ok: false, reason: 'zu_wenige' });
+});
+
+test('TST-U-011: Min = Max = 1 (Testmodus): jede Person eine Gruppe, auch n = 100', () => {
+  for (const n of [1, 2, 3, 100]) {
+    const res = formGroups(ids(n), lcg(2), { min: 1, max: 1 });
+    assert.equal(res.ok, true);
+    assert.equal(res.groups.length, n);
+    assert.ok(res.groups.every((g) => g.length === 1));
+  }
+});
+
+test('TST-U-011: ungültige Größen werden erkannt', () => {
+  for (const [min, max] of [[0, 4], [4, 15], [5, 4], [1.5, 4], ['a', 4], [undefined, 4]]) {
+    assert.deepEqual(validateGroupSize(min, max), { ok: false, reason: 'ungueltige_groesse' }, `${min}/${max}`);
+    assert.throws(() => formGroups(ids(10), lcg(1), { min, max }), RangeError);
+  }
+  assert.deepEqual(validateGroupSize(1, 14), { ok: true });
+  assert.deepEqual(validateGroupSize(4, 4), { ok: true });
 });
 
 test('TST-U-004: Eingabe wird nicht verändert', () => {

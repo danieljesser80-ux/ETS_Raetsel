@@ -10,9 +10,9 @@ describe('DB join_round', { skip: !SCHEMA_EXISTS && 'supabase/schema.sql fehlt' 
     ({ db } = await createDb());
   });
 
-  it('TST-DB: schema.sql ist zweimal ausfuehrbar, Woerter (25) und Gruppennamen (>=30) vorhanden', async () => {
+  it('TST-DB: schema.sql ist zweimal ausfuehrbar, Woerter (16) und Gruppennamen (>=30) vorhanden', async () => {
     const w = await q(db, 'SELECT count(*)::int AS c, count(DISTINCT word)::int AS d FROM public.words');
-    assert.deepEqual(w[0], { c: 25, d: 25 });
+    assert.deepEqual(w[0], { c: 16, d: 16 });
     const g = await q(db, 'SELECT count(DISTINCT lower(name))::int AS d FROM public.group_names');
     assert.ok(g[0].d >= 30);
     const r = await q(db, 'SELECT count(*)::int AS c FROM public.round');

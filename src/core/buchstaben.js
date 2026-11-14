@@ -1,14 +1,12 @@
 import { shuffle } from './gruppen.js';
 
-export const WORDS = [
-  'AKKU', 'MOTOR', 'RADAR', 'TURBO', 'REIFEN', 'BREMSE', 'HYBRID', 'SENSOR',
-  'INVERTER', 'BATTERIE', 'WALLBOX', 'GETRIEBE', 'KUPPLUNG', 'LENKRAD', 'FAHRWERK',
-  'LADEKABEL', 'LADESAEULE', 'KAROSSERIE', 'REICHWEITE', 'REKUPERATION', 'ELEKTROMOTOR',
-  'STROMLADER', 'SCHEINWERFER', 'WECHSELRICHTER', 'STEUERGERAET',
-];
+export const MAX_WORD_LENGTH = 9;
 
-export function wordsForGroupSize(n) {
-  return WORDS.filter((w) => w.length >= n && w.length <= 2 * n);
+export const WORDS = [];
+
+export function wordsForGroupSize(n, words = WORDS) {
+  if (n === 1) return words.slice();
+  return words.filter((w) => w.length >= n && w.length <= Math.min(2 * n, MAX_WORD_LENGTH));
 }
 
 export function assignLetters(word, memberIds, rng) {
@@ -16,6 +14,9 @@ export function assignLetters(word, memberIds, rng) {
     return { ok: false, reason: 'ungueltiges_wort' };
   }
   const m = memberIds.length;
+  if (m === 1) {
+    return { ok: true, assignment: { [memberIds[0]]: shuffle(word.split(''), rng) } };
+  }
   if (word.length < m || word.length > 2 * m) {
     return { ok: false, reason: 'wortlaenge' };
   }

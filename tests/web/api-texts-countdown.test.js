@@ -47,10 +47,10 @@ test('TST-U-008: Spieler-Methoden rufen die richtigen RPCs auf und liefern data'
   const api = createApi(c);
   assert.deepEqual(await api.joinRound('Anna'), payload);
   assert.deepEqual(await api.getState(), payload);
-  assert.deepEqual(await api.submitAnswer('MOTOR'), payload);
+  assert.deepEqual(await api.submitAnswer('ZEBRA'), payload);
   assert.deepEqual(c.calls.rpc[0], ['join_round', { p_name: 'Anna' }]);
   assert.equal(c.calls.rpc[1][0], 'get_state');
-  assert.deepEqual(c.calls.rpc[2], ['submit_answer', { p_answer: 'MOTOR' }]);
+  assert.deepEqual(c.calls.rpc[2], ['submit_answer', { p_answer: 'ZEBRA' }]);
 });
 
 test('TST-U-009: Admin-Methoden rufen die richtigen RPCs mit p_code auf', async () => {
@@ -72,6 +72,28 @@ test('TST-U-009: Admin-Methoden rufen die richtigen RPCs mit p_code auf', async 
   ]);
 });
 
+test('TST-U-008: Admin-Aufrufe der neuen Funktionen und submitTask', async () => {
+  const c = fakeClient({ data: { ok: true } });
+  const api = createApi(c);
+  await api.submitTask('schach', 'e4');
+  await api.submitTask('schaetz-vorname', '12', 'Anna');
+  await api.startTask('schach');
+  await api.admin.setGroupSize('c', 2, 3);
+  await api.admin.setTask('c', 'schach', { title: 'T', imageUrl: 'x.jpg' });
+  await api.admin.setTask('c', 'schaetz-vorname', { options: ['A', 'B', 'C', 'D'], correctOption: 'A' });
+  const names = c.calls.rpc.map((x) => x[0]);
+  assert.deepEqual(names, ['submit_task_answer', 'submit_task_answer', 'start_task', 'admin_set_group_size', 'admin_set_task', 'admin_set_task']);
+  assert.deepEqual(c.calls.rpc[0][1], { p_task_id: 'schach', p_answer: 'e4', p_choice: null });
+  assert.deepEqual(c.calls.rpc[1][1], { p_task_id: 'schaetz-vorname', p_answer: '12', p_choice: 'Anna' });
+  assert.deepEqual(c.calls.rpc[2][1], { p_task_id: 'schach' });
+  assert.deepEqual(c.calls.rpc[3][1], { p_code: 'c', p_min: 2, p_max: 3 });
+  assert.equal(c.calls.rpc[4][1].p_image_url, 'x.jpg');
+  assert.equal(c.calls.rpc[4][1].p_body, null);
+  assert.equal(c.calls.rpc[4][1].p_solution, null);
+  assert.deepEqual(c.calls.rpc[5][1].p_options, ['A', 'B', 'C', 'D']);
+  assert.equal(c.calls.rpc[5][1].p_correct_option, 'A');
+});
+
 test('TST-U-008: fachlicher Fehler kommt als data zurück, Transportfehler wirft Error', async () => {
   const fach = { ok: false, reason: 'doppelt' };
   assert.deepEqual(await createApi(fakeClient({ data: fach })).joinRound('x'), fach);
@@ -83,7 +105,9 @@ test('TST-U-008: fachlicher Fehler kommt als data zurück, Transportfehler wirft
 
 const REASONS = ['leer', 'zu_kurz', 'zu_lang', 'doppelt', 'anmeldung_geschlossen', 'voll', 'nicht_angemeldet',
   'keine_gruppe', 'falsche_phase', 'bereits_geloest', 'zu_schnell', 'nicht_berechtigt', 'anmeldung_offen',
-  'zu_wenige', 'nicht_teilbar', 'ungueltige_dauer', 'zu_wenige_namen'];
+  'zu_wenige', 'nicht_teilbar', 'ungueltige_dauer', 'zu_wenige_namen', 'ungueltige_groesse', 'wort_nicht_geloest',
+  'nicht_spielleiter', 'unbekannte_aufgabe',   'nicht_verfuegbar', 'nicht_gestartet', 'ungueltige_auswahl', 'ungueltige_optionen', 'bereits_abgegeben',
+    'ungueltige_zahl', 'ungueltige_loesung', 'ungueltiges_bild'];
 
 for (const r of REASONS) {
   test(`TST-UI: reasonText('${r}') ist eine deutsche Meldung`, () => {
@@ -122,31 +146,31 @@ test('TST-UI: phaseText für alle fünf Phasen nicht leer und verschieden', () =
 });
 
 test('TST-U-003: countdownSeconds ohne Frist ist null', () => {
-  assert.equal(countdownSeconds({ deadline_ms: null, server_now_ms: 0, fetchedAtMs: 0 }, 0), null);
+  assert.equal(countdownSeconds({ phase: 'anmeldung', deadline_ms: null, server_now_ms: 0, fetchedAtMs: 0 }, 0), null);
 });
 
 test('TST-U-003: countdownSeconds ohne Geräteabweichung', () => {
-  const s = { deadline_ms: 300000, server_now_ms: 0, fetchedAtMs: 1000 };
+  const s = { phase: 'anmeldung', deadline_ms: 300000, server_now_ms: 0, fetchedAtMs: 1000 };
   assert.equal(countdownSeconds(s, 1000), 300);
   assert.equal(countdownSeconds(s, 61000), 240);
 });
 
 test('TST-U-003: countdownSeconds nutzt Offset Server/Gerät (falsche Geräteuhr)', () => {
   // Gerät geht 1 Stunde vor; Serverzeit 10_000, Frist 70_000, lokal abgerufen bei 3_610_000
-  const s = { deadline_ms: 70000, server_now_ms: 10000, fetchedAtMs: 3610000 };
+  const s = { phase: 'anmeldung', deadline_ms: 70000, server_now_ms: 10000, fetchedAtMs: 3610000 };
   assert.equal(countdownSeconds(s, 3610000), 60);
   assert.equal(countdownSeconds(s, 3640000), 30);
 });
 
 test('TST-U-003: countdownSeconds rundet auf (ceil)', () => {
-  const s = { deadline_ms: 10001, server_now_ms: 0, fetchedAtMs: 0 };
+  const s = { phase: 'anmeldung', deadline_ms: 10001, server_now_ms: 0, fetchedAtMs: 0 };
   assert.equal(countdownSeconds(s, 0), 11);
   assert.equal(countdownSeconds(s, 1), 10);
-  assert.equal(countdownSeconds({ deadline_ms: 1000, server_now_ms: 0, fetchedAtMs: 0 }, 1), 1);
+  assert.equal(countdownSeconds({ phase: 'anmeldung', deadline_ms: 1000, server_now_ms: 0, fetchedAtMs: 0 }, 1), 1);
 });
 
 test('TST-U-003: countdownSeconds nie negativ, bei Ablauf 0', () => {
-  const s = { deadline_ms: 5000, server_now_ms: 0, fetchedAtMs: 0 };
+  const s = { phase: 'anmeldung', deadline_ms: 5000, server_now_ms: 0, fetchedAtMs: 0 };
   assert.equal(countdownSeconds(s, 5000), 0);
   assert.equal(countdownSeconds(s, 99999), 0);
   assert.ok(Number.isInteger(countdownSeconds(s, 1234)));

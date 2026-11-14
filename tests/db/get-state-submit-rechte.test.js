@@ -60,7 +60,8 @@ describe('DB get_state', { skip }, () => {
     const sol = await solutionOf(db, uid(1));
     const r = await rpc(db, uid(1), 'submit_answer', sol);
     const s = await rpc(db, uid(1), 'get_state');
-    assert.deepEqual(s.solved, { rank: r.rank, points: r.points });
+    assert.deepEqual(s.solved, { rank: r.rank });
+    assert.equal(r.points, undefined);
   });
 });
 
@@ -116,7 +117,7 @@ describe('DB submit_answer', { skip }, () => {
       await startedRound(db, 8);
       const sol = await solutionOf(db, uid(1));
       const r = await rpc(db, uid(1), 'submit_answer', mod(sol));
-      assert.deepEqual(r, { ok: true, correct: true, rank: 1, points: 10 });
+      assert.deepEqual(r, { ok: true, correct: true, rank: 1 });
     }
   });
 
@@ -199,15 +200,13 @@ describe('DB submit_answer', { skip }, () => {
       got.push(r);
     }
     assert.deepEqual(got.map((r) => r.rank), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    assert.deepEqual(got.map((r) => r.points), [10, 8, 6, 5, 4, 3, 2, 1, 1, 1]);
-    got.forEach((r, i) => assert.equal(r.points, pointsForRank(i + 1)));
-    const res = await q(db, 'SELECT group_id, rank, points FROM public.results ORDER BY rank');
+    const res = await q(db, 'SELECT group_id, solved_at FROM public.results');
     assert.equal(res.length, 10);
-    assert.equal(new Set(res.map((r) => r.rank)).size, 10);
     assert.equal(new Set(res.map((r) => r.group_id)).size, 10);
     const ov = await admin(db, 'admin_overview');
     assert.equal(ov.ranking.length, 10);
-    assert.deepEqual(ov.ranking.map((r) => r.rank), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    assert.deepEqual(ov.ranking.map((r) => r.rank), [1, 2, 3, 4, 5, 6, 7, 8, 8, 8]);
+    assert.deepEqual(ov.ranking.map((r) => r.points), [10, 8, 6, 5, 4, 3, 2, 1, 1, 1]);
   });
 
   it('TST-A-002: viele richtige Antworten hintereinander ergeben lueckenlose, eindeutige Raenge', async () => {
@@ -220,8 +219,8 @@ describe('DB submit_answer', { skip }, () => {
       subs.push([m, sol]);
     }
     for (const [m, sol] of subs) await rpc(db, m, 'submit_answer', sol);
-    const res = await q(db, 'SELECT rank FROM public.results ORDER BY rank');
-    assert.deepEqual(res.map((r) => r.rank), groups.map((_, i) => i + 1));
+    const ov = await admin(db, 'admin_overview');
+    assert.deepEqual(ov.ranking.map((r) => r.rank), groups.map((_, i) => i + 1));
   });
 });
 
@@ -231,7 +230,7 @@ describe('DB Rechte und Reset', { skip }, () => {
     ({ db } = await createDb());
   });
 
-  const tables = ['players', 'groups', 'group_tasks', 'letters', 'words', 'group_names', 'attempts', 'results', 'admin_config'];
+  const tables = ['players', 'groups', 'group_tasks', 'letters', 'words', 'group_names', 'attempts', 'results', 'admin_config', 'task_answers', 'task_attempts'];
 
   for (const t of tables) {
     it(`TST-A-003: authenticated kann Tabelle ${t} weder lesen noch schreiben`, async () => {
@@ -281,8 +280,8 @@ describe('DB Rechte und Reset', { skip }, () => {
   it('TST-S-007: Spieler kann fremde Gruppenzuordnung/Punkte nicht manipulieren', async () => {
     await startedRound(db, 8);
     await assert.rejects(() => sqlAs(db, 'authenticated', uid(1), `UPDATE public.players SET group_id = NULL`), /permission denied/i);
-    await assert.rejects(() => sqlAs(db, 'authenticated', uid(1), `UPDATE public.results SET points = 99`), /permission denied/i);
-    await assert.rejects(() => sqlAs(db, 'authenticated', uid(1), `INSERT INTO public.results (group_id, rank, points) VALUES (1, 1, 99)`), /permission denied/i);
+    await assert.rejects(() => sqlAs(db, 'authenticated', uid(1),     `UPDATE public.results SET solved_at = now()`), /permission denied/i);
+        await assert.rejects(() => sqlAs(db, 'authenticated', uid(1), `INSERT INTO public.results (group_id) VALUES (1)`), /permission denied/i);
   });
 
   it('TST-S-007: admin_reset loescht Spieler-, Gruppen-, Buchstaben-, Versuchs- und Ergebnisdaten; Listen und Code bleiben', async () => {
@@ -295,7 +294,7 @@ describe('DB Rechte und Reset', { skip }, () => {
     assert.ok((await cnt('results')) > 0 && (await cnt('attempts')) > 0);
     assert.deepEqual(await admin(db, 'admin_reset'), { ok: true });
     for (const t of ['players', 'groups', 'group_tasks', 'letters', 'attempts', 'results']) assert.equal(await cnt(t), 0, t);
-    assert.equal(await cnt('words'), 25);
+    assert.equal(await cnt('words'), 16);
     assert.ok((await cnt('group_names')) >= 30);
     assert.equal(await cnt('admin_config'), 1);
     assert.equal((await q(db, 'SELECT phase FROM public.round'))[0].phase, 'vorbereitet');
@@ -320,7 +319,7 @@ describe('DB Rechte und Reset', { skip }, () => {
       await startedRound(db, 10);
       const sol = await solutionOf(db, uid(1));
       const r = await rpc(db, uid(1), 'submit_answer', sol);
-      assert.deepEqual(r, { ok: true, correct: true, rank: 1, points: 10 });
+      assert.deepEqual(r, { ok: true, correct: true, rank: 1 });
       assert.equal((await q(db, 'SELECT count(*)::int AS c FROM public.results'))[0].c, 1);
       await admin(db, 'admin_finish');
       await admin(db, 'admin_reset');

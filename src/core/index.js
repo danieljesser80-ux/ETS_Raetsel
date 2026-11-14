@@ -4,3 +4,4 @@ export * from './gruppen.js';
 export * from './buchstaben.js';
 export * from './antwort.js';
 export * from './punkte.js';
+export * from './aufgaben.js';

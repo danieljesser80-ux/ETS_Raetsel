@@ -1,4 +1,4 @@
-# Schnittstellenvertrag Kernlogik (UNA-002 bis UNA-007)
+# Schnittstellenvertrag Kernlogik (UNA-002 bis UNA-007, UNA-011)
 
 Reine Funktionen, ES-Module (`"type": "module"`), keine Abhängigkeiten, Node 20. Zeit immer in Millisekunden (`nowMs`), Zufall immer als injizierbare Funktion `rng()` mit Ergebnis in [0,1). Eintritt: `src/core/index.js` re-exportiert alles. Fehler sind Rückgabewerte `{ ok:false, reason }`, außer bei Programmierfehlern (dann `RangeError`/`TypeError`).
 
@@ -17,21 +17,22 @@ Reine Funktionen, ES-Module (`"type": "module"`), keine Abhängigkeiten, Node 20
 - `canTransition(from, to) -> boolean`: erlaubt sind nur die vier Schritte in Reihenfolge (vorbereitet→anmeldung→gruppen_eingeteilt→wortaufgabe_aktiv→aufgabe_abgeschlossen) und zusätzlich `anmeldung→anmeldung` (erneut öffnen). Alles andere, auch unbekannte Phasen, ist falsch.
 
 ## Gruppenbildung (UNA-004; SWA-007, ENT-001/003/004)
-`formGroups(playerIds, rng) -> { ok:true, groups: string[][] } | { ok:false, reason }`
-- Nicht-Array oder doppelte IDs: `TypeError`.
-- n < 4: `reason 'zu_wenige'`. n = 7: `reason 'nicht_teilbar'`.
-- Sonst: Gruppenzahl `k = ceil(n/5)`; wenn `4*k > n`, dann `k = k-1`. Gilt danach `n > 6*k` oder `k < 1`: `'nicht_teilbar'`. Gruppengrößen unterscheiden sich um höchstens 1 und liegen in 4..6 (n=6 → eine 6er-Gruppe, n=11 → 6+5, n=8 → 4+4).
+`formGroups(playerIds, rng, { min = 4, max = 6 } = {}) -> { ok:true, groups: string[][] } | { ok:false, reason }`
+- Nicht-Array oder doppelte IDs: `TypeError`. Ungültige Größe (`validateGroupSize`): `RangeError`.
+- `DEFAULT_GROUP_SIZE = { min: 4, max: 6 }`, `GROUP_SIZE_LIMITS = { min: 1, max: 14 }`; `validateGroupSize(min, max) -> boolean` (ganze Zahlen, 1 ≤ min ≤ max ≤ 14); `chooseGroupCount(n, min, max) -> k | null`.
+- n < min: `reason 'zu_wenige'`.
+- Sonst: erlaubt ist k mit `ceil(n/max) ≤ k ≤ floor(n/min)`; gewählt wird das k, dessen Durchschnittsgröße n/k am nächsten an (min+max)/2 liegt (Gleichstand, Toleranz 1e-12: größeres k). Kein k: `'nicht_teilbar'` (z. B. n = 7 bei 4 bis 6). Gruppengrößen unterscheiden sich um höchstens 1 (n=6 → eine 6er-Gruppe, n=11 → 6+5, n=12 → 4+4+4, n=16 → 6+5+5). Min = Max = 1: jede Person eine Gruppe.
 - Jeder Teilnehmer genau einmal, keine Fremd-IDs, Reihenfolge per Fisher-Yates mit `rng` gemischt; Eingabe wird nicht verändert.
 
 `GROUP_NAMES`: Array fester weihnachtlicher Namen, mindestens 30, eindeutig (auch ohne Beachtung der Groß-/Kleinschreibung), nicht leer.
 `assignGroupNames(count, rng) -> string[]`: `count` verschiedene Namen aus `GROUP_NAMES`; `count > GROUP_NAMES.length` oder ungültiges `count` → `RangeError`.
 
 ## Wörter und Buchstaben (UNA-005; SWA-008, ENT-009)
-`WORDS`: genau diese 25 Wörter (Großbuchstaben A–Z):
-AKKU, MOTOR, RADAR, TURBO, REIFEN, BREMSE, HYBRID, SENSOR, INVERTER, BATTERIE, WALLBOX, GETRIEBE, KUPPLUNG, LENKRAD, FAHRWERK, LADEKABEL, LADESAEULE, KAROSSERIE, REICHWEITE, REKUPERATION, ELEKTROMOTOR, STROMLADER, SCHEINWERFER, WECHSELRICHTER, STEUERGERAET.
-`wordsForGroupSize(n) -> string[]`: alle Wörter mit Länge `n <= L <= 2n`.
+`MAX_WORD_LENGTH = 9` (OFF-015, SWA-026).
+`WORDS`: leere Liste; geheime Defaultwörter werden nicht veröffentlicht (AEN-053).
+`wordsForGroupSize(n, words = WORDS) -> string[]`: Wörter aus ausdrücklich übergebener Konfiguration mit Länge `n <= L <= min(2n, MAX_WORD_LENGTH)`; für n = 1 alle Wörter. Gruppengrößen über 9 haben kein passendes Wort. Tests verwenden synthetische Wörter, Defaultimport erfolgt geschützt im Admin aus externer Datei.
 `assignLetters(word, memberIds, rng) -> { ok:true, assignment: { [memberId]: string[] } } | { ok:false, reason }`
-- reason `'ungueltiges_wort'`: nicht ausschließlich A–Z oder leer. reason `'wortlaenge'`: Länge < Mitgliederzahl oder > 2*Mitgliederzahl.
+- reason `'ungueltiges_wort'`: nicht ausschließlich A–Z oder leer. reason `'wortlaenge'`: Länge < Mitgliederzahl oder > 2*Mitgliederzahl (bei genau einem Mitglied entfällt die Obergrenze: es erhält alle gemischten Buchstaben).
 - Jedes Mitglied erhält 1 bis 2 Buchstaben; die Vereinigung aller Buchstaben ist genau die Buchstabenmultimenge des Wortes. Überschüssige Buchstaben (Länge − Mitglieder) gehen an verschiedene, zufällig gewählte Mitglieder. Zuordnung der Buchstaben zu Mitgliedern mit `rng` gemischt.
 
 ## Antworten (UNA-006; SWA-009 bis SWA-011, ENT-005)
@@ -44,4 +45,13 @@ AKKU, MOTOR, RADAR, TURBO, REIFEN, BREMSE, HYBRID, SENSOR, INVERTER, BATTERIE, W
 
 ## Punkte (UNA-007; SWA-012, ENT-006)
 `POINTS = [10, 8, 6, 5, 4, 3, 2, 1]`
-`pointsForRank(rank) -> integer`: Rang 1..8 gemäß `POINTS`, Rang > 8 → 1. Rang kein ganzzahliger Wert ≥ 1 (0, negativ, 1.5, NaN, String, undefined) → `RangeError`.
+`DEFAULT_SCHEDULES`: vollständige neun Einträge je Schwierigkeit (SWA-044).
+`pointsForRank(rank, schedule = DEFAULT_SCHEDULES.mittel) -> integer`: Rang 1..8 gemäß Staffel, ab9 letzter Eintrag. Rang kein ganzzahliger Wert ≥1 oder Staffel ungültig (nicht neun nichtnegative ganze Werte ≤10000 in absteigender Reihenfolge) → `RangeError`. Eingabe nicht verändern.
+
+## Aufgaben (UNA-011; SWA-018, SWA-019)
+Modul `aufgaben.js`:
+- `TASK_KINDS = ['exact', 'estimate']`.
+- `normalizeTaskAnswer(s) -> string`: Großbuchstaben, entfernt Leerzeichen und `,;.-`; Nicht-String → `''`.
+- `checkTaskAnswer(input, solution) -> boolean`: normalisierter Vergleich; leere Eingabe ist falsch.
+- `parseGuess(s) -> number | null`: nur 1 bis 9 Ziffern (nach Trimmen), sonst `null`.
+- `rankSubmissions([{ groupId, correct, durationMs, atMs, guess? }], truth?) -> [{ groupId, rank }]` (AEN-021, ersetzt `rankEstimates`): Abgaben mit `correct === false` werden nicht platziert. Sortierung: bei numerischem `truth` nach Abstand `|guess − truth|`, dann kürzerer `durationMs`, dann kleinerem `atMs`, dann `groupId`; Eingabe unverändert.

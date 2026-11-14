@@ -47,7 +47,7 @@ Maßgeblich für die hier definierten IDs. Anforderungen anderer Ebenen werden n
 
 ## 2. Entscheidungen
 
-Die Entscheidungen vom 05.11.2026 sind gemäß AEN-004 vom Kunden getroffen. **ENT-008 bleibt offen**; die anderen Entscheidungen sind noch nicht in die Architektur, Implementierung und Tests umgesetzt. Die Gruppengröße wurde gegenüber dem Vorschlag von ENT-003 auf vier bis sechs erweitert; die frühere Wortlängenregel aus ENT-009 wurde durch OFF-064 aufgehoben.
+Die Entscheidungen vom 05.11.2026 sind gemäß AEN-004 vom Kunden getroffen. **ENT-008 bleibt offen**. Die in OFF-064 bestätigten Präzisierungen zu Wortverteilung und Antwortintervall sind in diesem Branch umgesetzt; die übrigen Entscheidungen werden gemäß ihrem jeweiligen Änderungsantrag verfolgt. Die Gruppengröße wurde gegenüber dem Vorschlag von ENT-003 auf vier bis sechs erweitert; die frühere Wortlängenregel aus ENT-009 wurde durch OFF-064 aufgehoben.
 
 | ID | Entscheidung | Betroffene Anforderungen | Stand |
 |---|---|---|---|

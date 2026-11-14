@@ -21,7 +21,7 @@ async function boot({ api = {}, state = { ok: true, phase: 'wortaufgabe_aktiv', 
   const render = (root, s, h) => { draws.push({ state: s, handlers: h }); };
   const body = SRC.split('\n').filter((l) => !/^import /.test(l)).join('\n');
   const fn = new Function('document', 'createClient', 'SUPABASE_URL', 'SUPABASE_KEY', 'createApi', 'reasonText',
-    'renderPlayer', 'updateCountdowns', 'createRefreshLoop', 'stateKey', 'setTimeout', 'clearTimeout', 'setInterval', 'confirm',
+    'renderPlayer', 'updateCountdowns', 'createRefreshLoop', 'stateKey', 'ANSWER_FEEDBACK_MS', 'setTimeout', 'clearTimeout', 'setInterval', 'confirm',
     `${body}\nreturn { ui, get busy() { return busy; } };`);
   const confirms = [];
   const exposed = fn(dom.window.document,
@@ -86,7 +86,7 @@ test('Richtige Antwort schliesst nach 1 s', async () => {
   const b = await boot({ api: { submitTask: async () => ({ ok: true, correct: true }) }, state: st });
   await b.h().onOpenTask('t');
   await b.h().onSubmitTask('t', 'x');
-  b.timers.filter((x) => x.ms === 3000).pop().f();
+  b.timers.filter((x) => x.ms === 1000).pop().f();
   assert.equal(b.exposed.ui.openTaskId, null);
 });
 

@@ -1,6 +1,6 @@
 # Änderungsanträge
 
-**Dokument-ID:** DOC-008 | **Version:** 0.43 | **Datum:** 14.11.2026
+**Dokument-ID:** DOC-008 | **Version:** 0.44 | **Datum:** 15.11.2026
 
 Register der vom Kunden beantragten Änderungen (OFF). Anträge werden **nie gelöscht**; nur ihr Status ändert sich, jede Änderung wird mit Datum im Statusverlauf festgehalten. Anträge werden gesammelt und erst auf Anweisung „umsetzen“ in einem Zug umgesetzt (AEN-012). Der Ablauf und die Baselines stehen in [DOC-009](KONFIGURATIONSMANAGEMENT.md). Zurück zu [DOC-001](../ANFORDERUNGEN.md).
 

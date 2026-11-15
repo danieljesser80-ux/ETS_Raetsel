@@ -1,6 +1,6 @@
 # Testkonzept und Testspezifikation – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-006 | **Version:** 0.26 | **Datum:** 14.11.2026
+**Dokument-ID:** DOC-006 | **Version:** 0.27 | **Datum:** 15.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 
@@ -29,6 +29,7 @@ Unit-Tests prüfen Komponentenverträge; Integrationstests prüfen reale Schnitt
 | TST-K-005 | KAN-002 | Veranstaltungsszenario mit 100 aktiven Spielern plus Steuerung funktioniert; ein zusätzlicher Teilnehmer wird verständlich abgewiesen. |
 | TST-K-006 | KAN-015 | Abnahme der weiteren Kategorien nach ENT-007/ENT-008; konkrete Testfälle anschließend ergänzen. |
 | TST-K-016 | KAN-052 bis KAN-058 | Beamer zeigt Mitglieder und aktuelle Punkte einzeilig; Clusterfortschritt und Schwierigkeitstags sind sichtbar; Rückmeldung dauert eine Sekunde; beliebige Admin-Wörter werden verteilt; Spieler-Beamer ist read-only; Aufgeben-Hinweise unterscheiden Start- und Folgeaufgaben. |
+| TST-K-017 | KAN-059, KAN-060 | Smartphone-Spieleransicht im Hochformat und auf schmalem Display prüfen; klassische Beameransicht bei 1920×1080 und abweichendem 16:9-Fenster prüfen; Rang, Mitglieder, Punkte und Spielzeit live vergleichen; read-only und Scrollverhalten prüfen. |
 
 ### 1.3 Software-/Systemtests
 
@@ -43,6 +44,7 @@ Unit-Tests prüfen Komponentenverträge; Integrationstests prüfen reale Schnitt
 | TST-S-007 | SWA-008, SWA-014, SWA-015 | Manipulierte Gruppen-/Punkteangaben, Zugriff auf Lösungen und fremde persönliche Daten sowie Spieleraufruf von Adminaktionen werden abgewiesen; Löschung nach ENT-012. |
 | TST-S-008 | SWA-016 | Nach Spezifikation jeder weiteren Kategorie: gültige/ungültige Ergebnisse und Kategorienablauf; konkrete Testfälle anschließend ergänzen. |
 | TST-S-043 | SWA-058, SWA-062, SWA-063 | Tokenbasierter Beamer und registrierter Spielerzugriff; anonym ohne Token abweisen; Mitgliedernamen nach Wortlösung sichtbar; beliebig lange und kurze Admin-Wörter vollständig und fair verteilen. |
+| TST-S-044 | SWA-065, SWA-066 | Spieler- und Projektorlayout verwenden dieselben Ranglistendaten; Smartphoneansicht bleibt schmal und read-only; Projektoransicht nutzt 16:9 bei 1920×1080 ohne horizontales Scrollen. |
 
 ### 1.4 Architektur-/Integrationstests
 

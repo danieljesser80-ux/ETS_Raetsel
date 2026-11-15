@@ -8,6 +8,7 @@ import { stateKey } from './clientcache.js';
 const root = document.getElementById('app');
 const notice = document.getElementById('notice');
 const playerMode = new URLSearchParams(location.search).get('mode') === 'player';
+document.body.classList.add(playerMode ? 'player-beamer-page' : 'projector-beamer-page');
 const api = createApi(createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: playerMode, autoRefreshToken: playerMode, detectSessionInUrl: false },
 }));

@@ -492,3 +492,140 @@ body.admin-page {
   .presentation-qr { grid-column: 2; grid-row: 1 / -1; }
   .presentation-qr h2 { font-size: 1.75rem; }
 }
+
+
+/* OFF-065: eigenständige Ranglistenlayouts für Spieler-Handy und Projektor */
+.beamer-projector {
+  width: 100%;
+  max-width: none;
+  padding: clamp(1rem, 2vw, 2.25rem);
+  gap: clamp(0.35rem, 0.8vh, 0.8rem);
+}
+.beamer-projector h1 {
+  margin: 0;
+  font-size: clamp(2rem, 3.2vw, 3.4rem);
+  line-height: 1.08;
+}
+.beamer-projector .game-clock {
+  justify-content: center;
+  gap: 0.2rem 1rem;
+  font-size: clamp(1rem, 1.4vw, 1.5rem);
+}
+.beamer-projector .game-clock strong { font-size: 0.85em; }
+.beamer-projector [data-game-countdown] {
+  font-size: clamp(2rem, 4vw, 4.5rem);
+}
+.beamer-projector .countdown {
+  font-size: clamp(2rem, 4vw, 4.5rem);
+  line-height: 1.05;
+}
+.beamer-projector .count {
+  margin: 0;
+  font-size: clamp(1rem, 1.4vw, 1.5rem);
+}
+.beamer-projector h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2vw, 2rem);
+}
+.beamer-projector .ranking {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: row;
+  align-content: start;
+  column-gap: clamp(1rem, 2vw, 2.5rem);
+  row-gap: 0;
+  overflow: auto;
+  font-size: clamp(1.1rem, 1.65vw, 1.8rem);
+}
+.beamer-projector .ranking li {
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.45em;
+  padding: clamp(0.25rem, 0.55vh, 0.55rem) 0;
+  border-bottom: 1px solid #a99a83;
+}
+.beamer-projector .ranking .rank { flex: 0 0 2.1em; font-weight: 900; }
+.beamer-projector .ranking .rname { line-height: 1.18; }
+.beamer-projector .ranking .group-members { font-size: 0.68em; }
+.beamer-projector .ranking .pts { flex: 0 0 auto; white-space: nowrap; font-weight: 900; }
+
+.beamer-player {
+  width: 100%;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0.65rem;
+  gap: 0.35rem;
+  border-width: 2px;
+}
+.beamer-player h1 {
+  margin: 0;
+  text-align: left;
+  font-size: clamp(1.15rem, 4vw, 1.55rem);
+  line-height: 1.15;
+}
+.beamer-player .game-clock {
+  justify-content: space-between;
+  gap: 0.15rem 0.5rem;
+  font-size: 0.85rem;
+}
+.beamer-player .game-clock strong { font-size: 0.85em; }
+.beamer-player [data-game-countdown] { font-size: 1.35rem; }
+.beamer-player .countdown { font-size: 1.8rem; line-height: 1.05; }
+.beamer-player .time-warning { font-size: 0.8rem; }
+.beamer-player .count {
+  margin: 0;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.beamer-player h2 {
+  margin: 0.1rem 0 0;
+  font-size: 1rem;
+}
+.beamer-player .ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: auto;
+  font-size: 0.95rem;
+}
+.beamer-player .ranking li {
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0;
+  border-bottom: 1px solid #b8aa95;
+}
+.beamer-player .ranking .rank {
+  flex: 0 0 1.8rem;
+  font-family: 'Special Elite', monospace;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+.beamer-player .ranking .rname { line-height: 1.2; }
+.beamer-player .ranking .group-members {
+  display: block;
+  margin: 0.12rem 0 0;
+  font-size: 0.72em;
+  line-height: 1.2;
+}
+.beamer-player .ranking .pts {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-weight: 900;
+  font-size: 0.9em;
+}
+.player-beamer-page { min-height: 100vh; height: auto; overflow: auto; }
+.player-beamer-page main { min-height: 100vh; height: auto; padding: 0.4rem; }
+.player-beamer-page #app { flex: none; }
+.player-beamer-page .beamer { height: auto; min-height: 0; }
+.player-beamer-page .beamer .ranking { flex: none; overflow: visible; }
+.player-beamer-page .beamer > :not(.ranking) { flex-shrink: 0; }
+
+@media (min-width: 80rem) and (min-aspect-ratio: 16/9) {
+  .projector-beamer-page main { padding: 1.25rem 2rem; }
+  .beamer-projector .ranking { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 28rem) {
+  .beamer-player { padding: 0.5rem; }
+  .beamer-player .ranking { font-size: 0.88rem; }
+}

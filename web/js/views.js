@@ -471,7 +471,12 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
         if (state.leader === true) {
           const tasks = state.tasks || [];
           const completed = tasks.filter(t => t.submitted === true).length;
-          card.append(el(doc, 'div', { cls: 'mission-progress', text: `Aufgaben erledigt: ${completed}/${tasks.length}` }));
+          const standing = state.final || state.liveStanding;
+          card.append(el(doc, 'div', { cls: 'mission-progress' }, [
+            el(doc, 'span', { text: `${standing?.points ?? '–'} Punkte` }),
+            el(doc, 'span', { text: `Platz ${standing?.rank ?? '–'}` }),
+            el(doc, 'span', { text: `${completed}/${tasks.length} erledigt` }),
+          ]));
         }
         card.append(...taskOverview(doc, state, handlers, nowMs));
       } else {

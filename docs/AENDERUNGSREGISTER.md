@@ -156,3 +156,12 @@ Organisatorische Änderungen werden ebenfalls erfasst; sie ändern ohne ausdrüc
 | 0.61 | 09.11.2026 | AEN-060: Antrag OFF-063 (freie Kategorien, aufklappbare Spieleransicht), keine Umsetzung. DOC-001 v0.60, DOC-002 v0.17, DOC-004 v0.17, DOC-006 v0.24, DOC-007 v0.61, DOC-008 v0.41, DOC-009 v1.1. | Konsistenz/Geheimnisse sauber; keine Codeänderung |
 | 0.62 | 09.11.2026 | AEN-061: OFF-058..063 umgesetzt und lokal verifiziert. DOC-001 v0.61, DOC-002 v0.18, DOC-004 v0.18, DOC-006 v0.25, DOC-007 v0.62, DOC-008 v0.42, DOC-009 v1.1. | 345 schnelle und 558 volle Tests, Konsistenz/Geheimnisse sauber; keine Veröffentlichung |
 | 0.63 | 14.11.2026 | AEN-062: OFF-064 fachlich/technisch spezifiziert und auf separatem Branch implementiert; Tests angelegt, Ausführung/Verifikation offen. DOC-001 v0.63, DOC-002 v0.19, DOC-004 v0.19, DOC-006 v0.26, DOC-007 v0.63, DOC-008 v0.43, DOC-009 v1.1 (Datei im aktuellen Repository nicht vorhanden). | Kein Merge, keine Veröffentlichung, keine Baseline; lokale/CI-Testausführung ausstehend |
+
+## Nachtrag 15.11.2026
+
+| ID | Änderung | Betroffene IDs | Nachweis |
+|---|---|---|---|
+| AEN-063 | OFF-065 mobile/Projektor-Bestenliste | KAN-059/060, SWA-065/066, UNA-046 | PR #4 in main, Kundenprüfung Smartphone erfolgreich; Projektor nachgebessert |
+| AEN-064 | OFF-066/067 Variante 2 und Spielleiter | KAN-061/062, SWA-067/068, UNA-046/047, TST-K-061/062, TST-S-067/068 | PR #5, d5e82e0, CI #60 grün |
+| AEN-065 | OFF-068 Weihnachtsdekoration | KAN-063, SWA-069, UNA-048, TST-K-063, TST-S-069 | PR #6, ba8b8e3, CI #65 grün, Abnahme 88d14ae |
+| AEN-066 | Dokumentationsbereinigung auf Kundenauftrag | DOC-001/002/004/006/007/008/009 | Aktueller Stand konsolidiert, DOC-009 rekonstruiert; keine Code-/SQL-Änderung |

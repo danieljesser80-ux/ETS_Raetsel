@@ -1,6 +1,6 @@
 # Architektur und Komponenten – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-004 | **Version:** 0.19 | **Datum:** 14.11.2026
+**Dokument-ID:** DOC-004 | **Version:** 0.20 | **Datum:** 15.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 

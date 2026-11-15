@@ -88,3 +88,7 @@ Ausführungsnachweise werden getrennt von dieser Spezifikation je Testlauf unter
 | TST-S-069 | SWA-069, UNA-048 | CSS-Dekoration ohne SQL; CI #65 grün, visuelle Abnahme bestätigt. |
 
 CI-Nachweise: [#60](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/runs/43736274332), [#65](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/runs/43741697546). Keine Aussage über nicht ausgeführte Einzelprüfungen.
+
+### Reale Generalprobe OFF-056
+
+[Prüfablauf GP-01–14 und Ergebnisprotokoll](../testprotokolle/generalprobe-off-056.md). Deckt TST-K-001–004, TST-K-016/017, TST-K-062 und OFF-055/056 ab; TST-K-005 und TST-K-061 (25 Gruppen) bleiben separat. Status geplant, keine reale Ausführung.

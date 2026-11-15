@@ -1,6 +1,6 @@
 # Kundenanforderungen – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-002 | **Version:** 0.20 | **Datum:** 15.11.2026
+**Dokument-ID:** DOC-002 | **Version:** 0.21 | **Datum:** 15.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 

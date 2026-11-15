@@ -52,7 +52,7 @@ test('TST-U-034: Kategorien sind eingeklappt, gruppiert nach erstem Auftreten, m
   renderPlayer(root, taskState([T('a', 'Eins'), T('b', 'Zwei'), T('c', 'Eins')]), {}, NOW);
   const toggles = [...root.querySelectorAll('button.category-toggle')];
   assert.deepEqual(toggles.map((b) => b.dataset.category), ['Eins', 'Zwei']);
-  assert.match(toggles[0].textContent, /Eins \(2\)/);
+  assert.match(toggles[0].textContent, /Eins \(0\/2 erledigt\)/);
   for (const b of toggles) {
     assert.equal(b.getAttribute('aria-expanded'), 'false');
     const panel = root.ownerDocument.getElementById(b.getAttribute('aria-controls'));

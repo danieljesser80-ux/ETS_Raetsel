@@ -496,7 +496,7 @@ test('TST-UI: renderBeamer zeigt Countdown nur in Phase anmeldung', () => {
   assert.ok(!/2:00/.test(textOf(r2)));
 });
 
-test('TST-UI: renderBeamer zeigt Teilnehmerzahl, Phase und Rangliste, keine Namen/Lösungen', () => {
+test('TST-UI: renderBeamer zeigt Teilnehmerzahl, Phase, Gruppenmitglieder und Rangliste, keine Lösungen', () => {
   const root = makeRoot();
   renderBeamer(root, overview({
     phase: 'aufgabe_abgeschlossen',
@@ -513,7 +513,8 @@ test('TST-UI: renderBeamer zeigt Teilnehmerzahl, Phase und Rangliste, keine Name
   const t = textOf(root);
   assert.match(t, /Teilnehmer:\s*3/);
   for (const s of ['Rentierbande', 'Lichterkette', '10', '8']) assert.ok(t.includes(s), s);
-  for (const s of ['Anna', 'Ben', 'Cleo', 'ZEBRA', 'RADAR', 'TURBO']) assert.ok(!t.includes(s), s);
+  for (const s of ['Anna', 'Ben', 'Cleo']) assert.ok(t.includes(s), s);
+  for (const s of ['ZEBRA', 'RADAR', 'TURBO']) assert.ok(!t.includes(s), s);
   assert.ok(t.length > 0);
 });
 

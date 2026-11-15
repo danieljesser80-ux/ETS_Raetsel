@@ -149,7 +149,7 @@ describe('DB submit_answer', { skip }, () => {
     const gid = await groupOf(1);
     const [a, b] = await memberOf(gid);
     await rpc(db, a, 'submit_answer', 'FALSCH1');
-    await setNow(db, isoAt(T0_MS + 1000));
+    await setNow(db, isoAt(T0_MS + 1500));
     assert.equal((await rpc(db, b, 'submit_answer', 'FALSCH2')).reason, 'zu_schnell');
     await setNow(db, isoAt(T0_MS + 3000));
     assert.deepEqual(await rpc(db, b, 'submit_answer', 'FALSCH3'), { ok: true, correct: false });

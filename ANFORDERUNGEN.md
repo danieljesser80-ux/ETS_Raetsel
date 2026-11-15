@@ -2,33 +2,33 @@
 
 ## 0. Sitzungseinstieg und aktueller Arbeitsstand
 
-**Stand: 09.11.2026 (AEN-061).** Dieser Abschnitt ist die maßgebliche kompakte Übergabe für neue Sitzungen, nicht die Freigabe eines Releases. Er ersetzt einen Starttext aus dem Chat. Zuerst diesen Abschnitt, das Dokumentverzeichnis (Abschnitt 2) und die verbindlichen Regeln in `docs\KONFIGURATIONSMANAGEMENT.md` lesen; weitere Quellen nur passend zur konkreten Nutzeraufgabe. Frühere Chats, Sitzungsdateien und historische Änderungsbeschreibungen sind für den normalen Einstieg nicht erforderlich.
+**Stand: 14.11.2026 (AEN-062).** Dieser Abschnitt ist die maßgebliche kompakte Übergabe für neue Sitzungen, nicht die Freigabe eines Releases. Er ersetzt einen Starttext aus dem Chat. Zuerst diesen Abschnitt, das Dokumentverzeichnis (Abschnitt 2) und die verbindlichen Regeln in `docs\KONFIGURATIONSMANAGEMENT.md` lesen; weitere Quellen nur passend zur konkreten Nutzeraufgabe. Frühere Chats, Sitzungsdateien und historische Änderungsbeschreibungen sind für den normalen Einstieg nicht erforderlich.
 
 | Thema | Aktueller Stand |
 |---|---|
 | Projekt und Arbeitsweise | Weihnachtsfeier-Rätselspiel in `C:\Raetsel`, ordnerbasiert ohne Git. Statische Weboberfläche in `web\`, Supabase-Schema in `supabase\schema.sql`, Kernlogik in `src\core\`. Kunde veröffentlicht selbst; kein automatischer Upload, Reset oder Live-Spielstart. |
 | Kostenbewusste Arbeitsweise | OFF-057/AEN-056: gezielte Kontextauszüge, kleine Aufgaben ohne zusätzliche Agenten, tätigkeitsbezogene Modellstrategie und gebündelte Umsetzung verankert und lokal geprüft. AEN-057 ersetzt auf Kundenauftrag Haiku durch Gemini 3.8 Flash für einfache Aufgaben in Abschnitt 1.3; lokal verifiziert. Nachweise DOC-007 AEN-056/AEN-057. Keine neue Infrastruktur oder geänderten Spiel-/Testregeln. Hauptmodell nicht umgestellt; App-Referenz dokumentiert keine Modellschlüssel, Hauptmodellwahl bleibt beim Kunden. Keine gemessene Ersparnis oder neue Sitzungserprobung. |
-| Umsetzung | AEN-053 und Fehlerkorrektur AEN-054 abgeschlossen. Zentrale Vorbereitung mit Wortliste, Aufgaben, Schwierigkeiten, Staffeln und Dauer; Aufgeben/Fehlversuche, eigene Aufgabenzeiten, Spielcountdown, separate Beamerseite, Punkteanleitung und CSV umgesetzt. OFF-037 bis OFF-055 lokal verifiziert. |
+| Umsetzung | AEN-053/AEN-054 und AEN-061 abgeschlossen. OFF-064 auf `change/off-064-beamer-difficulty-progress` umgesetzt: kompakte Beamer-Gruppenzeilen mit Live-Punkten, Fortschrittszähler, Schwierigkeits-Tags, 1-s-UI-Rückmeldung (unabhängig von 3-s-Serverdrosselung), freie Admin-Wortauswahl, read-only-Spieler-Beamer und differenzierte Aufgeben-Hinweise. Kein Merge nach `main`, keine Veröffentlichung. |
 | Performanceanalyse | AEN-061: OFF-058 bis OFF-061 umgesetzt und lokal verifiziert: Fristprüfung ohne Dauersperre (`expire_game_exclusive`), einmalige Rangberechnung je Status-RPC (`ranking_json`), Render-Skip bei unverändertem Zustand in Spieler-, Beamer- und Adminansicht, Konfigurationsrevision (`config_rev`) und Antwortzähler statt voller Konfiguration im 2-s-Poll. Keine gemessene Beschleunigung: echte Mehrverbindungs-/Lastmessung, `EXPLAIN (ANALYZE, BUFFERS)`, Nutzlastvergleich und Chrome-/Safari-Messung mit 100 Teilnehmern offen. |
 | Aufgabenimport | AEN-061: OFF-062/OFF-063 umgesetzt und lokal verifiziert. Format `raetsel-aufgaben/1` in `docs\AUFGABENFORMAT.md` (inklusive KI-Prompt), Parser `web\js\aufgabenformat.js`, RPC `admin_import_tasks` (Vorschau, Übernahme nur in vorbereitet/anmeldung, ersetzt den gesamten Aufgabensatz), Importkarte im Reiter Vorbereitung, aufklappbare Kategorien in der Spieleransicht. Aufgabendatei mit den aktuellen Aufgaben: `C:\Raetsel-geheim\aufgaben.md` (Lösungen für Locker, Lampen, 2× Geocaching und Wissensquiz sowie Geocaching-Bilder fehlen noch; die Vorschau zeigt dazu Warnungen). Kunde bestätigte am 09.11.2026 die Veröffentlichung und die Kundenprüfung der Schritte 1–4 (Import mit Vorschau, Übernahme, Kategorien, Anzeige) als erfolgreich; Lastverhalten nicht geprüft. |
-| Lokale Prüfung | Letzter voller Softwarelauf: 558 Tests; schneller Lauf: 345 Tests (AEN-061). Konsistenz und Geheimnisprüfung sauber. Nachweis `testprotokolle\lauf-010.md`. Der Volllauf ist wegen PGlite-Last dateiweise zuverlässiger als gleichzeitig. Diese Ergebnisse sind kein echter Last-/Nebenläufigkeits- oder Geräteabnahmenachweis. |
+| Lokale/CI-Prüfung | GitHub Actions Lauf 43653360311 vor abschließender Reviewkorrektur: 559/559 Tests bestanden. Danach wurden die bestehende 3-s-Serverdrosselung wiederhergestellt und die Beamer-Authentifizierung/Token-Nachrichtenbehandlung auf den jeweiligen Modus begrenzt; erneuter CI-Lauf steht noch aus. Konsistenz-/Geheimnisprüfung und Smartphoneprüfung nicht ausgeführt. |
 | Veröffentlichung | Kunde bestätigt am 08.11.2026 Upload von `web\` auf GitHub `main` und grünen Pages-Lauf sowie Supabase-Schema einschließlich AEN-054. Website: https://danieljesser80-ux.github.io/ETS_Raetsel/ ; Repository `danieljesser80-ux/ETS_Raetsel`; Supabase-Projekt `myvknbqoxocpkagjnrjc`. |
 | Reale Einrichtungsprüfung | Kunde bestätigt Cron aktiviert und `automatic_end_ready() = true`, Anonymous Sign-Ins, Adminzugang, erfolgreichen korrigierten Reset und bearbeitbare Vorbereitung. Öffentliche Punktetabelle ohne Fehler und separate Beamerseite bei geöffnetem Admin funktionieren laut Kunde. |
 | Gespeicherte Spielkonfiguration | Kunde bestätigt Default-Wortimport und Speicherung, Gruppengröße 4–6, Spielzeit 25 Minuten, Gruppenwort-Schwierigkeit mittel und vereinbarte Staffeln leicht/mittel/schwer; Vorbereitung zeigt „Bereit zum Start“. Countdown beginnt mit Gruppeneinteilung. Live-Konfiguration nicht ungefragt überschreiben; der bestätigte Stand ist keine dauerhafte Live-Messung. |
-| Noch offen | OFF-056: Generalprobe mit zwei Gruppen vorbereitet und lokal simuliert, reale vollständige Durchführung noch offen (`testprotokolle\lauf-009.md`). Veröffentlichung von `web\` und `supabase\schema.sql` sowie Importprobe vom Kunden bestätigt (09.11.2026); fehlende Lösungen/Bilder nachtragen; reale Last-/Mehrverbindungs- und Gerätemessung zu OFF-058..061; Release-Freigabe. |
+| Noch offen | OFF-064: erneuten CI-Testlauf nach Reviewkorrekturen abwarten, Konsistenz-/Geheimnisprüfung und Smartphoneprüfung durchführen; anschließend PR prüfen und nur nach ausdrücklicher Freigabe mergen/veröffentlichen. DOC-009 (`docs/KONFIGURATIONSMANAGEMENT.md`) wird hier referenziert, ist im aktuellen Repository-Stand aber nicht vorhanden. Zusätzlich bleiben die bisherigen Generalprobe-, Aufgabeninhalt-, Last-/Gerätemessungs- und Release-Freigaben offen. |
 | Baseline | Keine neue Baseline nach AEN-053/AEN-054. BL-008 ist eingefroren, aber nicht freigegeben; die bestätigte Veröffentlichung des aktuellen Arbeitsstands ist keine Veröffentlichung/Freigabe von BL-008. Regeln vor Generalprobe/Feier in DOC-009 beachten; Freigabe nur durch Kunden. |
 | Geheimnisse | Lösungen und Default-Wortdatei ausschließlich in `C:\Raetsel-geheim`; Defaultimport aus `gruppenwoerter-default.txt`. Keine Lösungen, Admincodes oder geheimen Schlüssel in Projekt, Chat, Exporte oder Screenshots übernehmen. |
-| Aktuelle Anschlussaufgabe | Keine Umsetzung läuft. Die neue Nutzernachricht bestimmt die Aufgabe; Veröffentlichung, Live-Lasttest und Datenlöschung sind dadurch nicht autorisiert. OFF-056 reale Generalprobe bleibt unabhängig offen. |
+| Aktuelle Anschlussaufgabe | OFF-064 ist auf `change/off-064-beamer-difficulty-progress` umgesetzt und als Draft-PR #2 zur Prüfung geöffnet; Testausführung, Review und Verifikation stehen aus. Die neue Nutzernachricht autorisiert weder Merge nach `main` noch Veröffentlichung, Live-Lasttest oder Datenlöschung. OFF-056 reale Generalprobe bleibt unabhängig offen. |
 
-**Pflege:** Bei Abschluss eines Arbeitspakets, bestätigter Veröffentlichung/Kundenprüfung oder Unterbrechung diesen Abschnitt aktualisieren: tatsächliche Änderungen, Nachweis, offen/blockiert und gegebenenfalls präzise Fortsetzung. Nur belegte Ergebnisse eintragen; Umsetzung, Veröffentlichung und Abnahme nicht gleichsetzen. Details bleiben in ihren maßgeblichen Dokumenten/Testprotokollen, statt Chatverläufe oder Logs zu kopieren. Dauerhafte Einstiegsregeln stehen in `.github\copilot-instructions.md` und DOC-009.
+**Pflege:** Bei Abschluss eines Arbeitspakets, bestätigter Veröffentlichung/Kundenprüfung oder Unterbrechung diesen Abschnitt aktualisieren: tatsächliche Änderungen, Nachweis, offen/blockiert und gegebenenfalls präzise Fortsetzung. Nur belegte Ergebnisse eintragen; Umsetzung, Veröffentlichung und Abnahme nicht gleichsetzen. Details bleiben in ihren maßgeblichen Dokumenten/Testprotokollen, statt Chatverläufe oder Logs zu kopieren. Dauerhafte Einstiegsregeln stehen in `.github\copilot-instructions.md`; DOC-009 wird referenziert, die Datei `docs/KONFIGURATIONSMANAGEMENT.md` fehlt jedoch im aktuellen Repository-Stand.
 
 ## 1. Dokumentstand und Vorgehen
 
 | Merkmal | Stand |
 |---|---|
 | Dokument-ID | DOC-001 |
-| Version | 0.61 |
-| Datum | 09.11.2026 |
+| Version | 0.63 |
+| Datum | 14.11.2026 |
 | Status | Baseline für ersten Release freigegeben (AEN-006) |
 | Zweck | Gemeinsame Grundlage für Anforderungen, Änderungen, Architektur, Implementierung und Prüfung |
 | Einsatz | Private Weihnachtsfeier, maximal 100 Spieler |
@@ -83,7 +83,7 @@ Gemäß AEN-002, OFF-057/AEN-056 und AEN-057 gilt folgende Arbeitsstrategie. Sie
 
 **Modellersatz (AEN-057, 09.11.2026):** Kunde verlangt „ersetze Haiku mit Gemini Flash“. Gemeint ist Gemini 3.8 Flash aus der gezeigten Modellauswahl; es ersetzt Haiku 5.5 ausschließlich in der aktiven Strategie für einfache Aufgaben. Historische AEN-/OFF-Einträge bleiben als damalige Entscheidungen erhalten. In der vorgelegten Preistabelle fehlen Preise für Gemini 3.8 Flash; daraus keine belegte Kostenersparnis ableiten. Sichtbare Hauptmodellverfügbarkeit ist keine Garantie der Agentenverfügbarkeit; bei Delegation weiterhin explizit auswählen und fehlende Verfügbarkeit offenlegen. Keine automatische Umschaltung des Hauptmodells.
 
-**Kontextauswahl:** Zum Einstieg DOC-001 nur Abschnitt 0 und 2 sowie DOC-009 lesen; Abschnitt 1.3 bei Fragen zu Arbeitsweise/Modellwahl. Anschließend betroffene OFF/KAN/SWA/ARC/UNA/TST anhand ihrer IDs suchen und nur maßgebliche Definitionen, notwendige Querverweise, relevante Codeabschnitte und Nachweise lesen. Ganze OFF-/AEN-Historien, Archive oder vollständige Sitzungsverläufe nicht vorsorglich laden. Definitionen nicht so kürzen, dass Bedingungen oder Ausnahmen verloren gehen. Bereits gelesenen unveränderten Kontext innerhalb einer Sitzung nicht erneut vollständig laden.
+**Kontextauswahl:** Zum Einstieg DOC-001 nur Abschnitt 0 und 2 sowie DOC-009 lesen; Abschnitt 1.3 bei Fragen zu Arbeitsweise/Modellwahl. Hinweis für diesen Stand: DOC-009 ist im Repository nicht vorhanden; deshalb konnte dessen Inhalt nicht geprüft werden. Anschließend betroffene OFF/KAN/SWA/ARC/UNA/TST anhand ihrer IDs suchen und nur maßgebliche Definitionen, notwendige Querverweise, relevante Codeabschnitte und Nachweise lesen. Ganze OFF-/AEN-Historien, Archive oder vollständige Sitzungsverläufe nicht vorsorglich laden. Definitionen nicht so kürzen, dass Bedingungen oder Ausnahmen verloren gehen. Bereits gelesenen unveränderten Kontext innerhalb einer Sitzung nicht erneut vollständig laden.
 
 **Delegation:** Normalen Kontext statt langen Kontext verwenden. Kleine Aufgaben direkt erledigen; Agenten nur für konkrete größere Pakete einsetzen, deren unabhängige Bearbeitung den zusätzlichen Kontext und Aufruf rechtfertigt. Agenten erhalten nur relevante Dokumentauszüge, IDs, Schnittstellen und ein eindeutiges Abschlusskriterium. Keine dauerhaft laufenden Agenten, doppelten Erkundungen oder mehrfachen Reviews ohne konkrete neue Fragestellung.
 
@@ -97,17 +97,17 @@ Agenten werden erst gestartet, wenn ein konkretes Arbeitspaket mit ausreichend g
 
 ## 2. Dokumentverzeichnis
 
-Jede ID hat genau eine maßgebliche Definitionsstelle. Querverweise und die Matrix ersetzen diese Definition nicht. Die sieben aktiven Dokumente werden bei Änderungen gemeinsam auf Konsistenz geprüft (AEN-022: SWA in DOC-002, UNA in DOC-004 aufgegangen; die Dokument-IDs DOC-003 und DOC-005 sind entfallen und werden nicht neu vergeben).
+Jede ID hat genau eine maßgebliche Definitionsstelle. Querverweise und die Matrix ersetzen diese Definition nicht. Die sechs im Repository vorhandenen aktiven Dokumente werden bei Änderungen gemeinsam auf Konsistenz geprüft; DOC-009 ist als siebtes Dokument referenziert, fehlt aber im aktuellen Repository-Stand (AEN-022: SWA in DOC-002, UNA in DOC-004 aufgegangen; die Dokument-IDs DOC-003 und DOC-005 sind entfallen und werden nicht neu vergeben).
 
 | Dokument-ID | Dokument | Maßgeblicher Inhalt | Version |
 |---|---|---|---|
-| DOC-001 | [Übersicht und Rückverfolgbarkeit](ANFORDERUNGEN.md) | Sitzungseinstieg/Arbeitsstand, Vorgehen, KI-Arbeitsstrategie, Statusbegriffe, Dokumentverzeichnis, Matrix und Freigabestand | 0.61 |
-| DOC-002 | [Kunden- und Softwareanforderungen](docs/KUNDENANFORDERUNGEN.md) | KAN, ENT, Entscheidungen, Aufgabenideen und SWA | 0.18 |
-| DOC-004 | [Architektur und Komponenten](docs/ARCHITEKTUR.md) | ARC, UNA, Daten-/Zustandsentwurf und Infrastrukturrahmen | 0.18 |
-| DOC-006 | [Testkonzept und Testspezifikation](docs/TESTSPEZIFIKATION.md) | TST, Testkonzept und Nachweisregeln | 0.25 |
-| DOC-007 | [Änderungsregister](docs/AENDERUNGSREGISTER.md) | AEN und Dokumenthistorie | 0.62 |
-| DOC-008 | [Änderungsanträge](docs/AENDERUNGSANTRAEGE.md) | Änderungsanträge (OFF) mit Status und Statusverlauf; nie gelöscht | 0.42 |
-| DOC-009 | [Konfigurationsmanagement](docs/KONFIGURATIONSMANAGEMENT.md) | Änderungskontrolle, Konfigurationselemente, Baselines (BL) | 1.1 |
+| DOC-001 | [Übersicht und Rückverfolgbarkeit](ANFORDERUNGEN.md) | Sitzungseinstieg/Arbeitsstand, Vorgehen, KI-Arbeitsstrategie, Statusbegriffe, Dokumentverzeichnis, Matrix und Freigabestand | 0.63 |
+| DOC-002 | [Kunden- und Softwareanforderungen](docs/KUNDENANFORDERUNGEN.md) | KAN, ENT, Entscheidungen, Aufgabenideen und SWA | 0.19 |
+| DOC-004 | [Architektur und Komponenten](docs/ARCHITEKTUR.md) | ARC, UNA, Daten-/Zustandsentwurf und Infrastrukturrahmen | 0.19 |
+| DOC-006 | [Testkonzept und Testspezifikation](docs/TESTSPEZIFIKATION.md) | TST, Testkonzept und Nachweisregeln | 0.26 |
+| DOC-007 | [Änderungsregister](docs/AENDERUNGSREGISTER.md) | AEN und Dokumenthistorie | 0.63 |
+| DOC-008 | [Änderungsanträge](docs/AENDERUNGSANTRAEGE.md) | Änderungsanträge (OFF) mit Status und Statusverlauf; nie gelöscht | 0.43 |
+| DOC-009 | [Konfigurationsmanagement](docs/KONFIGURATIONSMANAGEMENT.md) | Änderungskontrolle, Konfigurationselemente, Baselines (BL) | 1.1 (Datei im Repository nicht vorhanden) |
 Die [ursprüngliche Gesamtsammlung v0.1](docs/archiv/ANFORDERUNGEN-v0.1.md) ist ausschließlich ein historischer, unveränderter Stand und keine aktive Definitionsquelle.
 
 ## 3. Rückverfolgbarkeitsmatrix
@@ -129,17 +129,18 @@ Seit AEN-022 nur noch Kundenanforderung → Kundenabnahmetest. Die Ableitung SWA
 | KAN-034 | TST-K-013 |
 | KAN-035 | TST-K-014 |
 | KAN-036 bis KAN-047 | TST-K-015 |
+| KAN-052 bis KAN-058 | TST-K-016 |
 
 ## 4. Freigabe- und Entwicklungsstand
 
 | Ebene | Stand |
 |---|---|
 | Kundenanforderungen | Entscheidungen einschließlich ENT-008 getroffen; Anforderungsbaseline für ersten Release freigegeben (AEN-006), Folgeänderungen beauftragt, keine neue Release-Freigabe |
-| Softwareanforderungen | Abgeleitet, an die Folgeänderungen bis AEN-053 angepasst |
+| Softwareanforderungen | Abgeleitet, einschließlich OFF-064/AEN-062 (SWA-058 bis SWA-064) angepasst |
 | Architektur | GitHub Pages + Supabase vom Kunden gewählt (ENT-011); Details Entwurf |
-| Komponentenanforderungen | Abgeleiteter Entwurf |
-| Implementierung | AEN-053/AEN-054 umgesetzt. Kunde bestätigt Web-/Schema-Veröffentlichung und Einrichtung einschließlich korrigiertem Reset. Supabase Cron ist Betriebsvoraussetzung für browserunabhängiges Ende; Bereitschaft bestätigt, echte Ausführung bei Spielende noch nicht geprüft. Vollständige Smartphone-/Spielabnahme offen. |
-| Tests | AEN-054: 329 schnelle/530 volle Tests bestanden, 16 Suites; Lauf 009. Lokale Monitor-/Mobil-, Zeit-/Wertungs-/Rechte-/Fehlerprüfung, Konsistenz/Geheimnisse sauber. Reale Einrichtungs-/Reset-/Anleitungs-/Beameröffnung vom Kunden bestätigt. Vollständige Generalprobe, Parallelität und Last bleiben offen. |
+| Komponentenanforderungen | Abgeleiteter Entwurf, ergänzt um UNA-041 bis UNA-045 für OFF-064 |
+| Implementierung | AEN-053/AEN-054 und OFF-058..063 umgesetzt/verifiziert. OFF-064 auf separatem Branch implementiert; keine Übernahme nach `main`, keine Veröffentlichung. Spieler-Beamer erfordert das neue `supabase/schema.sql` und eine bereits angemeldete Spielersitzung. |
+| Tests | Letzter nachgewiesener Lauf: AEN-061 (345 schnelle/558 volle Tests, Lauf 010). OFF-064-Testfälle ergänzt; Ausführung, Konsistenz und Geheimnisprüfung stehen aus. Smartphone-/Beamerprüfung nach Schema-Update ebenfalls offen. |
 | Baseline / Kundenabnahme / Release | Konfigurationsmanagement nach DOC-009 (AEN-014). BL-001: Anforderungsbaseline „v0.5“ für den ersten Release vom Kunden freigegeben am 05.11.2026 (AEN-006). BL-002: Gesamtstand eingefroren, Freigabe offen. BL-003 bis BL-007 abgelöst. BL-008: Stand nach AEN-021 eingefroren, Freigabe offen; die nächste Baseline folgt vor der Generalprobe (AEN-022). Kundenabnahme und Release nicht erfolgt. |
 
 Der kompakte aktuelle Kunden-/Arbeitsstand und die offenen Anschlussarbeiten stehen maßgeblich in Abschnitt 0. Die folgenden Änderungsbeschreibungen sind historische Nachweise; sie sind keine zusätzlichen aktuellen Aufträge und keine Aufforderung, bereits bestätigte Veröffentlichungen erneut durchzuführen.

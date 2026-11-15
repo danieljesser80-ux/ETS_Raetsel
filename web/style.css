@@ -171,6 +171,13 @@ label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 .ranking li { display: flex; gap: 0.75rem; padding: 0.45rem 0; border-bottom: 1px dashed #6e5f4f; }
 .ranking .rname { flex: 1; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
 .ranking .group-status { display: block; font-size: 0.8em; font-weight: 400; overflow-wrap: anywhere; }
+.ranking .group-members { display: inline; margin-left: 0; font-size: 0.8em; font-weight: 400; overflow-wrap: anywhere; }
+.task-difficulty { margin: 0.25rem 0; }
+.difficulty-tag { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; color: #fff; font-size: 0.82em; line-height: 1.45; font-weight: 800; }
+.difficulty-leicht { background: #1769aa; }
+.difficulty-mittel { background: #c62828; }
+.difficulty-schwer { background: #111; }
+.beamer-link { margin-top: 0.75rem; }
 .timg { max-width: 100%; height: auto; border: 4px solid #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3); }
 .qr-card { text-align: center; word-break: break-all; }
 .qr-card img { max-width: 100%; border: 4px solid #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25); }
@@ -344,6 +351,10 @@ table.detail th, table.detail td { text-align: left; padding: 0.4rem; border-bot
 .beamer .countdown { font-size: 9rem; }
 .beamer .count { font-size: 2.5rem; font-weight: 800; text-align: center; margin: 0; }
 .beamer .ranking { font-size: 2rem; }
+.beamer .ranking li { align-items: baseline; gap: 0.5em; }
+.beamer .ranking .rname { display: block; }
+.beamer .ranking .group-members { font-size: 0.72em; }
+.beamer .ranking .pts { white-space: nowrap; }
 body.beamer-mode header, body.beamer-mode .qr-card { display: none; }
 body.beamer-mode main { max-width: none; }
 [hidden] { display: none !important; }

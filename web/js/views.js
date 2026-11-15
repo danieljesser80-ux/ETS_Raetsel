@@ -127,6 +127,13 @@ function countdownBox(doc, seconds) {
   });
 }
 
+function difficultyTag(doc, difficulty) {
+  const level = ['leicht', 'mittel', 'schwer'].includes(difficulty) ? difficulty : 'mittel';
+  const label = level[0].toUpperCase() + level.slice(1);
+  return el(doc, 'span', { cls: `difficulty-tag difficulty-${level}`, text: label,
+    attrs: { 'aria-label': `Schwierigkeit: ${label}` } });
+}
+
 export function updateCountdowns(root, state, nowMs) {
   const secs = countdownSeconds(state, nowMs);
   for (const n of root.querySelectorAll('[data-countdown]')) {
@@ -312,7 +319,7 @@ function taskForm(doc, t, handlers, feedback) {
 function taskView(doc, state, task, handlers, nowMs) {
   const fb = state.feedback && state.feedback.scope === task.id ? state.feedback : null;
   const out = [sectionTitle(doc, task.detail_title || task.title),
-    el(doc, 'p', { text: `Schwierigkeit: ${task.difficulty ?? 'mittel'}` }),
+    el(doc, 'p', { cls: 'task-difficulty' }, [difficultyTag(doc, task.difficulty)]),
     taskTime(doc, task.started_at_ms, task.duration_ms, state, nowMs)];
   if (task.submitted) out.push(el(doc, 'p', { cls: 'tstatus', text: submittedMark(task).text }));
   if (task.body) out.push(el(doc, 'p', { cls: 'tbody', text: task.body }));
@@ -349,7 +356,8 @@ function taskOverview(doc, state, handlers, nowMs) {
   groups.forEach((group, index) => {
     const open = openCategories.has(group.name);
     const panelId = `task-category-${index}`;
-    const toggle = el(doc, 'button', { cls: 'btn secondary category-toggle', text: `${group.name} (${group.items.length})`,
+    const completed = group.items.filter((task) => task.submitted === true).length;
+    const toggle = el(doc, 'button', { cls: 'btn secondary category-toggle', text: `${group.name} (${completed}/${group.items.length} erledigt)`,
       attrs: { type: 'button', 'aria-expanded': String(open), 'aria-controls': panelId, 'data-category': group.name } });
     listen(toggle, 'click', (event) => {
       const button = event.currentTarget;
@@ -374,7 +382,7 @@ function taskOverview(doc, state, handlers, nowMs) {
       }
       box.append(el(doc, 'p', { cls: 'tstatus', text: taskStatus(t, finished) }));
       box.append(el(doc, 'div', { cls: 'task-meta' }, [
-        el(doc, 'span', { text: t.difficulty ?? 'mittel', attrs: { 'aria-label': `Schwierigkeit: ${t.difficulty ?? 'mittel'}` } }),
+        difficultyTag(doc, t.difficulty),
         taskTime(doc, t.started_at_ms, t.duration_ms, state, nowMs, 'Zeit'),
       ]));
       panel.append(box);
@@ -502,6 +510,13 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
   } else {
     card.append(el(doc, 'p', { text: phaseText(phase) }));
   }
+  if (state.joined) {
+    card.append(el(doc, 'p', { cls: 'beamer-link' }, [
+      el(doc, 'a', { text: 'Beamer-Ansicht auf diesem Gerät öffnen', attrs: {
+        href: 'beamer.html?mode=player', target: '_blank', rel: 'noopener',
+      } }),
+    ]));
+  }
   root.appendChild(card);
   commit(liveRoot, root, JSON.stringify(['player', state.phase, state.joined, state.name,
     state.group?.name, !!state.solved, state.openTaskId || null]));
@@ -512,7 +527,7 @@ function remainingOf(overview, nowMs) {
   return countdownSeconds(overview, nowMs);
 }
 
-function rankingList(doc, ranking, showPoints = true, groups = []) {
+function rankingList(doc, ranking, showPoints = true, groups = [], showMembersForCompleted = false) {
   const ol = el(doc, 'ol', { cls: 'ranking' });
   const entries = [...(ranking || [])];
   for (const group of groups || []) {
@@ -521,14 +536,20 @@ function rankingList(doc, ranking, showPoints = true, groups = []) {
   for (const r of entries) {
     const group = groups.find((g) => g.name === r.group);
     const name = el(doc, 'span', { cls: 'rname', text: r.group });
-    if (group) name.append(el(doc, 'span', {
-      cls: 'group-status', text: group.word_completed || group.solved ? 'Gruppe komplett' : (group.members || []).join(', '),
-    }));
+    if (group) {
+      const members = (group.members || []).join(', ');
+      if (showMembersForCompleted) {
+        if (members) name.append(el(doc, 'span', { cls: 'group-members', text: ` (${members})` }));
+      } else {
+        name.append(el(doc, 'span', { cls: 'group-status',
+          text: group.word_completed || group.solved ? 'Gruppe komplett' : members }));
+      }
+    }
     ol.appendChild(
       el(doc, 'li', {}, [
         el(doc, 'span', { cls: 'rank', text: r.rank == null ? '–' : `${r.rank}.` }),
         name,
-        showPoints && r.points != null ? el(doc, 'span', { cls: 'pts', text: `${r.points} Punkte` }) : null,
+        showPoints && r.points != null ? el(doc, 'span', { cls: 'pts', text: showMembersForCompleted ? `${r.points} Pkt.` : `${r.points} Punkte` }) : null,
       ]),
     );
   }
@@ -689,6 +710,7 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
     el(doc, 'input', { cls: 'big-input', attrs: { id: 'f-game-minutes', name: 'game-minutes', type: 'number',
       min: 1, max: 35791394, value: overview.game_minutes ?? 25, ...(canStart ? {} : { disabled: 'disabled' }) } }),
     el(doc, 'label', { text: 'Schwierigkeit des Gruppenworts', attrs: { for: 'f-word-difficulty' } }),
+    el(doc, 'p', { cls: 'task-difficulty' }, [difficultyTag(doc, overview.word_difficulty ?? 'mittel')]),
     selectLevel('word-difficulty', overview.word_difficulty ?? 'mittel'),
     el(doc, 'p', { text: 'Spielzeit ab Gruppeneinteilung. Automatisches Ende; endgültig falsch/aufgegeben: 0 Punkte.' }),
   ]);
@@ -734,10 +756,10 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
   });
   const wordsCard = el(doc, 'section', { cls: 'card stack' }, [
     sectionTitle(doc, 'Gruppenwortliste'),
-    el(doc, 'label', { text: 'Ein Wort pro Zeile, A–Z, höchstens 9 Buchstaben', attrs: { for: 'f-words' } }),
+    el(doc, 'label', { text: 'Ein Wort pro Zeile, nur A–Z, beliebige Länge', attrs: { for: 'f-words' } }),
     wordsInput, fileInput,
     el(doc, 'p', { attrs: { 'data-word-import': '1', role: 'status' } }),
-    el(doc, 'p', { text: 'Geschützten Default lokal importieren. Ungefähr ähnliche Länge/Schwierigkeit wählen; keine feste Gleichheitsregel.' }),
+    el(doc, 'p', { text: 'Geschützten Default lokal importieren. Jedes Wort wird ohne automatische Längen- oder Schwierigkeitsfilterung vergeben; Buchstaben werden möglichst gleichmäßig verteilt.' }),
     mk('set-words', 'Wortliste speichern', canStart, 'primary', () =>
       handlers.onSetWords?.(liveRoot.querySelector('[name="words"]').value.split(/\r?\n/).map((word) => word.trim()).filter(Boolean))),
   ]);
@@ -757,6 +779,7 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
     const [l4, solution] = field('solution', t.kind === 'estimate' ? 'Richtige Zahl' : 'Lösung', t.solution);
     const box = el(doc, 'div', { cls: 'task stack', attrs: { 'data-task': t.id } }, [
       el(doc, 'p', { cls: 'tname', text: `${t.category}: ${t.title}` }),
+      el(doc, 'p', { cls: 'task-difficulty' }, [difficultyTag(doc, t.difficulty)]),
       el(doc, 'p', { text: t.available ? 'Freigegeben' : 'Nicht verfügbar (keine Lösung)' }),
     ]);
     box.append(l1, title, l2, body, l3, image, l4, solution,
@@ -857,9 +880,11 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
   for (const problem of missing) problems.append(el(doc, 'li', { text: problem }));
   preparation.append(problems);
   const taskList = el(doc, 'section', { cls: 'card stack' }, [sectionTitle(doc, 'Aufgabenübersicht')]);
-  for (const task of overview.tasks || []) taskList.append(el(doc, 'p', {
-    text: `${task.category}: ${task.title} – ${task.difficulty ?? 'mittel'} – ${task.answers ?? 0} Abgaben`,
-  }));
+  for (const task of overview.tasks || []) taskList.append(el(doc, 'p', {}, [
+    doc.createTextNode(`${task.category}: ${task.title} – `),
+    difficultyTag(doc, task.difficulty),
+    doc.createTextNode(` – ${task.answers ?? 0} Abgaben`),
+  ]));
   for (const field of tasksCard.querySelectorAll('input, textarea')) field.disabled = !canStart;
   const sections = [status, controls, sizeCard, playersCard, groupsCard, rankCard, tasksCard, totalsCard];
   sections.forEach((section, index) => section.setAttribute('data-section', `admin-${index}`));
@@ -933,7 +958,7 @@ export function renderBeamer(root, overview, nowMs = Date.now()) {
   wrap.append(
     el(doc, 'p', { cls: 'count', text: `Teilnehmer: ${overview.participants_count ?? (overview.players || []).length}` }),
     sectionTitle(doc, 'Rangliste'),
-    rankingList(doc, overview.ranking, overview.finished === true, overview.groups),
+    rankingList(doc, overview.ranking, true, overview.groups, true),
   );
   root.appendChild(wrap);
   commit(liveRoot, root, `beamer:${overview.phase}`);

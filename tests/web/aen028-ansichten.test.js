@@ -338,24 +338,24 @@ test('TST-S-030: Beamer zeigt vor Loesungen alle Gruppen mit Teilnehmern, auch o
   assert.ok(!/Gruppe komplett/.test(t));
 });
 
-test('TST-S-030: Beamer ersetzt Namen geloester Gruppen durch Gruppe komplett, Gruppenname und Wertung bleiben', () => {
+test('TST-S-030: Beamer zeigt Mitglieder geloester Gruppen in einer Zeile und Punkte live', () => {
   const root = makeRoot();
   renderBeamer(root, overview({ phase: 'wortaufgabe_aktiv', groups: GROUPS, ranking: RANKING }), NOW);
   const t = textOf(root);
   assert.ok(t.includes('Rentierbande'));
-  for (const s of ['Lichterkette', 'Cleo', 'Dora']) assert.ok(t.includes(s), s);
-  for (const s of ['Anna', 'Ben']) assert.ok(!t.includes(s), s);
-  assert.equal(t.split('Gruppe komplett').length - 1, 1);
+  for (const s of ['Lichterkette', 'Anna', 'Ben', 'Cleo', 'Dora']) assert.ok(t.includes(s), s);
+  assert.equal(t.split('Gruppe komplett').length - 1, 0);
+  assert.ok(root.querySelector('.ranking .pts')?.textContent.includes('Pkt.'), 'Punkte werden auch vor Spielende gezeigt');
   assert.ok(idx(t, 'Rentierbande') < idx(t, 'Lichterkette'), 'Gesamtrangfolge zuerst');
 });
 
-test('TST-S-030: Beamer nach allen Wortloesungen ohne jeden Teilnehmernamen', () => {
+test('TST-S-030: Beamer behaelt alle Teilnehmernamen auch nach allen Wortloesungen', () => {
   const root = makeRoot();
   const groups = GROUPS.map((g, i) => ({ ...g, solved: true, rank: i + 1 }));
   renderBeamer(root, overview({ phase: 'wortaufgabe_aktiv', groups, ranking: [{ rank: 1, group: 'Rentierbande', points: 10 }, { rank: 2, group: 'Lichterkette', points: 8 }] }), NOW);
   const t = textOf(root);
-  assert.equal(t.split('Gruppe komplett').length - 1, 2);
-  for (const s of ['Anna', 'Ben', 'Cleo', 'Dora']) assert.ok(!t.includes(s), s);
+  assert.equal(t.split('Gruppe komplett').length - 1, 0);
+  for (const s of ['Anna', 'Ben', 'Cleo', 'Dora']) assert.ok(t.includes(s), s);
 });
 
 test('TST-S-030: Admin-Rangliste zeigt Teilnehmer ungeloester Gruppen und Gruppe komplett fuer geloeste', () => {
@@ -385,6 +385,15 @@ test('TST-S-030: Namen in der Gruppenliste werden als Text dargestellt', () => {
     assert.ok(textOf(root).includes(evil));
     assert.equal(root.querySelectorAll('img, b').length, 0);
   }
+});
+
+test('TST-U-035: Admin-Aufgabenpflege und Aufgabenuebersicht zeigen Schwierigkeits-Tags', () => {
+  const root = makeRoot();
+  renderAdmin(root, overview({ phase: 'vorbereitet', tasks: [{ ...ADMIN_TASKS[0], difficulty: 'mittel', answers: 2 }] }), AH().h, NOW);
+  const tags = [...root.querySelectorAll('.difficulty-tag')];
+  assert.ok(tags.length >= 2, 'Editor und Aufgabenuebersicht');
+  assert.ok(tags.every((tag) => tag.textContent === 'Mittel'));
+  assert.ok(tags.every((tag) => tag.classList.contains('difficulty-mittel')));
 });
 
 // ---- Vorbereitungskontrolle (KAN-032, SWA-037)

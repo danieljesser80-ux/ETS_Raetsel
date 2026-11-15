@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { stateKey } from '../../web/js/clientcache.js';
+import { giveUpConfirmation } from '../../web/js/texts.js';
 
 const SRC = readFileSync(new URL('../../web/js/player.js', import.meta.url), 'utf8');
 
@@ -19,13 +20,13 @@ async function boot({ api = {}, state = { ok: true, phase: 'wortaufgabe_aktiv', 
   };
   const render = (root, s, h) => { draws.push({ state: s, handlers: h }); };
   const body = SRC.split('\n').filter((l) => !/^import /.test(l)).join('\n');
-  const fn = new Function('document', 'createClient', 'SUPABASE_URL', 'SUPABASE_KEY', 'createApi', 'reasonText',
-    'renderPlayer', 'updateCountdowns', 'createRefreshLoop', 'stateKey', 'setTimeout', 'clearTimeout', 'setInterval', 'confirm',
+  const fn = new Function('document', 'createClient', 'SUPABASE_URL', 'SUPABASE_KEY', 'createApi', 'reasonText', 'giveUpConfirmation',
+    'renderPlayer', 'updateCountdowns', 'createRefreshLoop', 'stateKey', 'ANSWER_FEEDBACK_MS', 'setTimeout', 'clearTimeout', 'setInterval', 'confirm',
     `${body}\nreturn { ui, get busy() { return busy; } };`);
   const confirms = [];
   const exposed = fn(dom.window.document,
     () => ({ channel: () => ({ on() { return this; }, subscribe() {} }) }), 'u', 'k',
-    () => fullApi, (r) => `reason:${r}`, render, () => {},
+    () => fullApi, (r) => `reason:${r}`, giveUpConfirmation, render, () => {},
     (cfg) => {
       loopCalls.push(cfg);
       let cur = null;
@@ -34,7 +35,7 @@ async function boot({ api = {}, state = { ok: true, phase: 'wortaufgabe_aktiv', 
         async request() { cur = await cfg.load(); cfg.apply(cur); },
       };
     },
-    stateKey,
+    stateKey, 1000,
     (f, ms) => { timers.push({ f, ms }); return timers.length; }, () => {}, () => 1,
     (t) => { confirms.push(t); return confirms.answer ?? true; });
   await new Promise((r) => setImmediate(r));
@@ -58,7 +59,7 @@ test('TST-S-042: Spieleransicht zeichnet bei nur geaenderter Serverzeit nicht ne
   assert.equal(b.draws.length, afterSame + 1, 'geaenderter Zustand: Render');
 });
 
-test('Falsche Antwort 1 und 2 schliessen die Aufgabe nicht, die endgueltige dritte schliesst nach 3 s', async () => {
+test('Falsche Antwort 1 und 2 schliessen die Aufgabe nicht, die endgueltige dritte schliesst nach 1 s', async () => {
   const wrong = [{ ok: true, correct: false, attempts_remaining: 2, submitted: false },
     { ok: true, correct: false, attempts_remaining: 1, submitted: false },
     { ok: true, correct: false, attempts_remaining: 0, submitted: true }];
@@ -69,23 +70,23 @@ test('Falsche Antwort 1 und 2 schliessen die Aufgabe nicht, die endgueltige drit
   assert.equal(b.exposed.ui.openTaskId, 't');
   for (const k of [0, 1]) {
     await b.h().onSubmitTask('t', 'x');
-    const t = b.timers.filter((x) => x.ms === 3000).pop();
+    const t = b.timers.filter((x) => x.ms === 1000).pop();
     t.f();
     assert.equal(b.exposed.ui.openTaskId, 't', `Versuch ${k + 1}: Aufgabe bleibt offen`);
     assert.equal(b.last().state.feedback, null);
   }
   await b.h().onSubmitTask('t', 'x');
   assert.equal(b.last().state.feedback.accepted, true, 'endgueltig');
-  b.timers.filter((x) => x.ms === 3000).pop().f();
+  b.timers.filter((x) => x.ms === 1000).pop().f();
   assert.equal(b.exposed.ui.openTaskId, null);
 });
 
-test('Richtige Antwort schliesst nach 3 s', async () => {
+test('Richtige Antwort schliesst nach 1 s', async () => {
   const st = { ok: true, phase: 'wortaufgabe_aktiv', tasks: [{ id: 't', started: true }] };
   const b = await boot({ api: { submitTask: async () => ({ ok: true, correct: true }) }, state: st });
   await b.h().onOpenTask('t');
   await b.h().onSubmitTask('t', 'x');
-  b.timers.filter((x) => x.ms === 3000).pop().f();
+  b.timers.filter((x) => x.ms === 1000).pop().f();
   assert.equal(b.exposed.ui.openTaskId, null);
 });
 
@@ -123,7 +124,7 @@ test('Verbindungsfehler bei Abgabe: Unsicherheitstext, kein automatisches Wieder
   const text = b.dom.window.document.getElementById('notice').textContent;
   assert.match(text, /unterbrochen|nicht sicher|unklar|prüf/i);
   assert.match(text, /Abgabe|angekommen|gespeichert|sicher|prüf/i, 'benennt die Unsicherheit der Abgabe');
-  b.timers.forEach((t) => { if (t.ms >= 3000) t.f(); });
+  b.timers.forEach((t) => { if (t.ms >= 1000) t.f(); });
   await new Promise((r) => setImmediate(r));
   assert.equal(n, 1, 'keine automatische Wiederholung');
   assert.equal(b.exposed.ui.openTaskId, 't', 'Aufgabe bleibt offen');

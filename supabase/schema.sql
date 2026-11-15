@@ -199,10 +199,7 @@ update public.tasks set needs_choice = true where id = 'schaetz-vorname';
 
 -- Wortliste wird ausschließlich im geschützten Admin aus einer lokalen Datei importiert.
 
--- OFF-016: Wörter höchstens 9 Buchstaben; vorhandene längere Wörter entfallen (außer in einer laufenden Einteilung)
-delete from public.words w
- where char_length(w.word) > 9
-   and not exists (select 1 from public.group_tasks g where g.word_id = w.id);
+-- OFF-064: Keine maximale Wortlänge; die Admin-Wortliste bleibt vollständig erhalten.
 
 -- OFF-018: Bildadressen von Schach und Sudoku vorausfüllen, gespeicherte Adressen bleiben
 update public.tasks set image_url = 'aufgaben/schach.svg' where id = 'schach' and image_url is null;
@@ -811,7 +808,7 @@ begin
   select phase into ph from public.round where id=1 for update;
   if ph not in ('vorbereitet','anmeldung') then return jsonb_build_object('ok',false,'reason','falsche_phase'); end if;
   if p_words is null or cardinality(p_words)=0 or exists(select 1 from unnest(p_words) w
-    where w is null or upper(btrim(w)) !~ '^[A-Z]{1,9}$') then
+    where w is null or upper(btrim(w)) !~ '^[A-Z]+$') then
     return jsonb_build_object('ok',false,'reason','ungueltige_wortliste');
   end if;
   select array_agg(upper(btrim(w))) into ws from unnest(p_words) w;
@@ -866,10 +863,11 @@ declare
   pids uuid[];
   gnames text[];
   gid int; wid int; w text; nm text;
-  pos int; i int; j int; e int; mi int; q int; cnt int;
+  pos int; i int; j int; mi int;
   members uuid[];
   lets text[];
   tmp text;
+  letter_counts int[];
   used int[];
 begin
   if not public.is_admin_code(p_code) then return jsonb_build_object('ok', false, 'reason', 'nicht_berechtigt'); end if;
@@ -898,30 +896,25 @@ begin
     insert into public.groups (name) values (nm) returning id into gid;
     update public.players set group_id = gid where id = any(members);
 
-    -- Gruppengröße 1 (Testbetrieb): Wortlänge frei
+    -- OFF-064: jedes Admin-Wort ist unabhängig von der Gruppengröße auswählbar.
     wid := null;
-    select id, word into wid, w from public.words
-     where (sz = 1 or char_length(word) between sz and least(2 * sz, 9)) and id <> all(used)
-     order by random() limit 1;
+    select id, word into wid, w from public.words where id <> all(used) order by random() limit 1;
     if wid is null then
-      select id, word into wid, w from public.words
-       where sz = 1 or char_length(word) between sz and least(2 * sz, 9) order by random() limit 1;
+      select id, word into wid, w from public.words order by random() limit 1;
     end if;
-    if wid is null then raise exception 'kein passendes wort fuer gruppengroesse %', sz; end if;
+    if wid is null then raise exception 'keine Gruppenwoerter konfiguriert'; end if;
     used := used || wid;
     insert into public.group_tasks (group_id, word_id, solution) values (gid, wid, w);
 
-    -- Buchstaben mischen; Überschuss (Länge - Größe) an verschiedene zufällige Mitglieder
+    -- Alle Buchstaben werden gemischt und möglichst gleichmäßig auf die Mitglieder verteilt.
     select array_agg(c order by random()) into lets from regexp_split_to_table(w, '') c;
     select array_agg(m order by random()) into members from unnest(members) m;
-    e := char_length(w) - sz;
-    j := 1;
-    for mi in 1..sz loop
-      cnt := case when sz = 1 then char_length(w) when mi <= e then 2 else 1 end;
-      for q in 1..cnt loop
-        insert into public.letters (player_id, position, letter) values (members[mi], q, lets[j]);
-        j := j + 1;
-      end loop;
+    letter_counts := array_fill(0, ARRAY[sz]);
+    for j in 1..char_length(w) loop
+      mi := ((j - 1) % sz) + 1;
+      letter_counts[mi] := letter_counts[mi] + 1;
+      insert into public.letters (player_id, position, letter)
+        values (members[mi], letter_counts[mi], lets[j]);
     end loop;
   end loop;
 
@@ -1284,7 +1277,11 @@ language plpgsql security definer set search_path = public, extensions, pg_temp
 as $$
 declare r public.round; rk_all jsonb;
 begin
-  if p_token is null or not exists(select 1 from public.display_tokens where token_hash=digest(p_token,'sha256')) then
+  if not (
+    (p_token is not null and exists(select 1 from public.display_tokens where token_hash=digest(p_token,'sha256')))
+    or (p_token is null and auth.uid() is not null
+      and exists(select 1 from public.players where id=auth.uid()))
+  ) then
     return jsonb_build_object('ok',false,'reason','nicht_berechtigt');
   end if;
   perform public.expire_game();
@@ -1296,9 +1293,8 @@ begin
     'finished',r.phase='aufgabe_abgeschlossen','participants_count',(select count(*) from public.players),
     'groups',coalesce((select jsonb_agg(jsonb_build_object('name',g.name,
       'solved',coalesce(rs.outcome='solved',false),'word_completed',rs.group_id is not null,
-      'members',case when rs.group_id is null then
-        coalesce((select jsonb_agg(p.name order by p.joined_at,p.name) from public.players p where p.group_id=g.id),'[]'::jsonb)
-        else '[]'::jsonb end) order by g.name)
+      'members',coalesce((select jsonb_agg(p.name order by p.joined_at,p.name)
+        from public.players p where p.group_id=g.id),'[]'::jsonb)) order by g.name)
       from public.groups g left join public.results rs on rs.group_id=g.id),'[]'::jsonb),
     'ranking',coalesce((select jsonb_agg(jsonb_build_object('group',z.name,'points',z.points,'rank',z.rank) order by z.rank,z.name)
       from (select g.name,coalesce(sum(x.pts),0)::int as points,

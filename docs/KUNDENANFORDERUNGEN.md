@@ -106,6 +106,8 @@ Diese Vorschläge sind **keine maßgebliche Quelle**. Maßgeblich sind die Entsc
 | SWA-062 | Admin-Wörter werden ohne automatische Längen-/Schwierigkeitsfilter ausgewählt; Buchstabenverteilung ist unabhängig von Wortlänge. | KAN-056 | Jedes gültige A–Z-Wort wird akzeptiert; jedes Zeichen genau einmal, Anzahl je Mitglied unterscheidet sich höchstens um eins. |
 | SWA-063 | Beamerzugriff ist zusätzlich mit einer registrierten Supabase-Spielersitzung möglich und bleibt read-only. | KAN-057 | Nur registrierte Spieler erhalten die Anzeige; anonyme Nichtspieler ohne Token werden abgewiesen; keine Steuerungselemente. |
 | SWA-064 | Aufgeben-Hinweise unterscheiden Starträtsel und Folgeaufgaben. | KAN-058 | Null-Punkte-Hinweis immer; Spielleiter-Hinweis ausschließlich beim Gruppenwort. |
+| SWA-065 | Spieler-Beamer erhält ein eigenes kompaktes Smartphone-Layout. | KAN-059 | Vertikale Rangliste mit kompaktem Countdown, Rang, Gruppe, Punkten und darunterstehenden Mitgliedernamen; read-only und live. |
+| SWA-066 | Klassischer Beamer erhält ein eigenes 16:9-Layout für 1920×1080. | KAN-060 | Breite, gut lesbare Rangliste; Gruppen und Punkte bleiben sichtbar, ohne horizontales Scrollen. |
 
 ## 5. Ergänzende Kundenanforderungen (OFF-065)
 

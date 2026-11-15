@@ -515,6 +515,10 @@ body.admin-page {
 .beamer-projector [data-game-countdown] {
   font-size: clamp(2rem, 4vw, 4.5rem);
 }
+.beamer-projector .countdown {
+  font-size: clamp(2rem, 4vw, 4.5rem);
+  line-height: 1.05;
+}
 .beamer-projector .count {
   margin: 0;
   font-size: clamp(1rem, 1.4vw, 1.5rem);
@@ -566,6 +570,7 @@ body.admin-page {
 }
 .beamer-player .game-clock strong { font-size: 0.85em; }
 .beamer-player [data-game-countdown] { font-size: 1.35rem; }
+.beamer-player .countdown { font-size: 1.8rem; line-height: 1.05; }
 .beamer-player .time-warning { font-size: 0.8rem; }
 .beamer-player .count {
   margin: 0;

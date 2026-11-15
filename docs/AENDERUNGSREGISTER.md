@@ -1,6 +1,6 @@
 # Änderungsregister – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-007 | **Version:** 0.63 | **Datum:** 14.11.2026
+**Dokument-ID:** DOC-007 | **Version:** 0.64 | **Datum:** 15.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 

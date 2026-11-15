@@ -947,7 +947,8 @@ export function renderBeamer(root, overview, nowMs = Date.now()) {
     commit(liveRoot, root, 'beamer:connecting');
     return;
   }
-  const wrap = el(doc, 'section', { cls: 'beamer stack' });
+  const modeClass = doc.body.classList.contains('player-beamer-page') ? 'beamer-player' : 'beamer-projector';
+  const wrap = el(doc, 'section', { cls: `beamer stack ${modeClass}` });
   wrap.append(el(doc, 'h1', { text: phaseText(overview.phase) }));
   if (overview.phase === 'anmeldung') {
     const secs = remainingOf(overview, nowMs);

@@ -125,3 +125,11 @@ Seit AEN-022 Teil dieses Dokuments (zuvor DOC-005). **Status: Entwurf, nicht fre
 | UNA-043 | Aufgabencluster und Schwierigkeits-Tags / ARC-001 | SWA-059, SWA-060 | Clusterbutton zeigt `erledigt/Gesamtzahl erledigt`; Schwierigkeit erscheint in Spieler-Detail, Spielerübersicht und Admin-Aufgabenansicht als farbiger Tag mit Klartext. |
 | UNA-044 | Antwort- und Aufgeben-Rückmeldung / ARC-001 | SWA-061, SWA-064 | Gemeinsame UI-Rückmeldezeit 1000 ms für Wort- und Folgeaufgaben, richtige und falsche Antworten; die unabhängige serverseitige Startwort-Drosselung bleibt bei 3000 ms. Aufgeben bestätigt bei jeder Aufgabe 0 Punkte; der Zusatz zur Übernahme der Spielleiterrolle erscheint nur beim Starträtsel. |
 | UNA-045 | Wortauswahl und Buchstabenverteilung / ARC-003, ARC-004 | SWA-062 | Admin-Wortliste ohne maximale Länge; `admin_form_groups` filtert nicht nach Gruppengröße oder Wortschwierigkeit. Gemischte Zeichen werden zyklisch auf gemischte Mitglieder verteilt; Anzahl je Mitglied differiert höchstens um eins. |
+
+## Ergänzung OFF-065–068
+
+| ID | Komponente | Quelle | Vertrag |
+|---|---|---|---|
+| UNA-046 | Bestenlistenlayouts / ARC-012 | SWA-065, SWA-066, SWA-067 | views.js und style.css: mobile vertikale Liste, Projektor eine Zeile pro Team und Statistik rechts; gleiche Live-Daten. |
+| UNA-047 | Spielleiterübersicht / ARC-001 | SWA-068 | player.js ergänzt bestehenden read-only Beamer-RPC; Fehler dürfen Spielfunktion nicht blockieren. views.js zeigt Punkte/Platz/Fortschritt und unterdrückt Link. |
+| UNA-048 | Weihnachtsdekoration / ARC-001, ARC-012 | SWA-069 | CSS mit eingebettetem WebP, bestehende Schriftarten; keine Datenbankänderung. |

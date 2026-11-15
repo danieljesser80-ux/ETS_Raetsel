@@ -1,6 +1,6 @@
 # Kundenanforderungen – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-002 | **Version:** 0.19 | **Datum:** 14.11.2026
+**Dokument-ID:** DOC-002 | **Version:** 0.20 | **Datum:** 15.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 
@@ -106,3 +106,10 @@ Diese Vorschläge sind **keine maßgebliche Quelle**. Maßgeblich sind die Entsc
 | SWA-062 | Admin-Wörter werden ohne automatische Längen-/Schwierigkeitsfilter ausgewählt; Buchstabenverteilung ist unabhängig von Wortlänge. | KAN-056 | Jedes gültige A–Z-Wort wird akzeptiert; jedes Zeichen genau einmal, Anzahl je Mitglied unterscheidet sich höchstens um eins. |
 | SWA-063 | Beamerzugriff ist zusätzlich mit einer registrierten Supabase-Spielersitzung möglich und bleibt read-only. | KAN-057 | Nur registrierte Spieler erhalten die Anzeige; anonyme Nichtspieler ohne Token werden abgewiesen; keine Steuerungselemente. |
 | SWA-064 | Aufgeben-Hinweise unterscheiden Starträtsel und Folgeaufgaben. | KAN-058 | Null-Punkte-Hinweis immer; Spielleiter-Hinweis ausschließlich beim Gruppenwort. |
+
+## 5. Ergänzende Kundenanforderungen (OFF-065)
+
+| ID | Anforderung | Status | Abnahmekriterium |
+|---|---|---|---|
+| KAN-059 | Spieler erhalten eine eigenständige, kompakte Bestenlistenansicht für Smartphones. | Bestätigt (OFF-065) | Rang, Gruppenname und Punkte sind klar erkennbar; Spielernamen stehen kleiner darunter; Spielzeit bleibt kompakt; Anzeige ist read-only und aktualisiert live. |
+| KAN-060 | Die klassische Beameransicht ist als breite 16:9-Bestenliste für 1920×1080 optimiert. | Bestätigt (OFF-065) | Gruppen, Mitglieder und Punkte sind aus Entfernung gut lesbar; möglichst alle Gruppen sind ohne unnötiges Scrollen sichtbar; Daten entsprechen der Live-Rangliste. |

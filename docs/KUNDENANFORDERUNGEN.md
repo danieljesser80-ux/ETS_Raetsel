@@ -115,3 +115,17 @@ Diese Vorschläge sind **keine maßgebliche Quelle**. Maßgeblich sind die Entsc
 |---|---|---|---|
 | KAN-059 | Spieler erhalten eine eigenständige, kompakte Bestenlistenansicht für Smartphones. | Bestätigt (OFF-065) | Rang, Gruppenname und Punkte sind klar erkennbar; Spielernamen stehen kleiner darunter; Spielzeit bleibt kompakt; Anzeige ist read-only und aktualisiert live. |
 | KAN-060 | Die klassische Beameransicht ist als breite 16:9-Bestenliste für 1920×1080 optimiert. | Bestätigt (OFF-065) | Gruppen, Mitglieder und Punkte sind aus Entfernung gut lesbar; möglichst alle Gruppen sind ohne unnötiges Scrollen sichtbar; Daten entsprechen der Live-Rangliste. |
+
+## 6. Ergänzungen OFF-066–068
+
+| ID | Anforderung | Status | Abnahmekriterium |
+|---|---|---|---|
+| KAN-061 | Projektor eine Zeile je Team, Statistik rechts; Titel Bestenliste. | Bestätigt | Mitglieder in Klammern, Punkte rechts, Spielzeit/Teilnehmer/Gruppen rechts; kein Spiel läuft. |
+| KAN-062 | Spielleiter kompakte Live-Übersicht ohne Bestenlistenlink. | Bestätigt | Punkte, Platz, Aufgabenfortschritt; Hinweis Spielleiter nur Startaufgabe. |
+| KAN-063 | Weihnachtsdekoration im bestehenden Geheimakten-Stil. | Bestätigt, visuell abgenommen | Realistische Tannen/Lichter, Special Elite/Courier Prime, lesbare Rangliste. |
+
+| ID | Softwareanforderung | Quelle | Kriterium |
+|---|---|---|---|
+| SWA-067 | Projektor einspaltige Rangliste mit separater Statistikspalte. | KAN-061 | Reihenfolge, Namen, Punkte bleiben sichtbar; 25 Gruppen gesondert prüfen. |
+| SWA-068 | Spieleransicht zeigt Live-Gesamtwertung für Spielleiter, ohne Bestenlistenlink. | KAN-062 | Read-only-RPC, Aufgabenfortschritt, bestehende Spielregeln unverändert. |
+| SWA-069 | Dekoration lokal eingebettet, responsive, bestehende Fonts. | KAN-063 | Keine SQL- oder Spielregeländerung; visuelle Abnahme. |

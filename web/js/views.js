@@ -340,7 +340,7 @@ function taskOverview(doc, state, handlers, nowMs) {
   out.push(
     el(doc, 'p', {
       text: isLeader
-        ? 'Du bist Spielleiter. Öffnen startet die Zeit. Drei exakte Versuche, eine Schätzung.'
+        ? 'Öffnen startet die Zeit. Drei exakte Versuche, eine Schätzung.'
         : `Euer Spielleiter${state.leader_name ? ` (${state.leader_name})` : ''} öffnet die Rätsel und gibt die Antworten ein.`,
     }),
   );
@@ -450,6 +450,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
       card.append(...taskView(doc, state, openTask, handlers, nowMs));
     } else {
       card.classList.add('player-overview');
+      if (state.leader === true) card.classList.add('mission-leader');
       card.append(el(doc, 'h2', { cls: 'player-group-name', text: group.name }));
       const list = el(doc, 'ul', { cls: 'members', attrs: { 'aria-label': 'Mitglieder eurer Gruppe' } });
       for (const m of group.members || []) {
@@ -467,6 +468,16 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
               : `Wort gelöst! Vorläufig Platz ${state.solved.rank}`,
           }),
         );
+        if (state.leader === true) {
+          const tasks = state.tasks || [];
+          const completed = tasks.filter(t => t.submitted === true).length;
+          const standing = state.final || state.liveStanding;
+          card.append(el(doc, 'div', { cls: 'mission-progress' }, [
+            el(doc, 'span', { text: `${standing?.points ?? '–'} Punkte` }),
+            el(doc, 'span', { text: `Platz ${standing?.rank ?? '–'}` }),
+            el(doc, 'span', { text: `${completed}/${tasks.length} erledigt` }),
+          ]));
+        }
         card.append(...taskOverview(doc, state, handlers, nowMs));
       } else {
         const letters = el(doc, 'div', { cls: 'letters', attrs: { 'aria-label': 'Deine Buchstaben' } });
@@ -510,9 +521,9 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
   } else {
     card.append(el(doc, 'p', { text: phaseText(phase) }));
   }
-  if (state.joined) {
+  if (state.joined && state.leader !== true) {
     card.append(el(doc, 'p', { cls: 'beamer-link' }, [
-      el(doc, 'a', { text: 'Beamer-Ansicht auf diesem Gerät öffnen', attrs: {
+      el(doc, 'a', { text: 'Bestenliste auf diesem Gerät öffnen', attrs: {
         href: 'beamer.html?mode=player', target: '_blank', rel: 'noopener',
       } }),
     ]));
@@ -949,18 +960,19 @@ export function renderBeamer(root, overview, nowMs = Date.now()) {
   }
   const modeClass = doc.body.classList.contains('player-beamer-page') ? 'beamer-player' : 'beamer-projector';
   const wrap = el(doc, 'section', { cls: `beamer stack ${modeClass}` });
-  wrap.append(el(doc, 'h1', { text: phaseText(overview.phase) }));
+  wrap.append(el(doc, 'h1', { text: 'Bestenliste' }));
+  const info = el(doc, 'aside', { cls: 'mission-info' });
   if (overview.phase === 'anmeldung') {
     const secs = remainingOf(overview, nowMs);
-    if (secs !== null && secs > 0) wrap.append(countdownBox(doc, secs));
+    if (secs !== null && secs > 0) info.append(countdownBox(doc, secs));
   }
   const clock = gameClock(doc, overview, nowMs);
-  if (clock) wrap.append(clock);
-  wrap.append(
-    el(doc, 'p', { cls: 'count', text: `Teilnehmer: ${overview.participants_count ?? (overview.players || []).length}` }),
-    sectionTitle(doc, 'Rangliste'),
-    rankingList(doc, overview.ranking, true, overview.groups, true),
-  );
+  if (clock) info.append(clock);
+  info.append(el(doc, 'p', { cls: 'count', text: `Teilnehmer: ${overview.participants_count ?? (overview.players || []).length}` }),
+    el(doc, 'p', { cls: 'count', text: `Gruppen: ${(overview.groups || []).length}` }));
+  const ranking = rankingList(doc, overview.ranking, true, overview.groups, true);
+  ranking.style.setProperty('--team-count', String(Math.max(1, ranking.children.length)));
+  wrap.append(info, ranking);
   root.appendChild(wrap);
   commit(liveRoot, root, `beamer:${overview.phase}`);
 }

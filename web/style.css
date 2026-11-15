@@ -629,3 +629,31 @@ body.admin-page {
   .beamer-player { padding: 0.5rem; }
   .beamer-player .ranking { font-size: 0.88rem; }
 }
+
+
+/* OFF-066/067: Geheime Weihnachtsmission */
+.beamer-player h1,.beamer-projector h1,.mission-leader .player-group-name {
+  background:#101317;color:var(--gold);border-bottom:4px solid var(--red);
+  padding:.65em .5em;text-align:center;
+}
+.beamer-player .mission-info,.beamer-projector .mission-info {
+  background:#101317;color:var(--paper);border-top:4px solid var(--red);padding:.75rem;
+}
+.mission-info .game-clock [data-game-countdown]{color:var(--gold)}
+.beamer-player .mission-info .count{display:inline-block;margin:.25rem .6rem .25rem 0}
+.beamer .ranking li:first-child{background:var(--gold);border-left:3px solid var(--red)}
+.beamer .ranking li:nth-child(2),.beamer .ranking li:nth-child(3){background:#d9cbb2}
+.beamer-projector{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:1rem;box-sizing:border-box}
+.beamer-projector h1{grid-column:1/-1}
+.beamer-projector .mission-info{grid-column:2;grid-row:2;align-self:start;text-align:center;min-width:0}
+.beamer-projector .mission-info .game-clock{flex-direction:column;align-items:center}
+.beamer-projector .mission-info .count{padding:1rem 0;border-top:1px dashed #887762}
+.beamer-projector .ranking{grid-column:1;grid-row:2;display:flex;flex-direction:column;gap:0;min-width:0;overflow:auto;font-size:clamp(.8rem,calc(36vh / var(--team-count)),1.8rem)}
+.beamer-projector .ranking li{flex:0 0 auto;padding:clamp(.12rem,calc(10vh / var(--team-count)),.55rem) .4rem;align-items:center}
+.beamer-projector .ranking .rname{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.beamer-projector .ranking .group-members{display:inline;font-size:.72em}
+.mission-leader .category-toggle{background:#d9cbb2;border-left:5px solid var(--red);color:var(--ink);text-align:left}
+.mission-leader .mission-progress{background:#101317;color:var(--gold);padding:.65rem;text-align:center;font-weight:bold}
+.mission-leader .task{border:1px solid #887762;padding:.65rem}
+
+.mission-progress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.3rem;font-size:.9rem}.mission-progress span+span{border-left:1px dashed #887762}

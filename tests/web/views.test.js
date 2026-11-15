@@ -341,7 +341,10 @@ test('TST-S-026: Übersicht: Rätsel öffnen per Titel, keine Formulare, Markier
   const tasks = [...TASKS, { ...TASKS[0], id: 'x-falsch', title: 'Falsch', submitted: true, correct: false },
     { ...TASKS[0], id: 'x-richtig', title: 'Richtig', submitted: true, correct: true }];
   renderPlayer(root, activeState({ solved: { rank: 1 }, leader: true, tasks }), h, NOW);
-  assert.match(textOf(root), /Spielleiter/);
+  assert.doesNotMatch(textOf(root), /Spielleiter/);
+  assert.ok(root.querySelector('.mission-leader'));
+  assert.equal(root.querySelector('.beamer-link'), null);
+  assert.match(root.querySelector('.mission-progress').textContent, /3\/7 erledigt/);
   assert.match(textOf(root), /Noch nicht verfügbar/);
   assert.match(textOf(root), /Geschätzt – vorläufig Platz 1/);
   assert.match(textOf(root), /✓ Richtig/);

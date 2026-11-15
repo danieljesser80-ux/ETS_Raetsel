@@ -1,6 +1,6 @@
 # Testkonzept und Testspezifikation – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-006 | **Version:** 0.27 | **Datum:** 15.11.2026
+**Dokument-ID:** DOC-006 | **Version:** 0.28 | **Datum:** 15.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 
@@ -75,3 +75,16 @@ Unit-Tests prüfen Komponentenverträge; Integrationstests prüfen reale Schnitt
 ## 2. Testprotokolle
 
 Ausführungsnachweise werden getrennt von dieser Spezifikation je Testlauf unter `testprotokolle/` abgelegt. Ein Protokoll enthält die Angaben aus Abschnitt 1.1 und verweist auf die ausgeführten TST-IDs sowie den geprüften Dokument-/Softwarestand. Automatisierte Tests liegen unter `tests/` (Befehl `npm test`) und tragen die TST-ID im Titel. Erster Lauf: [Lauf 001](../testprotokolle/lauf-001.md).
+
+## Ergänzende Nachweise und Prüfungen OFF-065–068
+
+| ID | Quelle | Prüfung / Status |
+|---|---|---|
+| TST-K-061 | KAN-061 | Projektor 1920×1080, 25 Gruppen, Namen/Punkte und rechte Statistik; Einzelprüfung offen. |
+| TST-K-062 | KAN-062 | Spielleiter Live-Punkte/Platz/Fortschritt und kein Link; separate Kundenprüfung nicht dokumentiert. |
+| TST-K-063 | KAN-063 | Weihnachtsdesign auf Pages; 15.11.2026 ausdrücklich abgenommen trotz Vorschauabweichung. |
+| TST-S-067 | SWA-067, UNA-046 | Layout und Live-Daten; gezielte 25-Gruppen-Browserprüfung offen. |
+| TST-S-068 | SWA-068, UNA-047 | TST-S-026 prüft Übersicht, kein Spielleitertext, Fortschritt und bestehende Aufgabenfunktionen; CI #60 grün. Live-Gesamtwertung separat prüfen. |
+| TST-S-069 | SWA-069, UNA-048 | CSS-Dekoration ohne SQL; CI #65 grün, visuelle Abnahme bestätigt. |
+
+CI-Nachweise: [#60](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/runs/43736274332), [#65](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/runs/43741697546). Keine Aussage über nicht ausgeführte Einzelprüfungen.

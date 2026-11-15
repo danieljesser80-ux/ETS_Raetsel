@@ -60,6 +60,12 @@ const sync = createRefreshLoop({
     await api.ensureSession();
     const s = await api.getState();
     if (!s || !s.ok) throw new Error(reasonText(s?.reason));
+    if (s.leader === true && s.group && s.phase !== 'aufgabe_abgeschlossen') {
+      try {
+        const board = await api.beamerState(null);
+        if (board?.ok) s.liveStanding = (board.ranking || []).find(r => r.group === s.group.name) || null;
+      } catch { /* Ranking unavailable: retain normal gameplay. */ }
+    }
     return s;
   },
   apply(s) {

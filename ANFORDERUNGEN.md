@@ -2,7 +2,9 @@
 
 ## 0. Sitzungseinstieg und aktueller Arbeitsstand
 
-**Aktuelle Übergabe 15.11.2026:** OFF-065 ist in main (PR #4). OFF-066/067: Kundenfreigabe zur Umsetzung Variante 2; Draft-PR #5. Bestenliste mobil und Projektor, Projektor ein Team je Zeile mit rechter Infospalte; Spielleiter ohne Bestenlistenlink, Live-Gesamtwertung und Aufgabenfortschritt. Bestehender Spieler-Bestenlisten-RPC wird zusätzlich abgefragt; keine SQL-Änderung. Tests, visuelle Prüfung und Merge-Freigabe offen. Die nachfolgenden älteren Angaben zu OFF-064 sind historisch.
+**Weihnachtsdekoration (15.11.2026):** Kundenfreigabe für Mix aus realistischen Tannenzweigen, warmen Lichtern und bestehendem Geheimakten-Stil. CSS mit eingebettetem WebP-Ausschnitt aus der freigegebenen Vorschau, Special Elite/Courier Prime unverändert; Spielleiter und beide Bestenlisten, keine Spielregel- oder SQL-Änderung. Automatisierte Tests vor Merge, visuelle Abnahme auf GitHub Pages nach Merge; insbesondere 25 Gruppen bei 1920×1080 und Handybreite prüfen.
+
+**Aktuelle Übergabe 15.11.2026:** OFF-065 ist in main (PR #4). OFF-066/067: Kundenfreigabe zur Umsetzung Variante 2; PR #5 in main (d5e82e0), Tests grün. Bestenliste mobil und Projektor, Projektor ein Team je Zeile mit rechter Infospalte; Spielleiter ohne Bestenlistenlink, Live-Gesamtwertung und Aufgabenfortschritt. Bestehender Spieler-Bestenlisten-RPC wird zusätzlich abgefragt; keine SQL-Änderung. Visuelle Prüfung offen. Die nachfolgenden älteren Angaben zu OFF-064 sind historisch.
 
 
 **Stand: 14.11.2026 (AEN-062).** Dieser Abschnitt ist die maßgebliche kompakte Übergabe für neue Sitzungen, nicht die Freigabe eines Releases. Er ersetzt einen Starttext aus dem Chat. Zuerst diesen Abschnitt, das Dokumentverzeichnis (Abschnitt 2) und die verbindlichen Regeln in `docs\KONFIGURATIONSMANAGEMENT.md` lesen; weitere Quellen nur passend zur konkreten Nutzeraufgabe. Frühere Chats, Sitzungsdateien und historische Änderungsbeschreibungen sind für den normalen Einstieg nicht erforderlich.

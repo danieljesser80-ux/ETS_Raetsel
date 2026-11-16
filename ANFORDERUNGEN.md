@@ -17,7 +17,7 @@
 | Baseline | BL-001 Anforderungsbaseline freigegeben; BL-008 historisch eingefroren, nicht freigegeben. Neue Einsatzbaseline erst nach Generalprobe und Kundenfreigabe. |
 | Geheimnisse | Lösungen, Admincodes und private Schlüssel nicht ins Repository; keine Live-Daten in Testnachweisen. |
 
-**OFF-069 (16.11.2026):** Kunde beauftragt Annäherung an neue realistische Designreferenz. Papiertextur, dunkelrote Titelbanner, lokale Weihnachtsgrafik, Kacheln und Ranglisten; bestehende Fonts und Spiellogik unverändert. Visuelle Abnahme und 25-Gruppen-Prüfung offen; keine SQL-Änderung.
+**OFF-069 (16.11.2026):** Neue Designreferenz in PR #9 umgesetzt, CI #96 grün, Merge a0917e7. Kunde lehnt die tatsächliche Optik ab und verlangt Rückkehr zum abgenommenen Design aus PR #6. Rücknahme stellt CSS und Views exakt auf Stand vor PR #9 zurück und entfernt dessen zwei Assets. Keine SQL-Änderung. Rücknahmeprüfung vor Merge; bisherige Abnahme bleibt maßgeblich.
 
 **Pflege:** Tatsächliche Änderungen, Tests, Veröffentlichung und Abnahme getrennt dokumentieren. Historische Angaben nicht als aktuellen Stand ausgeben.
 

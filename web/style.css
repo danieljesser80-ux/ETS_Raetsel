@@ -687,3 +687,32 @@ body.admin-page {
 @media (max-width: 28rem) {
   .beamer-player h1, .mission-leader .player-group-name { padding: .75em 1em; background-size: 100% 100%, auto 85%, auto 85%; }
 }
+
+/* OFF-069: reference design, scoped to mission views. */
+.beamer,.mission-leader{--mission-paper:url("assets/mission-paper.svg");--mission-fir:url("assets/mission-fir.svg");font-family:"Courier Prime",monospace}
+.beamer{background:#24160f;color:#24160f;padding:clamp(.5rem,1.5vw,1.5rem);border:1px solid #785334}
+.beamer h1,.mission-leader .mission-banner{position:relative;isolation:isolate;background:linear-gradient(90deg,#30190e,#7c1715 30%,#7c1715 70%,#30190e);color:#ffe5b3;text-shadow:1px 2px #35110b;font-family:"Special Elite",monospace;text-align:center;border:2px solid #cda05b;box-shadow:0 4px 8px #0006;padding:1rem 20%;margin:0;overflow:hidden}
+.beamer h1::before,.beamer h1::after,.mission-banner::before,.mission-banner::after{content:"";position:absolute;z-index:-1;inset:0 auto 0 0;width:24%;background:var(--mission-fir) center/cover no-repeat;mask-image:linear-gradient(90deg,#000 65%,transparent)}
+.beamer h1::after,.mission-banner::after{left:auto;right:0;transform:scaleX(-1)}
+.beamer h1 small,.mission-banner small{display:block;font-size:.55em;letter-spacing:.08em;margin-top:.4em}
+.beamer .mission-info,.mission-leader{background-color:#efd1a0;background-image:linear-gradient(#ffe5b333,#b8792933),var(--mission-paper);color:#29170d;border:2px solid #9a6634;box-shadow:inset 0 0 16px #8b512d55,0 3px 8px #0004}
+.beamer .mission-info{padding:.65rem;text-align:center}
+.mission-info .game-clock [data-game-countdown]{color:#801b19}
+.beamer .ranking{background:#efd1a0 var(--mission-paper);border:2px solid #9a6634;box-shadow:0 4px 8px #0005;padding:.25rem;margin:0}
+.beamer .ranking li{border-bottom:1px solid #aa7a49;background:linear-gradient(90deg,#fff1c766,#d8a66b44),var(--mission-paper);color:#29170d}
+.beamer .ranking li:first-child{background:linear-gradient(90deg,#e5a82d,#ffe5a0)}
+.beamer .ranking li:nth-child(2){background:linear-gradient(90deg,#b5b3ad,#eee7d9)}
+.beamer .ranking li:nth-child(3){background:linear-gradient(90deg,#b76c36,#efc497)}
+.mission-leader .player-group-name{background:none;color:#7b1816;border:0;text-shadow:none;padding:.5rem;font-size:1.6rem}
+.mission-leader .mission-progress{background:none;border:0;box-shadow:none;padding:0;gap:.35rem}
+.mission-leader .mission-progress span{background:linear-gradient(145deg,#36291d,#17130f);color:#ffe2a0;border:1px solid #aa793c;padding:.7rem .2rem;box-shadow:0 3px 5px #0004}
+.mission-leader .category-toggle{background:linear-gradient(#fbe2b5,#d7ad75);border:1px solid #a5723e;box-shadow:0 2px 3px #0003;color:#321c10}
+.mission-leader .task{background:#f5dcb3 var(--mission-paper);border:1px solid #a5723e}
+.beamer-projector{grid-template-columns:minmax(0,3fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:.65rem}
+.beamer-projector h1{font-size:clamp(1.5rem,3vw,3rem);padding:.6rem 20%}
+.beamer-projector .ranking{font-size:clamp(.85rem,calc(43vh / var(--team-count)),1.9rem);overflow:auto}
+.beamer-projector .ranking li{padding:clamp(.08rem,calc(7vh / var(--team-count)),.45rem) .4rem}
+.beamer-projector .mission-info .count{border-color:#a5723e}
+.beamer-player h1,.mission-leader .mission-banner{font-size:1.3rem;padding:.85rem 20%}
+.beamer-player .mission-info{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:.4rem}
+.beamer-player .mission-info .count{margin:0}

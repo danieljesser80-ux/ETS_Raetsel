@@ -450,7 +450,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
       card.append(...taskView(doc, state, openTask, handlers, nowMs));
     } else {
       card.classList.add('player-overview');
-      if (state.leader === true) { card.classList.add('mission-leader'); card.append(el(doc, 'h2', { cls: 'mission-banner', text: 'Geheime Weihnachtsmission' })); }
+      if (state.leader === true) card.classList.add('mission-leader');
       card.append(el(doc, 'h2', { cls: 'player-group-name', text: group.name }));
       const list = el(doc, 'ul', { cls: 'members', attrs: { 'aria-label': 'Mitglieder eurer Gruppe' } });
       for (const m of group.members || []) {
@@ -960,7 +960,7 @@ export function renderBeamer(root, overview, nowMs = Date.now()) {
   }
   const modeClass = doc.body.classList.contains('player-beamer-page') ? 'beamer-player' : 'beamer-projector';
   const wrap = el(doc, 'section', { cls: `beamer stack ${modeClass}` });
-  wrap.append(el(doc, 'h1', { text: 'Geheime Weihnachtsmission' }, [el(doc, 'small', { text: 'Bestenliste' })]));
+  wrap.append(el(doc, 'h1', { text: 'Bestenliste' }));
   const info = el(doc, 'aside', { cls: 'mission-info' });
   if (overview.phase === 'anmeldung') {
     const secs = remainingOf(overview, nowMs);

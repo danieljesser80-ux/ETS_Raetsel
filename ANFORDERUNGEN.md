@@ -12,7 +12,7 @@
 | Tests und Abnahme | Testlauf #60 und #65 erfolgreich; Weihnachtsdesign am 15.11. ausdrücklich abgenommen trotz Abweichung von Vorschau (88d14ae). Einzelprüfung 25 Gruppen/1920×1080 und Handybreite nicht separat bestätigt. |
 | Supabase | Kunde bestätigte Schema-Update, Cron, Anonymous Sign-Ins, Adminzugang, Reset und Vorbereitung; neuere Designänderungen ohne SQL. Live-Konfiguration nicht erneut geprüft. |
 | Aufgaben | Import OFF-062/063 vom Kunden erfolgreich geprüft; zuletzt dokumentiert fehlende Lösungen Locker, Lampen, zwei Geocaching-Aufgaben, Wissensquiz und Geocaching-Bilder. Aktueller Inhalt vom Kunden zu bestätigen. |
-| Offene Arbeiten | OFF-056 reale Generalprobe mit zwei Gruppen; finale Aufgabenbestätigung; Lastmessung bis 100 Teilnehmer/25 Gruppen, Geräteprüfung; finale Baseline und Gesamtfreigabe. Keine bekannte neue Fehlerbehebung beauftragt. |
+| Offene Arbeiten | OFF-056 reale Generalprobe mit zwei Gruppen ([Ablauf und Protokoll](testprotokolle/generalprobe-off-056.md), vorbereitet, nicht ausgeführt); finale Aufgabenbestätigung; Lastmessung bis 100 Teilnehmer/25 Gruppen, Geräteprüfung; finale Baseline und Gesamtfreigabe. Keine bekannte neue Fehlerbehebung beauftragt. |
 | Performance | OFF-058–061 implementiert; reale Mehrverbindungs-/Lastmessung, EXPLAIN, Nutzlast- und Browservergleich nicht nachgewiesen. |
 | Baseline | BL-001 Anforderungsbaseline freigegeben; BL-008 historisch eingefroren, nicht freigegeben. Neue Einsatzbaseline erst nach Generalprobe und Kundenfreigabe. |
 | Geheimnisse | Lösungen, Admincodes und private Schlüssel nicht ins Repository; keine Live-Daten in Testnachweisen. |

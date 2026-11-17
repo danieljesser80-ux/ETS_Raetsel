@@ -48,6 +48,7 @@ function setFeedback(scope, kind, text, { closeTask = false, persistent = false 
   clearTimeout(feedbackTimer);
   ui.feedback = { scope, kind, text, accepted: closeTask };
   draw();
+  if (persistent) return;
   feedbackTimer = setTimeout(() => {
     ui.feedback = null;
     if (closeTask) ui.openTaskId = null;

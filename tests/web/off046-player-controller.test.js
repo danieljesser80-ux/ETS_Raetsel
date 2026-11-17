@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { stateKey } from '../../web/js/clientcache.js';
 import { giveUpConfirmation } from '../../web/js/texts.js';
+import { ANSWER_FEEDBACK_MS } from '../../web/js/feedback.js';
 
 const SRC = readFileSync(new URL('../../web/js/player.js', import.meta.url), 'utf8');
 
@@ -35,7 +36,7 @@ async function boot({ api = {}, state = { ok: true, phase: 'wortaufgabe_aktiv', 
         async request() { cur = await cfg.load(); cfg.apply(cur); },
       };
     },
-    stateKey, 1000,
+    stateKey, ANSWER_FEEDBACK_MS,
     (f, ms) => { timers.push({ f, ms }); return timers.length; }, () => {}, () => 1,
     (t) => { confirms.push(t); return confirms.answer ?? true; });
   await new Promise((r) => setImmediate(r));
@@ -59,7 +60,7 @@ test('TST-S-042: Spieleransicht zeichnet bei nur geaenderter Serverzeit nicht ne
   assert.equal(b.draws.length, afterSame + 1, 'geaenderter Zustand: Render');
 });
 
-test('Falsche Antwort 1 und 2 schliessen die Aufgabe nicht, die endgueltige dritte schliesst nach 1 s', async () => {
+test('TST-S-072: Falschmeldung bei verbleibenden Versuchen bleibt ohne Timeout sichtbar', async () => {
   const wrong = [{ ok: true, correct: false, attempts_remaining: 2, submitted: false },
     { ok: true, correct: false, attempts_remaining: 1, submitted: false },
     { ok: true, correct: false, attempts_remaining: 0, submitted: true }];
@@ -67,27 +68,34 @@ test('Falsche Antwort 1 und 2 schliessen die Aufgabe nicht, die endgueltige drit
   const st = { ok: true, phase: 'wortaufgabe_aktiv', tasks: [{ id: 't', started: true }] };
   const b = await boot({ api: { submitTask: async () => wrong[i++] }, state: st });
   await b.h().onOpenTask('t');
-  assert.equal(b.exposed.ui.openTaskId, 't');
-  for (const k of [0, 1]) {
+  for (const remaining of [2, 1]) {
+    const before = b.timers.length;
     await b.h().onSubmitTask('t', 'x');
-    const t = b.timers.filter((x) => x.ms === 1000).pop();
-    t.f();
-    assert.equal(b.exposed.ui.openTaskId, 't', `Versuch ${k + 1}: Aufgabe bleibt offen`);
-    assert.equal(b.last().state.feedback, null);
+    assert.equal(b.exposed.ui.openTaskId, 't', 'Aufgabe bleibt offen');
+    assert.match(b.last().state.feedback.text, new RegExp('Falsch.*' + remaining));
+    assert.equal(b.timers.length, before, 'kein automatischer Timeout für erneuten Versuch');
   }
   await b.h().onSubmitTask('t', 'x');
-  assert.equal(b.last().state.feedback.accepted, true, 'endgueltig');
-  b.timers.filter((x) => x.ms === 1000).pop().f();
+  assert.equal(b.last().state.feedback.accepted, true, 'dritter Versuch endgültig');
+  const timer = b.timers.at(-1);
+  assert.equal(timer.ms, 3000);
+  timer.f();
   assert.equal(b.exposed.ui.openTaskId, null);
+  assert.equal(b.last().state.feedback, null);
 });
 
-test('Richtige Antwort schliesst nach 1 s', async () => {
+test('TST-S-073: Richtige Antwort zeigt drei Sekunden Feedback und schließt danach', async () => {
   const st = { ok: true, phase: 'wortaufgabe_aktiv', tasks: [{ id: 't', started: true }] };
   const b = await boot({ api: { submitTask: async () => ({ ok: true, correct: true }) }, state: st });
   await b.h().onOpenTask('t');
   await b.h().onSubmitTask('t', 'x');
-  b.timers.filter((x) => x.ms === 1000).pop().f();
+  assert.equal(b.exposed.ui.openTaskId, 't');
+  assert.equal(b.last().state.feedback.kind, 'success');
+  const timer = b.timers.at(-1);
+  assert.equal(timer.ms, 3000);
+  timer.f();
   assert.equal(b.exposed.ui.openTaskId, null);
+  assert.equal(b.last().state.feedback, null);
 });
 
 test('onGiveUp: Bestaetigung noetig, Abbruch sendet nichts, Zusage ruft giveUp(scope) genau einmal', async () => {
@@ -124,7 +132,7 @@ test('Verbindungsfehler bei Abgabe: Unsicherheitstext, kein automatisches Wieder
   const text = b.dom.window.document.getElementById('notice').textContent;
   assert.match(text, /unterbrochen|nicht sicher|unklar|prüf/i);
   assert.match(text, /Abgabe|angekommen|gespeichert|sicher|prüf/i, 'benennt die Unsicherheit der Abgabe');
-  b.timers.forEach((t) => { if (t.ms >= 1000) t.f(); });
+  b.timers.forEach((t) => { if (t.ms >= ANSWER_FEEDBACK_MS) t.f(); });
   await new Promise((r) => setImmediate(r));
   assert.equal(n, 1, 'keine automatische Wiederholung');
   assert.equal(b.exposed.ui.openTaskId, 't', 'Aufgabe bleibt offen');
@@ -148,4 +156,27 @@ test('Anleitungslink wird nur versteckt, solange eine Aufgabe sichtbar offen ist
   assert.match(SRC, /data-open-task/);
   assert.match(SRC, /guide/i);
   assert.match(SRC, /hidden/);
+});
+
+test('TST-S-074: Richtige Gruppenwortantwort zeigt Feedback für 3000 ms', async () => {
+  const st = { ok: true, phase: 'wortaufgabe_aktiv', tasks: [] };
+  const b = await boot({ api: { submitAnswer: async () => ({ ok: true, correct: true, rank: 1 }) }, state: st });
+  await b.h().onSubmit('LOESUNG');
+  assert.equal(b.last().state.feedback.scope, 'wort');
+  assert.equal(b.last().state.feedback.kind, 'success');
+  const timer = b.timers.at(-1);
+  assert.equal(timer.ms, 3000);
+  timer.f();
+  assert.equal(b.last().state.feedback, null);
+});
+
+test('TST-S-075: Beim Öffnen einer anderen Aufgabe wird altes Feedback entfernt', async () => {
+  const st = { ok: true, phase: 'wortaufgabe_aktiv', tasks: [{ id: 't', started: true }, { id: 'u', started: true }] };
+  const b = await boot({ api: { submitTask: async () => ({ ok: true, correct: false, attempts_remaining: 2, submitted: false }) }, state: st });
+  await b.h().onOpenTask('t');
+  await b.h().onSubmitTask('t', 'x');
+  assert.match(b.last().state.feedback.text, /Falsch/);
+  await b.h().onOpenTask('u');
+  assert.equal(b.exposed.ui.openTaskId, 'u');
+  assert.equal(b.last().state.feedback, null);
 });

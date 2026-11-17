@@ -344,7 +344,9 @@ test('TST-S-026: Übersicht: Rätsel öffnen per Titel, keine Formulare, Markier
   assert.doesNotMatch(textOf(root), /Spielleiter/);
   assert.ok(root.querySelector('.mission-leader'));
   assert.equal(root.querySelector('.beamer-link'), null);
-  assert.match(root.querySelector('.mission-progress').textContent, /3\/7 erledigt/);
+  assert.match(root.querySelector('.mission-progress').textContent, /3\/7/);
+  assert.doesNotMatch(root.querySelector('.mission-progress').textContent, /erledigt/i);
+  for (const toggle of root.querySelectorAll('.category-toggle')) assert.doesNotMatch(toggle.textContent, /erledigt/i);
   assert.match(textOf(root), /Noch nicht verfügbar/);
   assert.match(textOf(root), /Geschätzt – vorläufig Platz 1/);
   assert.match(textOf(root), /✓ Richtig/);
@@ -559,3 +561,13 @@ test('TST-S-007: renderMessage schreibt Text, kein HTML', () => {
 });
 
 void doc; void buttons;
+
+// OFF-070: Anzeige bei wiederholter Falschantwort bleibt sichtbar und Eingabe offen.
+test('TST-S-070: Wiederholbarer Fehlversuch zeigt Falsch neben aktiver Eingabe', () => {
+  const root = makeRoot();
+  const tasks = [{ ...TASKS[0], kind: 'exact', attempts_used: 1, attempts_remaining: 2, submitted: false, started: true, available: true }];
+  renderPlayer(root, activeState({ solved: { rank: 1 }, leader: true, tasks, openTaskId: 'schach',
+    feedback: { scope: 'schach', kind: 'error', text: 'Falsch – Noch 2 Versuche.' } }), H, NOW);
+  assert.match(root.querySelector('[data-feedback]').textContent, /Falsch.*Noch 2 Versuche/);
+  assert.equal(root.querySelector('input[name="task-schach"]').getAttribute('disabled'), null);
+});

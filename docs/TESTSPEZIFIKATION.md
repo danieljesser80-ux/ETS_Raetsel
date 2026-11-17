@@ -1,6 +1,6 @@
 # Testkonzept und Testspezifikation – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-006 | **Version:** 0.28 | **Datum:** 15.11.2026
+**Dokument-ID:** DOC-006 | **Version:** 0.29 | **Datum:** 17.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 
@@ -69,8 +69,8 @@ Unit-Tests prüfen Komponentenverträge; Integrationstests prüfen reale Schnitt
 | TST-U-007 | UNA-007 | Alle zulässigen Plätze und ungültige Konfigurationen gegen freigegebene Punkteformel; deterministische Ergebnisse ohne stillschweigende Ersatzwerte. |
 | TST-U-008 | UNA-008 | Zustandsdarstellung, Updates, Verbindungsfehler und erneuter Abruf; nur berechtigte persönliche Informationen sichtbar. |
 | TST-U-009 | UNA-009 | Rollenprüfung und Löschumfang nach ENT-012; keine unberechtigte Mutation und keine Löschung außerhalb der gewählten Runde. |
-| TST-U-035 | UNA-042, UNA-043, UNA-045 | Beamerzeile mit Klammern und Live-Punkten; Fortschrittsanzeige `erledigt/Gesamtzahl`; farbige Schwierigkeits-Tags; beliebige Wortlängen und gleichmäßige Buchstabenverteilung. |
-| TST-U-036 | UNA-044 | Gemeinsame UI-Rückmeldezeit von 1000 ms und differenzierter Aufgeben-Hinweis für Starträtsel/Folgeaufgaben; die serverseitige Antwortdrosselung bleibt unabhängig. |
+| TST-U-035 | UNA-042, UNA-043, UNA-045 | Beamerzeile mit Klammern und Live-Punkten; Fortschrittsanzeige `Anzahl/Gesamtzahl` ohne das Wort „erledigt“; farbige Schwierigkeits-Tags; beliebige Wortlängen und gleichmäßige Buchstabenverteilung. |
+| TST-U-036 | UNA-044 | Gemeinsame UI-Rückmeldezeit von 3000 ms und differenzierter Aufgeben-Hinweis für Starträtsel/Folgeaufgaben; die serverseitige Antwortdrosselung bleibt unabhängig. |
 
 ## 2. Testprotokolle
 
@@ -88,3 +88,58 @@ Ausführungsnachweise werden getrennt von dieser Spezifikation je Testlauf unter
 | TST-S-069 | SWA-069, UNA-048 | CSS-Dekoration ohne SQL; CI #65 grün, visuelle Abnahme bestätigt. |
 
 CI-Nachweise: [#60](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/runs/43736274332), [#65](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/runs/43741697546). Keine Aussage über nicht ausgeführte Einzelprüfungen.
+
+## OFF-070 – Aufgabenübersicht und Rückmeldung (17.11.2026)
+
+| Test-ID | Ebene | Prüfschritte / Soll-Ergebnis | Nachweis |
+|---|---|---|---|
+| TST-S-070 | UI / Regression | Kategorie-Zähler und Fortschrittskachel zeigen nur `x/y` ohne „erledigt“. Nach falscher exakter Antwort bei weiteren Versuchen bleibt „Falsch“ sichtbar und das Formular editierbar. Nächste Antwort ersetzt die Rückmeldung. | `tests/web/views.test.js` prüft Anzeige und editierbare Eingabe; Zeitpersistenz manuell und durch Codeprüfung. |
+| TST-S-071 | UI / Timing | Erfolgreiche oder endgültig falsche Abgabe bleibt 3000 ms sichtbar, dann Rückkehr zur Übersicht. Fehlantwort mit verbleibenden Versuchen bleibt länger als 3000 ms sichtbar, bis nächste Aktion erfolgt. | `tests/web/feedback.test.js` prüft die Zeitkonstante; Interaktionsablauf im Browser noch offen. |
+
+**Abgrenzung:** Automatisierte DOM-Tests bestätigen nicht den gesamten zeitgesteuerten Ablauf im Browser. Keine Supabase-Änderung. CI-Nachweis nach Abschluss ergänzen.
+
+**OFF-070 – ergänzende Grenz-/Fehlerfälle:** TST-S-072 prüft, dass wiederholte falsche Antworten mit Restversuchen den Fehler nicht automatisch entfernen und die Eingabe offen lassen; ein weiterer Versuch ersetzt die Meldung. TST-S-073 prüft abschließende richtige/falsche Antworten und das Gruppenwort auf 3000 ms Anzeige und danach Rückkehr/Schließen. TST-U-034/035 und TST-U-036 müssen an die neuen Sollwerte angepasst werden. Reale Browser-Zeitabläufe sind zusätzlich manuell zu verifizieren.
+
+## OFF-070 – Testfolgenanalyse und Abschlussprüfung (17.11.2026)
+
+**Anlass:** Vorzeitige Implementierung und zunächst unvollständige Testfolgenanalyse. Diese nachgeholte Prüfung dokumentiert die konkret identifizierten bestehenden Tests; eine lückenlose Einzelprüfung sämtlicher 561 Tests ist damit **nicht** nachgewiesen.
+
+| Vorhandener Test | Alte Erwartung | Neue Erwartung | Ergebnis |
+|---|---|---|---|
+| `tests/web/off059-cache-ansichten.test.js`, TST-U-034 | Kategorie `Eins (0/2 erledigt)` | `Eins (0/2)` | angepasst |
+| `tests/web/off064-aenderungen.test.js`, TST-U-035 | `Wissen (1/2 erledigt)` | `Wissen (1/2)` | angepasst |
+| `tests/web/off064-aenderungen.test.js`, TST-U-036 | 1000 ms | 3000 ms | angepasst |
+| `tests/web/off046-player-controller.test.js` | 1000-ms-Timeout auch bei wiederholbarer Fehlantwort | kein Timeout bei Restversuchen; 3000 ms bei Abschluss | TST-S-072/073 angepasst |
+| `tests/web/views.test.js` | Text der Kategorie und Fortschritt | ohne `erledigt` | ergänzt |
+| `tests/web/feedback.test.js` | Feedbackdauer | 3000 ms | angepasst |
+
+**Grenz-/Fehlerfälle:** Restversuche 2 und 1, endgültiger Fehlversuch 0, richtige Antwort, Nullfortschritt, Teilfortschritt, Aufgabenabschluss. **Noch nicht separat belegt:** Zeitablauf Gruppenwort als vollständiger Controller-Test, visuelle Browserprüfung, Abbruch/Ansichtswechsel während Timer und vollständige Querschnittsprüfung aller Tests auf widersprüchliche Hartkodierungen.
+
+**CI-Nachweis:** GitHub Actions #138, Commit `5092edeec2d3916059457bbd965e4a72c37b7b56`, erfolgreich. Dieser Nachweis gilt ausschließlich für diesen Commit; jede Dokumentationsänderung erfordert einen erneuten Lauf vor Merge.
+
+**Freigabesperre:** Merge erst nach vollständiger Testfolgenanalyse, konsistenter Dokumentation und grüner CI auf dem finalen Commit. Die offene manuelle Browser-/Geräteabnahme ist als Abweichung nach Deployment zu dokumentieren.
+
+**OFF-070 – weitere automatisierte Abdeckung:** TST-S-074 prüft die 3000-ms-Rückmeldung nach richtiger Gruppenwortlösung; TST-S-075 prüft, dass persistentes Feedback beim Öffnen einer anderen Aufgabe entfernt wird (`tests/web/off046-player-controller.test.js`). Nicht automatisiert geprüft: tatsächliche Browserdarstellung auf Mobilgeräten; visuelle Abnahme nach Deployment offen. Der frühere Zwischenstand mit nur 6 untersuchten Dateien wurde durch die vollständige Dateiinventur und Fundstellenbewertung im Abschnitt unten abgelöst. Vor Merge sind der finale grüne CI-Lauf und die Dokumentationskontrolle verpflichtend.
+
+**Nachprüfung 17.11.2026:** Die konkret geänderten Testdateien `off046-player-controller.test.js`, `off059-cache-ansichten.test.js`, `off064-aenderungen.test.js`, `views.test.js` und `feedback.test.js` wurden auf die Suchmuster `erledigt`, `1000`, `3000`, `feedback`, `Falsch` und `setTimeout` geprüft. In `off046-player-controller.test.js` wurde eine weitere hartcodierte Timeout-Schwelle (`t.ms >= 1000`) durch `ANSWER_FEEDBACK_MS` ersetzt. Die verbleibenden Zeitwerte `1000` und `13000` in diesem Test dienen ausschließlich der simulierten Serverzeit, nicht der Feedbackdauer. Die Dateinamenliste des gesamten Testbestands konnte über den verfügbaren Repository-Zugriff nicht vollständig abgerufen werden; die verpflichtende Einzelprüfung sämtlicher weiterer Tests bleibt offen. Ein grüner CI-Lauf ersetzt diese Prüfung nicht.
+
+## OFF-070 – Testfolgenanalyse des vollständigen Dateibestands (17.11.2026)
+
+**Inventur:** GitHub Actions #154 prüfte 45 Dateien unter tests/ (einschließlich Hilfsdateien). Davon wiesen 24 Dateien 186 Fundzeilen zu Statuswort, Rückmeldung, Fortschritt oder Zeitwerten auf. 563/563 automatisierte Tests bestanden. Die 21 übrigen Dateien zeigten keine Treffer der Suchmuster. Die 24 auffälligen Dateien wurden anhand der konkreten Fundstellen überprüft.
+
+| Testdateien | Prüfung und Ergebnis |
+|---|---|
+| antwort.test.js; db/get-state-submit-rechte.test.js | 3000-ms-Drosselung für Gruppenwortantworten, keine UI-Rückmeldezeit; gültig |
+| aufgaben.test.js; db/aen028-versuche.test.js; db/aufgaben.test.js | Antwortvalidierung, Versuche und serverseitige Wertung; durch OFF-070 nicht geändert |
+| db/gruppengroesse.test.js; db/off037-konfiguration.test.js; db/phasen-admin.test.js; db/off058-import-ranking.test.js | „falsch“ bezeichnet Admincode, Fehlergrund oder Phase; keine Statuswort-Anzeige |
+| db/off046-spielverlauf.test.js | Deadline, Exportstatus wrong und Serverzeit; unabhängig vom UI-Feedback |
+| tools/konsistenz.test.js | Negativfälle zur Dokumentenkonsistenz, unabhängig von OFF-070 |
+| web/aen028-ansichten.test.js | Fehlversuch bleibt offen; bestehende Erwartung mit OFF-070 vereinbar |
+| web/api-texts-countdown.test.js; web/off046-countdown.test.js; zeit.test.js | Countdown und Zeitabgleich; 1000/3000 keine Feedback-Timer |
+| web/desktop-qr.test.js; web/off037-admin.test.js | Adminansichten, simulierte Uhr und allgemeine Erfolgsmeldung |
+| web/off046-seiten.test.js | Polling-Existenz; keine Feedback-Zeitdauer |
+| web/spieler-kompakt.test.js | Gruppenwort-Fehleranzeige; keine widersprüchliche Zeitdauer |
+| web/off059-cache-ansichten.test.js; web/views.test.js; web/off064-aenderungen.test.js | Aufgabenfortschritt und Kategorien; OFF-070-Erwartungen angepasst |
+| web/feedback.test.js; web/off046-player-controller.test.js | 3000-ms-Abschlussfeedback, persistente Fehlversuche, Ansichtswechsel; OFF-070-Erwartungen angepasst |
+
+**Befund:** In den untersuchten Fundstellen keine weiteren widersprüchlichen Erwartungen festgestellt. Der veraltete Testtitel zum Wort „erledigt“ in web/off064-aenderungen.test.js wurde inzwischen korrigiert. Die automatisierte Suche ist eine heuristische Inventur und keine Garantie für semantische Vollständigkeit. Vor Merge: erneuter grüner Testlauf auf dem endgültigen Commit sowie Dokumentations-/Rückverfolgbarkeitsprüfung.

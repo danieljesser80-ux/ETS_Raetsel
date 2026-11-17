@@ -30,3 +30,11 @@ Alle folgenden Anforderungen haben zunächst den Status **Abgeleitet, nicht frei
 | SWA-014 | KAN-001, KAN-004 | Nur für das Spiel notwendige Teilnehmerdaten werden gespeichert. Der Admin sieht alle Spieldaten, Spieler nur die eigene Gruppe; die Rangliste ist nur für Admin/Beamer sichtbar (ENT-006). Der Kunde löscht die Daten spätestens 7 Tage nach der Feier (ENT-012). |
 | SWA-015 | KAN-005, KAN-006, KAN-014 | Steueraktionen und Konfiguration der Runde sind gegen unberechtigte Spielerzugriffe geschützt. Die konkreten Adminaktionen folgen den freigegebenen Spielregeln. |
 | SWA-016 | KAN-015 | Aufgaben weiterer Kategorien werden erst nach Festlegung ihrer Regeln in eigene SWA, UNA und TST zerlegt. Die genannten Ideen allein sind keine implementierbare Spezifikation. |
+
+## OFF-070 – Softwareanforderungen
+
+**SWA-070** (KAN-070): Kategorien und Fortschrittsanzeige rendern Zähler im Format `x/y` ohne angehängtes Wort „erledigt“, auch bei 0 und vollständigem Fortschritt.
+
+**SWA-071** (KAN-071): Bei `submitted=false` und einer falschen Antwort bleibt der scoped Fehlerzustand ohne Ablauftimer sichtbar; Eingabe bleibt aktiv. Ein neuer Versuch ersetzt die Rückmeldung. Der Zustand ist nur UI-lokal und nicht als Ergebnis gespeichert.
+
+**SWA-072** (KAN-072): Für abschließende Antworten und richtige Gruppenwortlösung gilt ein gemeinsamer UI-Timer von 3000 ms; bei Timerablauf verschwindet die Rückmeldung und die Folgeaufgaben-Einzelansicht wird geschlossen. Abbruch/Ansichtswechsel darf keine veraltete Rückmeldung wiederherstellen.

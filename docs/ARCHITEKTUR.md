@@ -123,7 +123,7 @@ Seit AEN-022 Teil dieses Dokuments (zuvor DOC-005). **Status: Entwurf, nicht fre
 | UNA-041 | Read-only-Spieler-Beamer / ARC-012 | SWA-063 | `beamer_state(null)` ist nur für eine authentifizierte UUID mit Eintrag in `players` zulässig; anonyme Aufrufe ohne gültigen Anzeigetoken bleiben abgewiesen. Spieler-Beamer nutzt dieselbe persistierte Supabase-Sitzung, besitzt keine Spielsteuerung und öffnet ohne `window.opener`. |
 | UNA-042 | Beamer-Gruppenzeile / ARC-012 | SWA-058 | Beamer zeigt `Gruppenname (Mitglied 1, Mitglied 2)` und aktuelle `Pkt.` in einer Zeile. Namen bleiben nach Wortlösung sichtbar; `ranking`/Punkte werden bei jedem Statusabruf aktualisiert. Admin-Rangliste behält ihre bisherige Darstellung. |
 | UNA-043 | Aufgabencluster und Schwierigkeits-Tags / ARC-001 | SWA-059, SWA-060 | Clusterbutton zeigt `erledigt/Gesamtzahl erledigt`; Schwierigkeit erscheint in Spieler-Detail, Spielerübersicht und Admin-Aufgabenansicht als farbiger Tag mit Klartext. |
-| UNA-044 | Antwort- und Aufgeben-Rückmeldung / ARC-001 | SWA-061, SWA-064 | Gemeinsame UI-Rückmeldezeit 1000 ms für Wort- und Folgeaufgaben, richtige und falsche Antworten; die unabhängige serverseitige Startwort-Drosselung bleibt bei 3000 ms. Aufgeben bestätigt bei jeder Aufgabe 0 Punkte; der Zusatz zur Übernahme der Spielleiterrolle erscheint nur beim Starträtsel. |
+| UNA-044 | Antwort- und Aufgeben-Rückmeldung / ARC-001 | SWA-061, SWA-064 | UI-Rückmeldung gemäß OFF-070: 3000 ms bei abschließender richtiger oder falscher Antwort für Wort- und Folgeaufgaben; bei falscher Folgeaufgaben-Antwort mit Restversuchen bleibt die Meldung ohne Timeout bis zur nächsten Aktion bestehen. Die unabhängige serverseitige Startwort-Drosselung bleibt bei 3000 ms. Aufgeben bestätigt bei jeder Aufgabe 0 Punkte; der Zusatz zur Übernahme der Spielleiterrolle erscheint nur beim Starträtsel. |
 | UNA-045 | Wortauswahl und Buchstabenverteilung / ARC-003, ARC-004 | SWA-062 | Admin-Wortliste ohne maximale Länge; `admin_form_groups` filtert nicht nach Gruppengröße oder Wortschwierigkeit. Gemischte Zeichen werden zyklisch auf gemischte Mitglieder verteilt; Anzahl je Mitglied differiert höchstens um eins. |
 
 ## Ergänzung OFF-065–068
@@ -133,3 +133,9 @@ Seit AEN-022 Teil dieses Dokuments (zuvor DOC-005). **Status: Entwurf, nicht fre
 | UNA-046 | Bestenlistenlayouts / ARC-012 | SWA-065, SWA-066, SWA-067 | views.js und style.css: mobile vertikale Liste, Projektor eine Zeile pro Team und Statistik rechts; gleiche Live-Daten. |
 | UNA-047 | Spielleiterübersicht / ARC-001 | SWA-068 | player.js ergänzt bestehenden read-only Beamer-RPC; Fehler dürfen Spielfunktion nicht blockieren. views.js zeigt Punkte/Platz/Fortschritt und unterdrückt Link. |
 | UNA-048 | Weihnachtsdekoration / ARC-001, ARC-012 | SWA-069 | CSS mit eingebettetem WebP, bestehende Schriftarten; keine Datenbankänderung. |
+
+## OFF-070 – Technische Anforderungen und Grenzen
+
+**ARC-070:** `web/js/views.js` stellt Kategorie-/Fortschrittszähler ohne Statuswort dar. `web/js/player.js` verwaltet ein scoped Feedback mit optionaler Persistenz bei wiederholbaren Fehlern. `web/js/feedback.js` definiert zentral `ANSWER_FEEDBACK_MS = 3000`. Bestehende APIs, Datenbank, Berechtigungen, Wertungs- und Versuchsregeln bleiben unverändert.
+
+**Fehler-/Grenzfälle:** 0 erledigte bzw. alle erledigten Aufgaben, erster/zweiter falscher Versuch, endgültig dritter falscher Versuch, richtige Antwort, Gruppenwort und unmittelbar erneute Eingabe. Die asynchrone Rückmeldung darf nicht die Eingabe sperren, solange weitere Versuche möglich sind.

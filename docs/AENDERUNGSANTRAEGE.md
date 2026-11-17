@@ -1,6 +1,6 @@
 # Änderungsanträge
 
-**Dokument-ID:** DOC-008 | **Version:** 0.44 | **Datum:** 15.11.2026
+**Dokument-ID:** DOC-008 | **Version:** 0.45 | **Datum:** 17.11.2026
 
 Register der vom Kunden beantragten Änderungen (OFF). Anträge werden **nie gelöscht**; nur ihr Status ändert sich, jede Änderung wird mit Datum im Statusverlauf festgehalten. Anträge werden gesammelt und erst auf Anweisung „umsetzen“ in einem Zug umgesetzt (AEN-012). Der Ablauf und die Baselines stehen in [DOC-009](KONFIGURATIONSMANAGEMENT.md). Zurück zu [DOC-001](../ANFORDERUNGEN.md).
 
@@ -91,3 +91,13 @@ Register der vom Kunden beantragten Änderungen (OFF). Anträge werden **nie gel
 | OFF-066 | 15.11.2026 | Variante 2: Bestenliste, Projektor eine Zeile je Team, Statistik rechts; kein Spiel läuft. | verifiziert | PR #5, Test #60 grün; in main | AEN-064 | |
 | OFF-067 | 15.11.2026 | Spielleiter ohne Bestenlistenlink, Live-Punkte/Platz/Fortschritt; Hinweis nur Starträtsel. | verifiziert | PR #5, Test #60 grün; in main | AEN-064 | |
 | OFF-068 | 15.11.2026 | Realistische Weihnachtsdekoration mit bestehenden Fonts und Aktenstil. | verifiziert | PR #6, Test #65 grün; visuell abgenommen trotz Vorschauabweichung | AEN-065 | |
+
+## OFF-070 – Aufgabenstatus und Feedback (17.11.2026)
+
+**Antrag:** Wort „erledigt“ aus Aufgabenübersicht entfernen, Fehlermeldung bei weiteren Versuchen dauerhaft anzeigen, automatische Rückmeldung nach abschließender Antwort wieder 3 Sekunden.
+
+**Status:** Umsetzung in PR #11; Testfälle TST-S-070/071 ergänzt; CI und visuelle Abnahme getrennt nachweisen. **Betroffene Dateien:** `web/js/views.js`, `web/js/player.js`, `web/js/feedback.js`, `tests/web/views.test.js`, `tests/web/feedback.test.js`. **Supabase:** keine Änderung.
+
+**OFF-070 – Statusverlauf 17.11.2026:** Ursprünglich ohne Freigabe vorzeitig in PR #11 implementiert (Prozessabweichung). Kunde hat anschließend die vollständige Umsetzung der drei ausdrücklich genannten Punkte freigegeben. Vor Weiterentwicklung werden KAN-070–072, SWA-070–072, ARC-070, Testfälle und Rückverfolgbarkeit vollständig dokumentiert. Die Testschleife ist erst nach grüner CI abgeschlossen; keine stillschweigende Freigabe weiterer Wünsche.
+
+**OFF-070 – Abschlussprüfung (17.11.2026):** Vollständige Testdatei-Inventur in GitHub Actions #154: 45 Dateien, 24 Dateien mit 186 relevanten Suchtreffern; Fundstellen in der Testspezifikation bewertet. 563/563 Tests grün auf dem damaligen Commit. Die Umsetzung umfasst auch die Controller-Regressionstests TST-S-072–075, Anpassungen in `tests/web/off046-player-controller.test.js`, `tests/web/off059-cache-ansichten.test.js` und `tests/web/off064-aenderungen.test.js` sowie die Korrektur der älteren Architekturvorgabe UNA-044. Der abschließende CI-Lauf auf dem letzten Dokumentationscommit und die Mergeprüfung stehen noch aus; die visuelle Kundenabnahme folgt nach Deployment. Keine Supabase-Änderung.

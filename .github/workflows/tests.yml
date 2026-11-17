@@ -29,5 +29,7 @@ jobs:
           cache: npm
       - name: Abhängigkeiten installieren
         run: npm ci
+      - name: OFF-070 Testfolgenanalyse – vollständiges Dateiinventar
+        run: node tools/off070-testfolgenanalyse.mjs
       - name: Vollständige Tests inklusive Datenbanktests
         run: npm test

@@ -129,3 +129,13 @@ Diese Vorschläge sind **keine maßgebliche Quelle**. Maßgeblich sind die Entsc
 | SWA-067 | Projektor einspaltige Rangliste mit separater Statistikspalte. | KAN-061 | Reihenfolge, Namen, Punkte bleiben sichtbar; 25 Gruppen gesondert prüfen. |
 | SWA-068 | Spieleransicht zeigt Live-Gesamtwertung für Spielleiter, ohne Bestenlistenlink. | KAN-062 | Read-only-RPC, Aufgabenfortschritt, bestehende Spielregeln unverändert. |
 | SWA-069 | Dekoration lokal eingebettet, responsive, bestehende Fonts. | KAN-063 | Keine SQL- oder Spielregeländerung; visuelle Abnahme. |
+
+## OFF-070 – Bestätigte Kundenanforderungen (17.11.2026)
+
+**KAN-070 (bestätigt):** In der Aufgabenübersicht werden Fortschrittszahlen und Kategorien ohne das Wort „erledigt“ angezeigt; die Zahlen selbst bleiben erhalten.
+
+**KAN-071 (bestätigt):** Nach einer falschen Antwort mit verbleibenden Versuchen bleibt die Fehlerrückmeldung dauerhaft sichtbar, bis sie durch die nächste Aktion/Rückmeldung ersetzt wird. Die Aufgabe bleibt bearbeitbar.
+
+**KAN-072 (bestätigt):** Nach richtiger oder endgültig falscher Antwort wird die Rückmeldung drei Sekunden lang angezeigt, bevor die Aufgabenübersicht erscheint. Dies gilt für den vorhandenen Abschlussablauf; keine Änderung der Versuchs-/Punktevergabe.
+
+**Freigabe:** Der Kunde hat am 17.11.2026 ausdrücklich das gesamte OFF-070-Paket zur Umsetzung nach vollständiger Dokumentation und Tests freigegeben. Keine Supabase-Änderung.

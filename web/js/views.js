@@ -357,7 +357,7 @@ function taskOverview(doc, state, handlers, nowMs) {
     const open = openCategories.has(group.name);
     const panelId = `task-category-${index}`;
     const completed = group.items.filter((task) => task.submitted === true).length;
-    const toggle = el(doc, 'button', { cls: 'btn secondary category-toggle', text: `${group.name} (${completed}/${group.items.length} erledigt)`,
+    const toggle = el(doc, 'button', { cls: 'btn secondary category-toggle', text: `${group.name} (${completed}/${group.items.length})`,
       attrs: { type: 'button', 'aria-expanded': String(open), 'aria-controls': panelId, 'data-category': group.name } });
     listen(toggle, 'click', (event) => {
       const button = event.currentTarget;
@@ -475,7 +475,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
           card.append(el(doc, 'div', { cls: 'mission-progress' }, [
             el(doc, 'span', { text: `${standing?.points ?? '–'} Punkte` }),
             el(doc, 'span', { text: `Platz ${standing?.rank ?? '–'}` }),
-            el(doc, 'span', { text: `${completed}/${tasks.length} erledigt` }),
+            el(doc, 'span', { text: `${completed}/${tasks.length}` }),
           ]));
         }
         card.append(...taskOverview(doc, state, handlers, nowMs));

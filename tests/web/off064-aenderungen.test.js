@@ -19,10 +19,10 @@ const playerState = (over = {}) => ({
   tasks, server_now_ms: NOW, game_deadline_ms: null, ...over,
 });
 
-test('TST-U-035: Cluster zeigt erledigte Aufgaben im Format erledigt/Gesamtzahl', () => {
+test('TST-U-035: Cluster zeigt Fortschritt als x/y ohne Statuswort', () => {
   const root = makeRoot();
   renderPlayer(root, playerState(), {}, NOW);
-  assert.equal(root.querySelector('[data-category="Wissen"]').textContent, 'Wissen (1/2 erledigt)');
+  assert.equal(root.querySelector('[data-category="Wissen"]').textContent, 'Wissen (1/2)');
 });
 
 test('TST-U-035: Schwierigkeits-Tags enthalten Text und passende Farbklasse in der Uebersicht', () => {
@@ -68,8 +68,8 @@ test('TST-U-035: Jeder angemeldete Spieler kann die reine Beamer-Ansicht auf ein
   assert.equal(link.getAttribute('rel'), 'noopener');
 });
 
-test('TST-U-036: Antwort-Rueckmeldung ist fuer Wort und Folgeaufgaben auf eine Sekunde gesetzt', () => {
-  assert.equal(ANSWER_FEEDBACK_MS, 1000);
+test('TST-U-036: Antwort-Rueckmeldung ist fuer Wort und Folgeaufgaben auf drei Sekunden gesetzt', () => {
+  assert.equal(ANSWER_FEEDBACK_MS, 3000);
 });
 
 test('TST-U-036: Aufgeben-Hinweis nennt Spielleiter nur beim Startraetsel und stets null Punkte', () => {

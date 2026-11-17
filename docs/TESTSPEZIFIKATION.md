@@ -122,3 +122,24 @@ CI-Nachweise: [#60](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/run
 **OFF-070 – weitere automatisierte Abdeckung:** TST-S-074 prüft die 3000-ms-Rückmeldung nach richtiger Gruppenwortlösung; TST-S-075 prüft, dass persistentes Feedback beim Öffnen einer anderen Aufgabe entfernt wird (`tests/web/off046-player-controller.test.js`). Nicht automatisiert geprüft: tatsächliche Browserdarstellung auf Mobilgeräten sowie vollständige Einzelanalyse aller übrigen Tests; dies bleibt als Nachweislücke ausgewiesen. Testfolgenanalyse: 6 konkret betroffene Testdateien im Änderungsvergleich überprüft; sämtliche weiteren Testdateien wurden nicht einzeln auf hart codierte Erwartungen untersucht. Kein Merge ohne Schließung der Nachweislücke.
 
 **Nachprüfung 17.11.2026:** Die konkret geänderten Testdateien `off046-player-controller.test.js`, `off059-cache-ansichten.test.js`, `off064-aenderungen.test.js`, `views.test.js` und `feedback.test.js` wurden auf die Suchmuster `erledigt`, `1000`, `3000`, `feedback`, `Falsch` und `setTimeout` geprüft. In `off046-player-controller.test.js` wurde eine weitere hartcodierte Timeout-Schwelle (`t.ms >= 1000`) durch `ANSWER_FEEDBACK_MS` ersetzt. Die verbleibenden Zeitwerte `1000` und `13000` in diesem Test dienen ausschließlich der simulierten Serverzeit, nicht der Feedbackdauer. Die Dateinamenliste des gesamten Testbestands konnte über den verfügbaren Repository-Zugriff nicht vollständig abgerufen werden; die verpflichtende Einzelprüfung sämtlicher weiterer Tests bleibt offen. Ein grüner CI-Lauf ersetzt diese Prüfung nicht.
+
+## OFF-070 – Testfolgenanalyse des vollständigen Dateibestands (17.11.2026)
+
+**Inventur:** GitHub Actions #154 prüfte 45 Dateien unter tests/ (einschließlich Hilfsdateien). Davon wiesen 24 Dateien 186 Fundzeilen zu Statuswort, Rückmeldung, Fortschritt oder Zeitwerten auf. 563/563 automatisierte Tests bestanden. Die 21 übrigen Dateien zeigten keine Treffer der Suchmuster. Die 24 auffälligen Dateien wurden anhand der konkreten Fundstellen überprüft.
+
+| Testdateien | Prüfung und Ergebnis |
+|---|---|
+| antwort.test.js; db/get-state-submit-rechte.test.js | 3000-ms-Drosselung für Gruppenwortantworten, keine UI-Rückmeldezeit; gültig |
+| aufgaben.test.js; db/aen028-versuche.test.js; db/aufgaben.test.js | Antwortvalidierung, Versuche und serverseitige Wertung; durch OFF-070 nicht geändert |
+| db/gruppengroesse.test.js; db/off037-konfiguration.test.js; db/phasen-admin.test.js; db/off058-import-ranking.test.js | „falsch“ bezeichnet Admincode, Fehlergrund oder Phase; keine Statuswort-Anzeige |
+| db/off046-spielverlauf.test.js | Deadline, Exportstatus wrong und Serverzeit; unabhängig vom UI-Feedback |
+| tools/konsistenz.test.js | Negativfälle zur Dokumentenkonsistenz, unabhängig von OFF-070 |
+| web/aen028-ansichten.test.js | Fehlversuch bleibt offen; bestehende Erwartung mit OFF-070 vereinbar |
+| web/api-texts-countdown.test.js; web/off046-countdown.test.js; zeit.test.js | Countdown und Zeitabgleich; 1000/3000 keine Feedback-Timer |
+| web/desktop-qr.test.js; web/off037-admin.test.js | Adminansichten, simulierte Uhr und allgemeine Erfolgsmeldung |
+| web/off046-seiten.test.js | Polling-Existenz; keine Feedback-Zeitdauer |
+| web/spieler-kompakt.test.js | Gruppenwort-Fehleranzeige; keine widersprüchliche Zeitdauer |
+| web/off059-cache-ansichten.test.js; web/views.test.js; web/off064-aenderungen.test.js | Aufgabenfortschritt und Kategorien; OFF-070-Erwartungen angepasst |
+| web/feedback.test.js; web/off046-player-controller.test.js | 3000-ms-Abschlussfeedback, persistente Fehlversuche, Ansichtswechsel; OFF-070-Erwartungen angepasst |
+
+**Befund:** In den untersuchten Fundstellen keine weiteren widersprüchlichen Erwartungen festgestellt. Der veraltete Testtitel zum Wort „erledigt“ in web/off064-aenderungen.test.js wurde inzwischen korrigiert. Die automatisierte Suche ist eine heuristische Inventur und keine Garantie für semantische Vollständigkeit. Vor Merge: erneuter grüner Testlauf auf dem endgültigen Commit sowie Dokumentations-/Rückverfolgbarkeitsprüfung.

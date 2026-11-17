@@ -44,7 +44,7 @@ function uncertain() {
   notice.dataset.uncertain = '1';
 }
 
-function setFeedback(scope, kind, text, { closeTask = false } = {}) {
+function setFeedback(scope, kind, text, { closeTask = false, persistent = false } = {}) {
   clearTimeout(feedbackTimer);
   ui.feedback = { scope, kind, text, accepted: closeTask };
   draw();
@@ -173,7 +173,7 @@ const handlers = {
       } else if (r.correct === false) {
         const left = r.attempts_remaining;
         const remaining = r.submitted ? 'Keine weiteren Versuche.' : `Noch ${left} ${left === 1 ? 'Versuch' : 'Versuche'}.`;
-        setFeedback(taskId, 'error', `Falsch – ${remaining}`, { closeTask: r.submitted === true });
+        setFeedback(taskId, 'error', `Falsch – ${remaining}`, { closeTask: r.submitted === true, persistent: r.submitted !== true });
       } else {
         setFeedback(taskId, 'info', 'Geschätzt – abgegeben', { closeTask: true });
       }

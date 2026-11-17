@@ -99,3 +99,22 @@ CI-Nachweise: [#60](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/run
 **Abgrenzung:** Automatisierte DOM-Tests bestätigen nicht den gesamten zeitgesteuerten Ablauf im Browser. Keine Supabase-Änderung. CI-Nachweis nach Abschluss ergänzen.
 
 **OFF-070 – ergänzende Grenz-/Fehlerfälle:** TST-S-072 prüft, dass wiederholte falsche Antworten mit Restversuchen den Fehler nicht automatisch entfernen und die Eingabe offen lassen; ein weiterer Versuch ersetzt die Meldung. TST-S-073 prüft abschließende richtige/falsche Antworten und das Gruppenwort auf 3000 ms Anzeige und danach Rückkehr/Schließen. TST-U-034/035 und TST-U-036 müssen an die neuen Sollwerte angepasst werden. Reale Browser-Zeitabläufe sind zusätzlich manuell zu verifizieren.
+
+## OFF-070 – Testfolgenanalyse und Abschlussprüfung (17.11.2026)
+
+**Anlass:** Vorzeitige Implementierung und zunächst unvollständige Testfolgenanalyse. Diese nachgeholte Prüfung dokumentiert die konkret identifizierten bestehenden Tests; eine lückenlose Einzelprüfung sämtlicher 561 Tests ist damit **nicht** nachgewiesen.
+
+| Vorhandener Test | Alte Erwartung | Neue Erwartung | Ergebnis |
+|---|---|---|---|
+| `tests/web/off059-cache-ansichten.test.js`, TST-U-034 | Kategorie `Eins (0/2 erledigt)` | `Eins (0/2)` | angepasst |
+| `tests/web/off064-aenderungen.test.js`, TST-U-035 | `Wissen (1/2 erledigt)` | `Wissen (1/2)` | angepasst |
+| `tests/web/off064-aenderungen.test.js`, TST-U-036 | 1000 ms | 3000 ms | angepasst |
+| `tests/web/off046-player-controller.test.js` | 1000-ms-Timeout auch bei wiederholbarer Fehlantwort | kein Timeout bei Restversuchen; 3000 ms bei Abschluss | TST-S-072/073 angepasst |
+| `tests/web/views.test.js` | Text der Kategorie und Fortschritt | ohne `erledigt` | ergänzt |
+| `tests/web/feedback.test.js` | Feedbackdauer | 3000 ms | angepasst |
+
+**Grenz-/Fehlerfälle:** Restversuche 2 und 1, endgültiger Fehlversuch 0, richtige Antwort, Nullfortschritt, Teilfortschritt, Aufgabenabschluss. **Noch nicht separat belegt:** Zeitablauf Gruppenwort als vollständiger Controller-Test, visuelle Browserprüfung, Abbruch/Ansichtswechsel während Timer und vollständige Querschnittsprüfung aller Tests auf widersprüchliche Hartkodierungen.
+
+**CI-Nachweis:** GitHub Actions #138, Commit `5092edeec2d3916059457bbd965e4a72c37b7b56`, erfolgreich. Dieser Nachweis gilt ausschließlich für diesen Commit; jede Dokumentationsänderung erfordert einen erneuten Lauf vor Merge.
+
+**Freigabesperre:** Merge erst nach vollständiger Testfolgenanalyse, konsistenter Dokumentation und grüner CI auf dem finalen Commit. Die offene manuelle Browser-/Geräteabnahme ist als Abweichung nach Deployment zu dokumentieren.

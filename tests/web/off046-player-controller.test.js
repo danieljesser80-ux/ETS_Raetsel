@@ -157,3 +157,26 @@ test('Anleitungslink wird nur versteckt, solange eine Aufgabe sichtbar offen ist
   assert.match(SRC, /guide/i);
   assert.match(SRC, /hidden/);
 });
+
+test('TST-S-074: Richtige Gruppenwortantwort zeigt Feedback für 3000 ms', async () => {
+  const st = { ok: true, phase: 'wortaufgabe_aktiv', tasks: [] };
+  const b = await boot({ api: { submitAnswer: async () => ({ ok: true, correct: true, rank: 1 }) }, state: st });
+  await b.h().onSubmit('LOESUNG');
+  assert.equal(b.last().state.feedback.scope, 'wort');
+  assert.equal(b.last().state.feedback.kind, 'success');
+  const timer = b.timers.at(-1);
+  assert.equal(timer.ms, 3000);
+  timer.f();
+  assert.equal(b.last().state.feedback, null);
+});
+
+test('TST-S-075: Beim Öffnen einer anderen Aufgabe wird altes Feedback entfernt', async () => {
+  const st = { ok: true, phase: 'wortaufgabe_aktiv', tasks: [{ id: 't', started: true }, { id: 'u', started: true }] };
+  const b = await boot({ api: { submitTask: async () => ({ ok: true, correct: false, attempts_remaining: 2, submitted: false }) }, state: st });
+  await b.h().onOpenTask('t');
+  await b.h().onSubmitTask('t', 'x');
+  assert.match(b.last().state.feedback.text, /Falsch/);
+  await b.h().onOpenTask('u');
+  assert.equal(b.exposed.ui.openTaskId, 'u');
+  assert.equal(b.last().state.feedback, null);
+});

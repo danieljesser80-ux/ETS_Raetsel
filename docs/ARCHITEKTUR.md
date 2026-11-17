@@ -133,3 +133,9 @@ Seit AEN-022 Teil dieses Dokuments (zuvor DOC-005). **Status: Entwurf, nicht fre
 | UNA-046 | Bestenlistenlayouts / ARC-012 | SWA-065, SWA-066, SWA-067 | views.js und style.css: mobile vertikale Liste, Projektor eine Zeile pro Team und Statistik rechts; gleiche Live-Daten. |
 | UNA-047 | Spielleiterübersicht / ARC-001 | SWA-068 | player.js ergänzt bestehenden read-only Beamer-RPC; Fehler dürfen Spielfunktion nicht blockieren. views.js zeigt Punkte/Platz/Fortschritt und unterdrückt Link. |
 | UNA-048 | Weihnachtsdekoration / ARC-001, ARC-012 | SWA-069 | CSS mit eingebettetem WebP, bestehende Schriftarten; keine Datenbankänderung. |
+
+## OFF-070 – Technische Anforderungen und Grenzen
+
+**ARC-070:** `web/js/views.js` stellt Kategorie-/Fortschrittszähler ohne Statuswort dar. `web/js/player.js` verwaltet ein scoped Feedback mit optionaler Persistenz bei wiederholbaren Fehlern. `web/js/feedback.js` definiert zentral `ANSWER_FEEDBACK_MS = 3000`. Bestehende APIs, Datenbank, Berechtigungen, Wertungs- und Versuchsregeln bleiben unverändert.
+
+**Fehler-/Grenzfälle:** 0 erledigte bzw. alle erledigten Aufgaben, erster/zweiter falscher Versuch, endgültig dritter falscher Versuch, richtige Antwort, Gruppenwort und unmittelbar erneute Eingabe. Die asynchrone Rückmeldung darf nicht die Eingabe sperren, solange weitere Versuche möglich sind.

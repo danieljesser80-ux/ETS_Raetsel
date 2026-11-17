@@ -19,7 +19,7 @@ const playerState = (over = {}) => ({
   tasks, server_now_ms: NOW, game_deadline_ms: null, ...over,
 });
 
-test('TST-U-035: Cluster zeigt erledigte Aufgaben im Format erledigt/Gesamtzahl', () => {
+test('TST-U-035: Cluster zeigt Fortschritt als x/y ohne Statuswort', () => {
   const root = makeRoot();
   renderPlayer(root, playerState(), {}, NOW);
   assert.equal(root.querySelector('[data-category="Wissen"]').textContent, 'Wissen (1/2)');

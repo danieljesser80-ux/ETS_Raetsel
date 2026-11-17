@@ -1,6 +1,6 @@
 # Testkonzept und Testspezifikation – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-006 | **Version:** 0.28 | **Datum:** 15.11.2026
+**Dokument-ID:** DOC-006 | **Version:** 0.29 | **Datum:** 17.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 
@@ -69,8 +69,8 @@ Unit-Tests prüfen Komponentenverträge; Integrationstests prüfen reale Schnitt
 | TST-U-007 | UNA-007 | Alle zulässigen Plätze und ungültige Konfigurationen gegen freigegebene Punkteformel; deterministische Ergebnisse ohne stillschweigende Ersatzwerte. |
 | TST-U-008 | UNA-008 | Zustandsdarstellung, Updates, Verbindungsfehler und erneuter Abruf; nur berechtigte persönliche Informationen sichtbar. |
 | TST-U-009 | UNA-009 | Rollenprüfung und Löschumfang nach ENT-012; keine unberechtigte Mutation und keine Löschung außerhalb der gewählten Runde. |
-| TST-U-035 | UNA-042, UNA-043, UNA-045 | Beamerzeile mit Klammern und Live-Punkten; Fortschrittsanzeige `erledigt/Gesamtzahl`; farbige Schwierigkeits-Tags; beliebige Wortlängen und gleichmäßige Buchstabenverteilung. |
-| TST-U-036 | UNA-044 | Gemeinsame UI-Rückmeldezeit von 1000 ms und differenzierter Aufgeben-Hinweis für Starträtsel/Folgeaufgaben; die serverseitige Antwortdrosselung bleibt unabhängig. |
+| TST-U-035 | UNA-042, UNA-043, UNA-045 | Beamerzeile mit Klammern und Live-Punkten; Fortschrittsanzeige `Anzahl/Gesamtzahl` ohne das Wort „erledigt“; farbige Schwierigkeits-Tags; beliebige Wortlängen und gleichmäßige Buchstabenverteilung. |
+| TST-U-036 | UNA-044 | Gemeinsame UI-Rückmeldezeit von 3000 ms und differenzierter Aufgeben-Hinweis für Starträtsel/Folgeaufgaben; die serverseitige Antwortdrosselung bleibt unabhängig. |
 
 ## 2. Testprotokolle
 
@@ -88,3 +88,12 @@ Ausführungsnachweise werden getrennt von dieser Spezifikation je Testlauf unter
 | TST-S-069 | SWA-069, UNA-048 | CSS-Dekoration ohne SQL; CI #65 grün, visuelle Abnahme bestätigt. |
 
 CI-Nachweise: [#60](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/runs/43736274332), [#65](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/runs/43741697546). Keine Aussage über nicht ausgeführte Einzelprüfungen.
+
+## OFF-070 – Aufgabenübersicht und Rückmeldung (17.11.2026)
+
+| Test-ID | Ebene | Prüfschritte / Soll-Ergebnis | Nachweis |
+|---|---|---|---|
+| TST-S-070 | UI / Regression | Kategorie-Zähler und Fortschrittskachel zeigen nur `x/y` ohne „erledigt“. Nach falscher exakter Antwort bei weiteren Versuchen bleibt „Falsch“ sichtbar und das Formular editierbar. Nächste Antwort ersetzt die Rückmeldung. | `tests/web/views.test.js` prüft Anzeige und editierbare Eingabe; Zeitpersistenz manuell und durch Codeprüfung. |
+| TST-S-071 | UI / Timing | Erfolgreiche oder endgültig falsche Abgabe bleibt 3000 ms sichtbar, dann Rückkehr zur Übersicht. Fehlantwort mit verbleibenden Versuchen bleibt länger als 3000 ms sichtbar, bis nächste Aktion erfolgt. | `tests/web/feedback.test.js` prüft die Zeitkonstante; Interaktionsablauf im Browser noch offen. |
+
+**Abgrenzung:** Automatisierte DOM-Tests bestätigen nicht den gesamten zeitgesteuerten Ablauf im Browser. Keine Supabase-Änderung. CI-Nachweis nach Abschluss ergänzen.

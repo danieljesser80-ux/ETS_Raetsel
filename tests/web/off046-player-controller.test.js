@@ -132,7 +132,7 @@ test('Verbindungsfehler bei Abgabe: Unsicherheitstext, kein automatisches Wieder
   const text = b.dom.window.document.getElementById('notice').textContent;
   assert.match(text, /unterbrochen|nicht sicher|unklar|prüf/i);
   assert.match(text, /Abgabe|angekommen|gespeichert|sicher|prüf/i, 'benennt die Unsicherheit der Abgabe');
-  b.timers.forEach((t) => { if (t.ms >= 1000) t.f(); });
+  b.timers.forEach((t) => { if (t.ms >= ANSWER_FEEDBACK_MS) t.f(); });
   await new Promise((r) => setImmediate(r));
   assert.equal(n, 1, 'keine automatische Wiederholung');
   assert.equal(b.exposed.ui.openTaskId, 't', 'Aufgabe bleibt offen');

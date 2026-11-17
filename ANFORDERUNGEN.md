@@ -248,3 +248,15 @@ OFF-041 (AEN-041) ist gesammelt/geklärt: Geocaching in der Spielerübersicht da
 | Änderungsablauf | Änderungswünsche werden als Anträge (OFF) in DOC-008 gesammelt, nie gelöscht, sondern mit Status und Verlauf geführt, und erst auf Anweisung des Kunden in einem Zug umgesetzt (Dokumente, Code, Tests, Konsistenzprüfung). Bei Unklarheit wird vorher nachgefragt. Konfigurationsmanagement und Baselines: DOC-009. (AEN-012, AEN-013, AEN-014) |
 | Konsistenzregel | Nach jeder Änderung an Dokumenten oder Code wird die Konsistenz geprüft: jede ID genau einmal definiert (Matrix und historische Vorschläge ausgenommen), keine Referenz ohne Definition, lokale Links gültig, Versionen in Kopfzeile, Dokumentverzeichnis und Dokumenthistorie gleich, `npm test` grün. Ergebnis wird berichtet, auch wenn nicht geprüft werden konnte. (AEN-010) |
 | Altdateien | index.html, falsch.html, geloest.html, style.css, n8n-* sind nicht bewertet und gehören nicht zur Baseline. |
+
+## OFF-070 – Freigabe und Rückverfolgbarkeit (17.11.2026)
+
+Der Kunde hat OFF-070 ausdrücklich als zusammenhängendes Änderungspaket zur vollständigen Umsetzung freigegeben. Prozessreihenfolge: Dokumentation → Tests → Implementierung/Fehlerbehebung → grüne CI → Merge. Historischer vorzeitig erstellter PR #11 bleibt Entwicklungsbranch, nicht stillschweigend freigegeben.
+
+| Kunde | Software | Architektur | Tests | Änderung |
+|---|---|---|---|---|
+| KAN-070 | SWA-070 | ARC-070 | TST-S-070, TST-U-034/035 | Zähler ohne „erledigt“ |
+| KAN-071 | SWA-071 | ARC-070 | TST-S-070/072 | Falschrückmeldung bleibt sichtbar |
+| KAN-072 | SWA-072 | ARC-070 | TST-S-071/073, TST-U-036 | 3000-ms-Abschlussfeedback |
+
+Keine Änderung von Supabase. Reale visuelle Abnahme nach Veröffentlichung offen.

@@ -97,3 +97,5 @@ Register der vom Kunden beantragten Änderungen (OFF). Anträge werden **nie gel
 **Antrag:** Wort „erledigt“ aus Aufgabenübersicht entfernen, Fehlermeldung bei weiteren Versuchen dauerhaft anzeigen, automatische Rückmeldung nach abschließender Antwort wieder 3 Sekunden.
 
 **Status:** Umsetzung in PR #11; Testfälle TST-S-070/071 ergänzt; CI und visuelle Abnahme getrennt nachweisen. **Betroffene Dateien:** `web/js/views.js`, `web/js/player.js`, `web/js/feedback.js`, `tests/web/views.test.js`, `tests/web/feedback.test.js`. **Supabase:** keine Änderung.
+
+**OFF-070 – Statusverlauf 17.11.2026:** Ursprünglich ohne Freigabe vorzeitig in PR #11 implementiert (Prozessabweichung). Kunde hat anschließend die vollständige Umsetzung der drei ausdrücklich genannten Punkte freigegeben. Vor Weiterentwicklung werden KAN-070–072, SWA-070–072, ARC-070, Testfälle und Rückverfolgbarkeit vollständig dokumentiert. Die Testschleife ist erst nach grüner CI abgeschlossen; keine stillschweigende Freigabe weiterer Wünsche.

@@ -19,7 +19,7 @@
 
 **OFF-069 (16.11.2026):** Neue Designreferenz in PR #9 umgesetzt, CI #96 grün, Merge a0917e7. Kunde lehnt die tatsächliche Optik ab und verlangt Rückkehr zum abgenommenen Design aus PR #6. Rücknahme stellt CSS und Views exakt auf Stand vor PR #9 zurück und entfernt dessen zwei Assets. Keine SQL-Änderung. Rücknahmeprüfung vor Merge; bisherige Abnahme bleibt maßgeblich.
 
-**Pflege:** Tatsächliche Änderungen, Tests, Veröffentlichung und Abnahme getrennt dokumentieren. Historische Angaben nicht als aktuellen Stand ausgeben.
+**OFF-070 (17.11.2026):** Kundenauftrag: In der Aufgabenübersicht das Wort „erledigt“ aus Kategorie-Zählern und Fortschrittskachel entfernen; bei falscher Antwort mit weiteren Versuchen die Rückmeldung bis zur nächsten Aktion dauerhaft sichtbar halten; nach endgültiger Abgabe/Erfolg die Rückmeldung wieder 3 Sekunden anzeigen. Keine Supabase-/Schemaänderung, keine Änderung der Spiellogik. Automatisierte Prüfung und visuelle Abnahme separat.\n\n**Pflege:** Tatsächliche Änderungen, Tests, Veröffentlichung und Abnahme getrennt dokumentieren. Historische Angaben nicht als aktuellen Stand ausgeben.
 
 ## 1. Dokumentstand und Vorgehen
 

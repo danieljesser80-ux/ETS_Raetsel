@@ -143,3 +143,23 @@ CI-Nachweise: [#60](https://github.com/danieljesser80-ux/ETS_Raetsel/actions/run
 | web/feedback.test.js; web/off046-player-controller.test.js | 3000-ms-Abschlussfeedback, persistente Fehlversuche, Ansichtswechsel; OFF-070-Erwartungen angepasst |
 
 **Befund:** In den untersuchten Fundstellen keine weiteren widersprüchlichen Erwartungen festgestellt. Der veraltete Testtitel zum Wort „erledigt“ in web/off064-aenderungen.test.js wurde inzwischen korrigiert. Die automatisierte Suche ist eine heuristische Inventur und keine Garantie für semantische Vollständigkeit. Vor Merge: erneuter grüner Testlauf auf dem endgültigen Commit sowie Dokumentations-/Rückverfolgbarkeitsprüfung.
+
+
+## OFF-071 – Testfolgenanalyse, Zwischenstand (18.11.2026)
+
+**Status: unvollständig; Sperre vor Test- und Codeänderungen.** Der Kunde hat die vollständige Umsetzung ausdrücklich freigegeben. Die verpflichtende Prüfung sämtlicher vorhandener Tests auf widersprüchliche Erwartungen, hartcodierte Werte und überholte Anforderungen ist noch nicht nachgewiesen. Ein Repository-Checkout war in der ausführenden Umgebung wegen fehlender DNS-Auflösung für github.com nicht möglich. Einzelne Dateien wurden direkt aus dem Branch `off-071-mobile-spieleransicht` gelesen. Die frühere OFF-070-Inventur (45 Testdateien) ist kein Ersatz für eine neue OFF-071-Inventur.
+
+| Vorhandene Datei / Fundstelle | Bisherige Erwartung / Befund | OFF-071-Soll / Prüfbedarf | Bewertung |
+|---|---|---|---|
+| `tests/web/views.test.js`, TST-U-008 | `Vorläufig Platz 2` nach Gruppenwortlösung | Keine Gruppenwortzeit und keine Platzinformation im Erfolgsbereich; Punkte und Fortschritt bleiben erhalten | Konflikt, Testanpassung nach vollständiger Analyse nötig |
+| `tests/web/spieler-kompakt.test.js` | `Wort gelöst! Vorläufig Platz 2` | Erfolgsanzeige ohne Platzangabe | Konflikt |
+| `tests/web/spieler-kompakt.test.js` | `.player-group-name` entspricht exakt `Testgruppe` | In Gruppenwortphase eindeutige Beschriftung `DEINE GRUPPE: <dynamischer Name>` direkt unter Spielrestzeit; lange Namen umbrechen | Konflikt; DOM-/Barrierefreiheitsprüfung nötig |
+| `tests/web/views.test.js` | Finale `Platz 2 – 14 Punkte` sowie Aufgaben- und Adminplatzierungen | Finale Wertung und andere Ansichten nicht pauschal entfernen; Anzeigeumfang phasenspezifisch abgrenzen | Nicht ohne weitere Prüfung ändern |
+| `tests/web/aen028-ansichten.test.js` | Gruppen-, Rollen- und Phasenabläufe; Beamer-Rangdaten | Gruppenanzeige und Sichtbarkeit ohne Beamer-/Adminregression | Prüfung offen |
+| `tests/web/off059-cache-ansichten.test.js` | Zustand mit gelöstem Wort und Aufgaben | Fortschritt ohne Platz, keine Zustands-/Cache-Regression | Prüfung offen |
+| `tests/web/off064-aenderungen.test.js` | Bestenlisten- und Fortschrittsdarstellung | Bestehende Bestenliste erhalten; nur Link während Anmeldung ausblenden | Prüfung offen |
+| `tests/web/off046-seiten.test.js` | Statische Seiten-/QR-Prüfungen | Beschriftung des Links `Regeln` und Ziel `erklaerung.html` prüfen | Prüfung offen |
+
+**Bestätigte Code-Fundstellen (nur Analyse, keine Implementierung):** `web/index.html` enthält `.guide-link` mit dem bisherigen Text `Spielidee, Ablauf und Regeln`; `web/js/views.js` erzeugt die Rätselüberschrift und Einleitung (ca. Zeilen 339–344), Gruppenname (454), Gruppenwortzeit (460 und 506), Erfolgs-/Platzangaben (467–478), den Bestenlistenlink für angemeldete Nicht-Spielleiter unabhängig von der Phase (ca. 524–529). Die abschließende Rangangabe in der Phase `aufgabe_abgeschlossen` ist gesondert gegen die fachliche Abgrenzung zu prüfen.
+
+**Noch verpflichtend vor jeder Testanpassung:** vollständige Dateiliste aller Tests erfassen; jede Testdatei einschließlich negativer Treffer auf relevante Texte, DOM-Selektoren, Phasen, Zeitwerte und Layoutannahmen bewerten; Konflikte und gültige Altanforderungen je Datei dokumentieren; Fehler-/Grenzfälle spezifizieren (Anmeldung vor/nach Phasenwechsel, Spieler/Spielleiter, Gruppenwort offen/gelöst/aufgegeben, Aufgabenübersicht, Spielende, lange Gruppennamen, 320-px-Ansicht, Tastatur/Screenreader, Linkziel); anschließend Dokumentenkette KAN → SWA → ARC/UNA → TST konsistent aktualisieren. Bis dahin keine Tests oder Anwendungscode ändern, keinen Merge durchführen.

@@ -44,6 +44,10 @@ Dieser Abschnitt ersetzt widersprechende Altverträge unten. Vorbereitung wird z
 
 `texts.js`: `reasonText(reason) -> string`: deutsche Meldung für alle Gründe: `leer, zu_kurz, zu_lang, doppelt, anmeldung_geschlossen, voll, nicht_angemeldet, keine_gruppe, falsche_phase, bereits_geloest, zu_schnell, nicht_berechtigt, anmeldung_offen, zu_wenige, nicht_teilbar, ungueltige_dauer, zu_wenige_namen, ungueltige_groesse, wort_nicht_geloest, nicht_spielleiter, unbekannte_aufgabe, nicht_verfuegbar, bereits_ausgewertet, bereits_abgegeben, ungueltige_zahl, ungueltige_loesung, ungueltiges_bild, keine_schaetzfrage`; unbekannter Grund → allgemeine Meldung (nie `undefined`, nie der Rohcode allein). `phaseText(phase) -> string` für die fünf Phasen.
 
+## OFF-072 – Reine Auswahlaufgabe
+
+Bei `kind='exact'` und `needs_choice=true` zeigt `renderPlayer` die vier Optionen ohne Zahlenfeld. `onSubmitTask(taskId, '', choice)` sendet die Auswahl; der Antwortcontroller behandelt sowohl richtige als auch falsche gültige Auswahlen als abgeschlossene Einmal-Abgabe. `kind='estimate'` mit `needs_choice=true` behält Zahlenfeld und Auswahl. Die Admin-Vorbereitung verlangt für eine reine Auswahl keine numerische Lösung.
+
 `countdown.js`: `countdownSeconds(state, nowMs) -> integer >= 0 | null`: `state.deadline_ms` null → null; sonst `ceil((deadline_ms - (nowMs + (state.server_now_ms - state.fetchedAtMs))) / 1000)`, nie negativ. Dabei ist `state.fetchedAtMs` die lokale Gerätezeit beim Abruf (vom Controller gesetzt). `formatClock(seconds) -> 'M:SS'`.
 
 `views.js` (reine DOM-Renderer, erhalten `root` (HTMLElement) und löschen/ersetzen dessen Inhalt; Handler werden als Callbacks übergeben):

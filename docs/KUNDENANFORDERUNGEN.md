@@ -1,6 +1,6 @@
 # Kundenanforderungen – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-002 | **Version:** 0.21 | **Datum:** 15.11.2026
+**Dokument-ID:** DOC-002 | **Version:** 0.26 | **Datum:** 19.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 
@@ -28,14 +28,57 @@ Maßgeblich für die hier definierten IDs. Anforderungen anderer Ebenen werden n
 | KAN-014 | Auf Basis der Lösungsreihenfolge werden Punkte vergeben. | Bestätigt; Punkte gemäß ENT-006 | Die Punkte jeder Gruppe entsprechen der in ENT-006 festgelegten Punktetabelle. |
 | KAN-015 | Das Spiel soll verschiedene Aufgabenkategorien enthalten. | Bestätigt; erster Release nur Wortaufgabe (ENT-007) | Der erste Release enthält die Wortaufgabe; weitere Kategorien folgen als eigene Änderungsanträge. |
 | KAN-052 | Die Beamer-Ansicht zeigt je Gruppe Gruppennamen, alle Mitgliedernamen in Klammern und die aktuelle Punktzahl in einer gemeinsamen Zeile. | Bestätigt (OFF-064) | Keine Meldung „Gruppe komplett“; Punkte werden während des Spiels live aktualisiert. |
-| KAN-053 | Aufgabencluster zeigen den erledigten Anteil im Format `erledigt/Gesamtzahl erledigt`. | Bestätigt (OFF-064) | Beispiel `3/8 erledigt`; Zähler aktualisiert sich nach jeder abgeschlossenen Aufgabe. |
+| KAN-053 | Aufgabencluster zeigen erledigte Anzahl und Gesamtzahl. | Bestätigt (OFF-064); Beschriftung geändert durch OFF-070 | Zähler wie `3/8` aktualisieren sich nach jeder abgeschlossenen Aufgabe; das Wort „erledigt“ wird nicht angezeigt. |
 | KAN-054 | Schwierigkeitsstufen werden überall als farbige Tags mit Text angezeigt. | Bestätigt (OFF-064) | Leicht = blau, Mittel = rot, Schwer = schwarz; der Tag enthält den jeweiligen Klartext. |
-| KAN-055 | Nach dem Absenden einer Antwort wird die Rückmeldung eine Sekunde angezeigt. | Bestätigt (OFF-064) | Gilt für richtige und falsche Antworten bei Startwort und Folgeaufgaben. |
+| KAN-055 | Die ursprüngliche Rückmeldezeit von einer Sekunde wurde durch OFF-070 abgelöst. | Abgelöst (OFF-070) | Abschließende Rückmeldung dauert drei Sekunden; ein falscher Versuch mit Restversuchen bleibt bis zur nächsten Aktion sichtbar (KAN-071/072). |
 | KAN-056 | Die Wortauswahl im Starträtsel verwendet ausschließlich die vom Spielleiter in der Admin-Konfiguration hinterlegte Wortliste, ohne automatische Längen- oder Schwierigkeitsfilter. | Bestätigt (OFF-064) | Jedes konfigurierte A–Z-Wort ist auswählbar; alle Zeichen werden möglichst gleichmäßig verteilt. |
 | KAN-057 | Auch Nicht-Spielleiter können die Beamer-Ansicht auf ihrem Smartphone öffnen. | Bestätigt (OFF-064) | Nicht-Spielleiter sehen ausschließlich die Anzeige und erhalten keine Spielsteuerung. |
 | KAN-058 | Beim Aufgeben bleibt der Hinweis auf null Punkte immer sichtbar; der Hinweis auf die Spielleiterrolle erscheint nur beim Starträtsel. | Bestätigt (OFF-064) | Bei Folgeaufgaben wird der Spielleiter-Hinweis nicht angezeigt. |
 
-### 1.1 Gesammelte Aufgabenideen, noch keine Umsetzungsvorgaben
+### 1.1 Ergänzte Kundenanforderungen (rekonstruiert)
+
+Die folgenden Anforderungen sind aus AEN-/OFF-Nachweisen und den erhaltenen Architektur- und Testverträgen rekonstruiert. Unbekannter Originalwortlaut wird nicht behauptet. Als abgelöst gekennzeichnete Regeln bleiben nur zur Rückverfolgbarkeit erhalten.
+
+| ID | Anforderung | Status | Abnahmekriterium |
+|---|---|---|---|
+| KAN-016 | Automatisierte Tests können als schneller und vollständiger Lauf ausgeführt werden. | Bestätigt (AEN-020) | Der schnelle Lauf lässt Datenbanktests aus; der vollständige Lauf umfasst alle Tests. |
+| KAN-017 | Aufgabenlösungen und Sperrliste bleiben außerhalb der öffentlichen Projektdateien. | Bestätigt (AEN-020) | Die Geheimnisprüfung meldet Treffer, ohne den geheimen Inhalt auszugeben. |
+| KAN-018 | Eine Schätzfrage kann vier Antwortoptionen mit einer zusätzlichen Zahleneingabe verbinden. | Bestätigt (AEN-021) | Spieler wählen eine Option und geben die Schätzung ab; die bestehende Schätzwertung bleibt maßgeblich. |
+| KAN-019 | Die ursprüngliche Regel sah genau einen Versuch je Rätsel vor. | Abgelöst durch KAN-028 (AEN-028) | Historische Ein-Versuch-Regel; für exakte Folgeaufgaben gilt stattdessen die Drei-Versuche-Regel. |
+| KAN-020 | Aufgaben werden nach Antwortergebnis beziehungsweise Schätzungsnähe und Dauer gewertet; die finale Wertung wird nach Spielende angezeigt. | Bestätigt (AEN-021) | Exakte Antworten und Schätzungen folgen ihren jeweiligen Rangfolgen; vor Spielende wird keine finale Gesamtwertung behauptet. |
+| KAN-021 | Aufgabeninhalte können für die festgelegten Kategorien gepflegt und bereitgestellt werden. | Bestätigt (AEN-023) | Aufgabenbeschreibung, Antwortart und erforderliche Inhalte werden vor der Spielrunde erfasst. |
+| KAN-022 | Die ursprüngliche Wortauswahl war auf höchstens neun Buchstaben begrenzt. | Abgelöst durch KAN-056 (OFF-064) | Historische Grenze; gültige Admin-Wörter werden nun ohne automatische Längenfilterung verwendet. |
+| KAN-023 | Rückmeldungen zu Aufgabenantworten erscheinen im jeweiligen Eingabeformular. | Bestätigt (AEN-023) | Die Antwortmeldung ist der Aufgabe zugeordnet und verständlich sichtbar. |
+| KAN-024 | Aufgaben können mit einem Bild ergänzt werden. | Bestätigt (AEN-023) | Ein konfigurierter Bildpfad wird nach dem Öffnen der Aufgabe angezeigt. |
+| KAN-025 | Abgegebene Aufgaben zeigen ihren Ergebnisstatus. | Bestätigt (AEN-023) | Die Übersicht unterscheidet richtige, falsche und geschätzte Abgaben. |
+| KAN-026 | Der Admin kann die Aufgaben- und Antwortdetails einer Gruppe einsehen. | Bestätigt (AEN-023) | Die Adminansicht zeigt die Aufgabenzeilen der ausgewählten Gruppe samt Antwort und Dauer. |
+| KAN-027 | Spieler erhalten eine öffentliche Erklärung des Spielablaufs. | Bestätigt (AEN-024) | Die Erklärseite beschreibt Ablauf und Regeln ohne geheime Aufgabenlösungen. |
+| KAN-028 | Exakte Folgeaufgaben erlauben bis zu drei Versuche je Gruppe. | Bestätigt (AEN-028) | Die ersten beiden falschen Antworten lassen die Aufgabe offen; eine richtige Antwort oder der dritte Versuch schließt sie ab. |
+| KAN-029 | Lokale Eingaben bleiben bei Zustandsaktualisierungen erhalten. | Bestätigt (AEN-028) | Unveränderte Servervorgaben überschreiben keine bearbeiteten Werte oder Leerwerte. |
+| KAN-030 | Wiederholte Zustandsabrufe werden je Client koordiniert. | Bestätigt (AEN-028) | Es läuft höchstens ein Abruf gleichzeitig; Änderungen lösen höchstens einen zusammengefassten Folgeabruf aus. |
+| KAN-031 | Die Aufgabenübersicht zeigt den Versuchszustand der Gruppe. | Bestätigt (AEN-028) | Versuche und Abschlussstatus werden aus dem verbindlichen Spielzustand angezeigt. |
+| KAN-032 | Spieler können die Gruppenaufgabe und verfügbare Folgeaufgaben nachvollziehbar finden. | Bestätigt (AEN-028) | Übersicht und Einzelaufgabe zeigen nur für die Gruppe verfügbare Informationen. |
+| KAN-033 | Die Vorbereitung zeigt fehlende oder unvollständige Aufgabenangaben. | Bestätigt (AEN-028) | Unvollständige gespeicherte Aufgaben werden konkret gemeldet, ohne Lösungen offenzulegen. |
+| KAN-034 | Admin und Präsentation sind für die vorgesehene Desktop-/Monitoransicht bedienbar; der Präsentations-QR führt zur Spielseite derselben Website. | Bestätigt (AEN-036) | Admin bleibt auf 1920×1200 nutzbar; der QR-Code verweist auf die relative Spieleradresse. |
+| KAN-035 | Die mobile Spielerübersicht ist kompakt, und nach Wortlösung werden keine Wort- oder Buchstabenreste angezeigt. | Bestätigt (AEN-038) | Gruppenname und Teilnehmer bleiben sichtbar; gelöste Wortinhalte werden nicht weiter angezeigt. |
+| KAN-036 | Falsche Aufgabenantworten bleiben bei Restversuchen bearbeitbar; Anleitung und Aufgeben-Hinweise entsprechen der aktuellen Aufgabe. | Bestätigt (AEN-053) | Nicht abschließende Fehlversuche bleiben sichtbar; Starträtsel- und Folgeaufgabenhinweise sind getrennt. |
+| KAN-037 | Die Anleitung erklärt die Punkte- und Rangfolgeregeln. | Bestätigt (AEN-053) | Punktestaffeln und Unterschiede zwischen Aufgaben- und Gruppenwertung sind verständlich beschrieben. |
+| KAN-038 | Geocaching-Aufgaben zeigen den tatsächlichen Ort erst nach dem Öffnen. | Bestätigt (AEN-053) | Die Übersicht verwendet eine neutrale Aufgabenbezeichnung; Ortsdetails werden erst nach dem Start sichtbar. |
+| KAN-039 | Aufgaben können einer Schwierigkeit zugeordnet werden. | Bestätigt (AEN-053) | Die konfigurierte Schwierigkeit ist in den vorgesehenen Spieler- und Adminansichten erkennbar. |
+| KAN-040 | Aufgeben der Gruppenwortaufgabe schließt sie mit null Punkten ab und bestimmt den Spielleiter. | Bestätigt (AEN-053) | Die bestätigende Person übernimmt die Spielleiterrolle; das Wort bleibt endgültig ungelöst. |
+| KAN-041 | Gruppenwörter, Aufgaben und Lösungen sind vor dem Spiel konfigurierbar. | Bestätigt (AEN-053) | Nur berechtigte Admins können Inhalte vor Einteilung speichern; Lösungen bleiben geheim. |
+| KAN-042 | Wortauswahl und Punktestaffeln können vor dem Spiel konfiguriert werden. | Bestätigt (AEN-053) | Die gespeicherte Konfiguration gilt für die Runde und wird nach Einteilung nicht stillschweigend geändert. |
+| KAN-043 | Vor-Spiel-Einstellungen sind zentral in der Vorbereitung gebündelt. | Bestätigt (AEN-053) | Gruppengröße, Wörter, Aufgaben, Schwierigkeiten und Punktestaffeln sind dort erreichbar; Steuerung bleibt für den Spielbetrieb. |
+| KAN-044 | Die Spielzeit ist konfigurierbar und endet serverseitig automatisch. | Bestätigt (AEN-053) | Der Countdown beginnt mit der Gruppeneinteilung; nach Fristablauf werden keine Spielaktionen angenommen. |
+| KAN-045 | Spieler sehen die Dauer ihrer Gruppenaufgaben. | Bestätigt (AEN-053) | Laufende und abgeschlossene Dauer wird je Aufgabe angezeigt; nicht gestartete Aufgaben werden nicht als Nullzeit dargestellt. |
+| KAN-046 | Die Beameransicht läuft auf einer eigenen Seite weiter, während der Admin geöffnet bleibt. | Bestätigt (AEN-053) | Beameraktualisierung ist unabhängig vom Admin-Tab; Schließen der Seite beendet nicht das Spiel. |
+| KAN-047 | Vorbereitung, Verbindungszustand, Restzeitwarnungen, Export und Generalprobe unterstützen den Spielbetrieb. | Bestätigt (AEN-053) | Bereitschaft beruht auf gespeicherten Daten; Übertragungsstatus und finale Ergebnisse werden korrekt angezeigt beziehungsweise exportiert. |
+| KAN-048 | Häufige Statusabrufe sollen Spielaktionen nicht durch unnötige Sperren blockieren. | Bestätigt (AEN-061) | Nicht fällige Statusabrufe vermeiden exklusive Spiel-/Rundensperren; Frist- und Aktionsregeln bleiben atomar. |
+| KAN-049 | Ranglistenberechnungen werden innerhalb eines Statusabrufs gebündelt. | Bestätigt (AEN-061) | Benötigte Ränge und Punkte werden wiederverwendet; Rangfolge und Rechte bleiben unverändert. |
+| KAN-050 | Unveränderte Daten sollen nicht unnötig vollständig neu gerendert oder übertragen werden. | Bestätigt (AEN-061) | Geänderte Serverzeit wird übernommen; tatsächliche Daten- und Ansichtsänderungen bleiben sichtbar. |
+| KAN-051 | Aufgabenimport und Admin-Konfiguration unterstützen wiederverwendbare, gespeicherte Zustände. | Bestätigt (AEN-061) | Import wird vor Übernahme validiert; unveränderte Konfiguration kann über Revisionen wiederverwendet werden. |
+
+### 1.2 Gesammelte Aufgabenideen, noch keine Umsetzungsvorgaben
 
 | Kategorie/Idee | Herkunft | Einordnung |
 |---|---|---|
@@ -55,7 +98,7 @@ Die Entscheidungen vom 05.11.2026 sind gemäß AEN-004 vom Kunden getroffen. **E
 | ENT-002 | Wer startet den Countdown? Wie wird „alle angemeldet“ erkannt: Admin-Abschluss, bekannte Sollzahl oder anderer Mechanismus? Was geschieht bei Zeitablauf ohne vollständige Teilnahme? | KAN-005, KAN-006 | **Entschieden:** Der Admin startet die Anmeldung, kann sie vorzeitig schließen und löst die Gruppeneinteilung aus. |
 | ENT-003 | Wie werden Teilnehmerzahlen behandelt, die sich nicht in Vierer-/Fünfergruppen aufteilen lassen, sowie weniger als vier Teilnehmer und keine Teilnehmer? | KAN-006, KAN-007 | **Entschieden:** Gruppen mit vier bis sechs Mitgliedern statt Dreiergruppen. Das löst 6 und 11 Teilnehmer; bei 7 sowie 1 bis 3 Teilnehmern gibt es keine automatische Einteilung, der Admin öffnet die Anmeldung erneut oder entscheidet. Details der Admin-Entscheidung sind noch zu spezifizieren. |
 | ENT-004 | Werden Gruppen zufällig oder nach anderen Regeln gebildet? Wie werden Gruppennamen vergeben? | KAN-007, KAN-008 | **Entschieden:** zufällige Einteilung; Gruppennamen aus fester weihnachtlicher Liste ohne Wiederholung. |
-| ENT-005 | Wer darf die Gruppenantwort eingeben? Wie werden Groß-/Kleinschreibung, Leerzeichen, Umlaute und falsche Versuche behandelt? Wann beginnt die Wortaufgabe? | KAN-010 bis KAN-013, KAN-055 / OFF-064 | **Entschieden:** Jedes Mitglied darf einreichen; Aufgabe beginnt mit der Einteilung; Groß-/Kleinschreibung und Leerzeichen am Rand werden ignoriert; Wörter ohne Umlaute und ß; falsche Versuche zulässig, pro Gruppe höchstens alle 3 Sekunden (serverseitige Schutzgrenze). Antwort-Rückmeldungen bei Wort- und Folgeaufgaben dauern unabhängig davon 1 Sekunde. |
+| ENT-005 | Wer darf die Gruppenantwort eingeben? Wie werden Groß-/Kleinschreibung, Leerzeichen, Umlaute und falsche Versuche behandelt? Wann beginnt die Wortaufgabe? | KAN-010 bis KAN-013, KAN-055 / OFF-064 | **Entschieden:** Jedes Mitglied darf einreichen; Aufgabe beginnt mit der Einteilung; Groß-/Kleinschreibung und Leerzeichen am Rand werden ignoriert; Wörter ohne Umlaute und ß; falsche Versuche zulässig, pro Gruppe höchstens alle 3 Sekunden (serverseitige Schutzgrenze). Das UI-Feedback folgt den Abschlussregeln von OFF-070. |
 | ENT-006 | Welche Punkteformel und welche Regel für praktisch gleichzeitige Lösungen gelten? Wird eine Rangliste angezeigt, und wem? | KAN-013, KAN-014 | **Entschieden:** Maßgeblich ist die serverseitige Eingangsreihenfolge. Punkte: Platz 1 bis 8 erhalten 10, 8, 6, 5, 4, 3, 2, 1; alle weiteren Plätze 1 Punkt. Die Rangliste sehen nur Admin/Beamer. |
 | ENT-007 | Welche Kategorien gehören zum ersten Release? Wie viele Aufgaben gibt es, in welcher Reihenfolge und mit welchen Regeln? | KAN-015 | **Entschieden:** Erster Release nur Wortaufgabe; weitere Kategorien als eigene Änderungsanträge. |
 | ENT-008 | Was bedeutet „anzahl locker“? Welcher Motorwagen beziehungsweise welches Patent ist gemeint? | KAN-015 | **Offen**, aber nicht Teil des ersten Releases (ENT-007). Vor Aufnahme in eine spätere Aufgabe sind Inhalt und Lösung zu klären. |
@@ -100,9 +143,9 @@ Diese Vorschläge sind **keine maßgebliche Quelle**. Maßgeblich sind die Entsc
 | ID | Softwareanforderung | Quelle | Abnahmekriterium |
 |---|---|---|---|
 | SWA-058 | Beamer-Ranglistenzeile zeigt Gruppenname, Mitgliedernamen in Klammern und Punkte in einer Zeile; Namen bleiben nach Wortlösung sichtbar. | KAN-052 | Beamer zeigt alle Gruppenmitglieder und laufende Punkte, ohne „Gruppe komplett“. |
-| SWA-059 | Aufgabencluster zählen abgeschlossene Aufgaben und Gesamtaufgaben. | KAN-053 | Anzeige `n/m erledigt`, Zähler basiert auf dem serverseitigen Abgabestatus. |
+| SWA-059 | Aufgabencluster zählen abgeschlossene Aufgaben und Gesamtaufgaben. | KAN-053 | Anzeige `n/m` ohne das Wort „erledigt“; der Zähler basiert auf dem serverseitigen Abgabestatus. |
 | SWA-060 | Schwierigkeit wird als Tag mit Text und Farbklasse dargestellt. | KAN-054 | Alle Aufgabenansichten verwenden Leicht/blau, Mittel/rot, Schwer/schwarz. |
-| SWA-061 | Antwort-Rückmeldung wird nach 1000 ms ausgeblendet. Das bestehende serverseitige Wiederholungsintervall bleibt unverändert. | KAN-055 | Richtige und falsche Antworten in Wort- und Folgeaufgaben verwenden dieselbe Rückmeldezeit von 1000 ms; die bisherige serverseitige Schutzgrenze bleibt bei 3000 ms. |
+| SWA-061 | Die Rückmeldung folgt dem Abschlusszustand der Antwort; das serverseitige Wiederholungsintervall bleibt unabhängig davon. | KAN-055, KAN-071, KAN-072 | Nicht abschließende Fehlversuche bleiben sichtbar; abschließende Rückmeldungen dauern 3000 ms. Die serverseitige Startwort-Drosselung bleibt bei 3000 ms. |
 | SWA-062 | Admin-Wörter werden ohne automatische Längen-/Schwierigkeitsfilter ausgewählt; Buchstabenverteilung ist unabhängig von Wortlänge. | KAN-056 | Jedes gültige A–Z-Wort wird akzeptiert; jedes Zeichen genau einmal, Anzahl je Mitglied unterscheidet sich höchstens um eins. |
 | SWA-063 | Beamerzugriff ist zusätzlich mit einer registrierten Supabase-Spielersitzung möglich und bleibt read-only. | KAN-057 | Nur registrierte Spieler erhalten die Anzeige; anonyme Nichtspieler ohne Token werden abgewiesen; keine Steuerungselemente. |
 | SWA-064 | Aufgeben-Hinweise unterscheiden Starträtsel und Folgeaufgaben. | KAN-058 | Null-Punkte-Hinweis immer; Spielleiter-Hinweis ausschließlich beim Gruppenwort. |
@@ -139,3 +182,95 @@ Diese Vorschläge sind **keine maßgebliche Quelle**. Maßgeblich sind die Entsc
 **KAN-072 (bestätigt):** Nach richtiger oder endgültig falscher Antwort wird die Rückmeldung drei Sekunden lang angezeigt, bevor die Aufgabenübersicht erscheint. Dies gilt für den vorhandenen Abschlussablauf; keine Änderung der Versuchs-/Punktevergabe.
 
 **Freigabe:** Der Kunde hat am 17.11.2026 ausdrücklich das gesamte OFF-070-Paket zur Umsetzung nach vollständiger Dokumentation und Tests freigegeben. Keine Supabase-Änderung.
+
+## OFF-072 – Auswahlaufgabe ohne Schätzung (19.11.2026)
+
+| ID | Anforderung | Status | Abnahmekriterium |
+|---|---|---|---|
+| KAN-073 | Zusätzlich zur Schätzfrage mit Auswahl gibt es eine eigenständige Auswahlaufgabe ohne Zahleneingabe. | Bestätigt (OFF-072) | Die Gruppe wählt eine von vier Optionen und darf genau einmal abgeben. Richtig wird nach Dauer wie eine exakte Antwort gewertet; falsch bleibt abgeschlossen und erhält keine Punkte. Die Schätzfrage mit zusätzlicher Auswahl behält ihre bisherige Zahlen- und Auswahlwertung. |
+
+| ID | Softwareanforderung | Quelle | Abnahmekriterium |
+|---|---|---|---|
+| SWA-073 | Die Spielsoftware unterstützt eigenständige Auswahlaufgaben mit vier Optionen und ohne Zahleneingabe. | KAN-073 | Eine Auswahlaufgabe ist ohne numerische Lösung spielbar, akzeptiert genau eine gültige Auswahl und wertet richtige Antworten nach Dauer wie `exakt`; falsche Antworten bleiben abgeschlossen und unplatziert. `auswahl` mit numerischer Lösung behält die bisherige Schätzwertung. |
+
+## OFF-071 – Behutsame Optimierung der Smartphone-Spieleransicht
+
+| ID | Anforderung | Status | Abnahmekriterium |
+|---|---|---|---|
+| KAN-074 | Die Smartphone-Spieleransicht soll kompakter und leichter erfassbar werden, ohne das bestehende Design oder Spielverhalten neu zu gestalten. | Bestätigt (OFF-071) | Bestehende Weihnachtsgrafik, Farben, Schriften und Akten-/Papierstil bleiben erhalten. Kopf- und Spielinformationen, Abstände, Fortschritt, Kategorien und Text-Hierarchie werden auf Smartphones behutsam verbessert; Regeln, Rollen, Aktionen, Daten und Zustandswechsel bleiben gleich. |
+| KAN-075 | Zusätzliche Gruppenwortzeit und vorläufige Platzhinweise sollen in der Smartphone-Spieleransicht nicht erscheinen. | Bestätigt (OFF-071) | Gruppenwortzeit samt Zeitwert wird dort in allen Phasen ausgeblendet; der Hinweis auf den vorläufigen Platz im Erfolg „Wort gelöst!“ und die Platzangabe in der Punkte-/Statusübersicht entfallen. Spielrestzeit, Punkte und Rätsel-Fortschritt bleiben sichtbar; endgültiger Platz nach Spielende und zugrunde liegende Daten bleiben erhalten. Andere Ansichten ändern sich nicht. |
+| KAN-076 | Der Link zur Erklärungs-/Regelseite wird in der Spieleransicht mit „Regeln“ beschriftet. | Bestätigt (OFF-071) | Nur der Linktext ändert sich; Ziel `erklaerung.html`, Inhalt, Funktion und Zugriffsverhalten bleiben gleich. |
+| KAN-077 | Die mobile Rätselübersicht soll ohne allgemeine Abschnittseinleitung auskommen. | Bestätigt (OFF-071) | Auf Smartphones entfallen die Überschrift „RÄTSEL“ und beim Spielleiter der Text „Öffnen startet die Zeit. Drei exakte Versuche, eine Schätzung.“. Kategorien, Aufgaben und Aufgabenstellungen bleiben erhalten; andere rollenbezogene Hinweise bleiben sichtbar. |
+| KAN-078 | Während der Anmeldephase wird in der Spieleransicht kein Bestenlistenlink angezeigt. | Bestätigt (OFF-071) | In Phase `anmeldung` ist der Link verborgen; außerhalb dieser Phase bleiben bisherige Anzeige und Zugriffslogik unverändert. Bestenliste und andere Ansichten ändern sich nicht. |
+| KAN-079 | In der Gruppenwortphase soll die eigene Gruppenzugehörigkeit auf dem Smartphone unmittelbar erkennbar sein. | Bestätigt (OFF-071) | Direkt unter der Spielrestzeit steht dynamisch „DEINE GRUPPE: <Gruppenname>“. Buchstaben, Anweisung und Eingabefeld bleiben darunter. Gestaltung bleibt kompakt; lange Gruppennamen sind lesbar und umbrechen. Gruppenzuordnung und Spielablauf bleiben unverändert. |
+
+| ID | Softwareanforderung | Quelle | Abnahmekriterium |
+|---|---|---|---|
+| SWA-074 | Die Spielerübersicht wird bei Smartphone-Breite kompakter dargestellt, ohne andere Ansichten oder das bestehende Design zu verändern. | KAN-074 | Bei einer CSS-Viewportbreite bis 40 rem werden Kopf-/Spielinformationen, Abstände, Fortschritt, Kategorien und Text-Hierarchie behutsam angepasst. Farben, Schriften, Weihnachtsgrafik, Aktenstil, Bedienbarkeit und Rollenhinweise bleiben erhalten. |
+| SWA-075 | Zusätzliche Gruppenwortzeit und vorläufige Platzanzeigen werden nur in der Smartphone-Spielerübersicht ausgeblendet. | KAN-075 | Bei höchstens 40 rem erscheinen weder Gruppenwort-Zeit samt Wert noch vorläufiger Platzhinweis oder Platz in der Punkte-/Statusübersicht. Spielrestzeit, Punkte, Aufgabenfortschritt und endgültiger Platz nach Spielende bleiben sichtbar. Zustand und gespeicherte Daten sowie Admin-, Bestenlisten- und Beameransichten bleiben unverändert. |
+| SWA-076 | Der Regellink der Spieler-Einstiegsseite trägt die Beschriftung „Regeln“. | KAN-076 | Linktext exakt „Regeln“; `href="erklaerung.html"` und Navigation bleiben unverändert. |
+| SWA-077 | Die mobile Rätselübersicht entfernt ihre allgemeine Überschrift und die Spielleiter-Einleitung. | KAN-077 | Bei höchstens 40 rem wird „RÄTSEL“ und ausschließlich der Spielleitertext „Öffnen startet die Zeit. Drei exakte Versuche, eine Schätzung.“ nicht angezeigt. Kategorien, Aufgaben, Aufgabenstellungen und rollenspezifische Hinweise für Nicht-Spielleiter bleiben erhalten. |
+| SWA-078 | Der Bestenlistenlink wird während der Anmeldephase unterdrückt. | KAN-078 | Bei `phase === 'anmeldung'` wird der Link nicht gerendert; in allen anderen Phasen gilt die vorhandene Sichtbarkeits- und Zugriffslogik. |
+| SWA-079 | Die Gruppenübersicht kennzeichnet die Gruppenzugehörigkeit auf Smartphones direkt unter der Spielrestzeit. | KAN-079 | Bei höchstens 40 rem steht „DEINE GRUPPE: “ mit dem dynamischen Gruppennamen vor Buchstaben, Anweisung und Eingabe; lange Namen umbrechen ohne horizontales Überlaufen. |
+
+## 7. Wiederhergestellte Softwareanforderungen
+
+Die folgenden SWA-Definitionen wurden aus DOC-003, den AEN-/OFF-Nachweisen und den erhaltenen Architektur- und Komponentenverträgen in DOC-002 überführt. Der ursprüngliche Wortlaut ist nur dort übernommen, wo er erhalten ist. Abgelöste Einzelregeln bleiben für die Historie bezeichnet und dürfen nicht als aktuelle Umsetzungsvorgabe gelesen werden.
+
+| ID | Quelle | Softwareanforderung und Prüfkriterium | Status |
+|---|---|---|---|
+| SWA-001 | KAN-003 | Eine Rundenadresse öffnet den Einstieg in genau diese Runde. Ungültige Rundenadressen zeigen eine verständliche Fehlermeldung. | Abgeleitet |
+| SWA-002 | KAN-003, KAN-004, KAN-009, KAN-012 | Die Spieleroberfläche ist auf Smartphones ohne Installation bedienbar. Anmeldung, Buchstabenanzeige und Antwortabgabe funktionieren auf aktuellen Chrome- und Safari-Smartphonebrowsern (ENT-013). | Abgeleitet |
+| SWA-003 | KAN-002, KAN-004 | Der Server validiert Anmeldung und Rundenstatus; auch bei parallelen Anfragen werden höchstens 100 Teilnehmer registriert. Leere Namen werden abgewiesen; Namen haben 2 bis 20 Zeichen und sind ohne Beachtung der Groß-/Kleinschreibung eindeutig (ENT-010). | Abgeleitet |
+| SWA-004 | KAN-004, KAN-009 | Jeder Teilnehmer erhält eine stabile Identität unabhängig vom Anzeigenamen. Neuladen im selben Browser erhält die Zuordnung und erzeugt keinen weiteren Teilnehmer; Gerätewechsel wird nicht unterstützt (ENT-010). | Abgeleitet |
+| SWA-005 | KAN-005, KAN-006 | Der Server verwaltet verbindlichen Anmeldeschluss und Spielphase. Der Anmeldeschluss liegt 300 Sekunden nach freigegebenem Start; Anmeldungen ab diesem Zeitpunkt werden abgewiesen. Der Admin kann die Anmeldung starten und vorzeitig schließen (ENT-002). | Abgeleitet |
+| SWA-006 | KAN-005 | Der Client berechnet den Countdown aus dem serverseitigen Endzeitpunkt mit Korrektur der Gerätezeit. Wiederverbinden synchronisiert die Anzeige; ein sekündlicher Backend-Aufruf nur für den Countdown ist nicht erforderlich. | Abgeleitet |
+| SWA-007 | KAN-006, KAN-007 | Die Gruppeneinteilung ordnet jeden zugelassenen Teilnehmer genau einer Gruppe zu. Gruppengröße folgt der gespeicherten Min-/Max-Konfiguration; unzulässige oder nicht aufteilbare Teilnehmerzahlen werden ohne Teilzuordnung abgewiesen. | Abgeleitet; durch AEN-015 präzisiert |
+| SWA-008 | KAN-008, KAN-011 | Teilnehmer erhalten Gruppeninformation, Aufgabenbeschreibung und die für sie bestimmten Buchstaben. Das vollständige geheime Lösungswort wird nicht an den Spielerclient ausgeliefert. | Abgeleitet; Verteilung durch OFF-064 präzisiert |
+| SWA-009 | KAN-012 | Eine Antwort wird serverseitig der Gruppe des authentifizierten Teilnehmers zugeordnet. Eine vom Client behauptete fremde Gruppenzugehörigkeit wird nicht akzeptiert. | Abgeleitet |
+| SWA-010 | KAN-011, KAN-013 | Antworten werden serverseitig gegen das eigene Gruppenwort geprüft. Groß-/Kleinschreibung und Leerzeichen am Rand werden ignoriert; falsche Startwortversuche sind zulässig, pro Gruppe jedoch höchstens alle drei Sekunden. Eine falsche Antwort erzeugt keinen Lösungsplatz. | Abgeleitet |
+| SWA-011 | KAN-013, KAN-020 | Pro Gruppe und Aufgabe zählt höchstens ein abgeschlossenes Ergebnis. Plätze sind atomar und eindeutig; maßgeblich sind die serverseitigen Rangregeln. | Abgeleitet; Rangbildung durch AEN-021 präzisiert |
+| SWA-012 | KAN-014 | Punkte werden serverseitig gemäß der geltenden Punktekonfiguration berechnet und dem Ergebnis zugeordnet. Der Client kann Punkte nicht frei setzen. | Abgeleitet |
+| SWA-013 | KAN-002, KAN-005, KAN-009, KAN-013 | Die Anwendung unterstützt 100 gleichzeitig aktive Spieler plus Admin/optionale Anzeige. Gruppen- und Phasenänderungen werden synchronisiert; Zielwerte und Wiederverbindung folgen ENT-013. | Abgeleitet |
+| SWA-014 | KAN-001, KAN-004, KAN-057, KAN-059, KAN-060 | Es werden nur notwendige Teilnehmerdaten gespeichert. Admins sehen alle Spieldaten; Spieler sehen ihre Gruppe und freigegebene read-only Ranglisten. Löschung erfolgt spätestens sieben Tage nach der Feier (ENT-012). | Abgeleitet; Sichtbarkeit durch OFF-064/065 ergänzt |
+| SWA-015 | KAN-005, KAN-006, KAN-014 | Steueraktionen und Rundenkonfiguration sind gegen unberechtigte Spielerzugriffe geschützt. | Abgeleitet |
+| SWA-016 | KAN-015 | Aufgaben weiterer Kategorien werden erst nach Festlegung ihrer Regeln in eigene SWA, UNA und TST zerlegt. Aufgabenideen allein sind keine implementierbare Spezifikation. | Abgeleitet |
+| SWA-017 | KAN-007, KAN-011 | Gruppengröße und Buchstabenverteilung werden serverseitig aus der gültigen Gruppenkonfiguration und dem gewählten Wort abgeleitet; jedes Wortzeichen wird genau einmal verteilt. | Abgeleitet; Buchstabenverteilung durch OFF-064 präzisiert |
+| SWA-018 | KAN-018, KAN-020 | Exakte Antworten werden serverseitig geprüft; richtige Ergebnisse werden nach Aufgabenzeit und den dokumentierten Tie-Break-Regeln gewertet. | Abgeleitet |
+| SWA-019 | KAN-018, KAN-020 | Schätzantworten werden als numerische Eingabe angenommen und nach Abstand zur Lösung, danach Dauer und festgelegten Tie-Break-Regeln gewertet. | Abgeleitet |
+| SWA-020 | KAN-007 | Der Admin kann vor der Einteilung Mindest- und Maximalgröße der Gruppen konfigurieren. Die zulässigen Werte werden serverseitig geprüft; die Einteilung erzeugt vollständige, disjunkte Gruppen. | Abgeleitet (AEN-015) |
+| SWA-021 | KAN-016 | Der Testläufer bietet einen schnellen Modus ohne Datenbanktests und einen vollständigen Modus mit allen Tests; unbekannte Modi schlagen ausdrücklich fehl. | Abgeleitet (AEN-020) |
+| SWA-022 | KAN-017 | Geheime Aufgabenlösungen und Sperrliste bleiben außerhalb der öffentlichen Projektdateien. Die Geheimnisprüfung meldet Fundstellen, ohne geheime Werte auszugeben. | Abgeleitet (AEN-020) |
+| SWA-023 | KAN-020 | Aufgabenstart, Abgabe und Rangbildung berücksichtigen Aufgabenart, Berechtigung und Spielphase; Zeiten und Ergebnisse werden serverseitig ermittelt. | Abgeleitet (AEN-016/AEN-021) |
+| SWA-024 | KAN-028 | Exakte Folgeaufgaben erlauben bis zu drei Versuche je Gruppe. Die ersten beiden falschen Antworten schließen die Aufgabe nicht ab; richtige Antwort oder dritter Versuch erzeugt das einmalige Ergebnis. | Abgeleitet (AEN-028) |
+| SWA-026 | KAN-022 | Aufgabenwörter waren auf höchstens neun Buchstaben begrenzt. | Abgelöst durch SWA-062 (OFF-064) |
+| SWA-027 | KAN-023 | Ein Eingabeformular zeigt eine übergebene Rückmeldung unter dem Eingabefeld; ohne Rückmeldung bleibt der Bereich leer. | Abgeleitet |
+| SWA-028 | KAN-024 | Aufgaben können Bildadressen enthalten; vorhandene gespeicherte Bildadressen werden durch Initialdaten nicht überschrieben. | Abgeleitet |
+| SWA-029 | KAN-025 | Der Spielerzustand kennzeichnet abgegebene exakte Aufgaben als richtig oder falsch und unterscheidet nicht abgegebene Aufgaben. | Abgeleitet |
+| SWA-030 | KAN-026 | Die Adminübersicht liefert für jede Gruppe Aufgabenzeilen mit Titel, Antwort, Ergebnis und Dauer, einschließlich des Gruppenworts. | Abgeleitet |
+| SWA-031 | KAN-026 | Spieler können eine einzelne verfügbare Aufgabe öffnen; der Admin kann zur Gruppenübersicht zurückkehren. Die frühere einsekündige Rückmeldezeit ist durch SWA-072 abgelöst. | Abgeleitet; Timing abgelöst durch OFF-070 |
+| SWA-032 | KAN-027, KAN-034 | Öffentliche Anleitung und Präsentation zeigen den Spielablauf auf den vorgesehenen Monitorlayouts; relative Links und QR-Ziel bleiben auf derselben Website. | Abgeleitet |
+| SWA-033 | KAN-032 | Admin-Ranglisten- und Beameransichten zeigen die vorgesehenen Gruppeninformationen; Spieler erhalten nur ihre berechtigte Gruppenansicht. | Abgeleitet |
+| SWA-034 | KAN-029 | Bei Zustandsaktualisierungen bleiben unveränderte DOM-Bereiche sowie lokale Eingaben, Leerwerte, Fokus und Selektion erhalten; erfolgreiche Aktionen dürfen gezielt Entwürfe verwerfen. | Abgeleitet (AEN-028) |
+| SWA-035 | KAN-030 | Pro Client läuft höchstens ein Statusabruf gleichzeitig; zusätzliche Anforderungen werden zusammengefasst. Veraltete Ergebnisse früherer Generationen werden ignoriert; Fehler werden mit Backoff erneut versucht. | Abgeleitet (AEN-028) |
+| SWA-036 | KAN-028 | Versuche werden für jede Aufgabe und Gruppe eindeutig nummeriert und geschützt gespeichert; nur richtige Antwort oder erschöpfte Versuche schließen das Ergebnis ab. | Abgeleitet (AEN-028) |
+| SWA-037 | KAN-033 | Aufgabenbereitschaft prüft gespeicherte Aufgabenangaben und liefert konkrete Mängel ohne geheime Lösungswerte. | Abgeleitet (AEN-028) |
+| SWA-038 | KAN-016, KAN-017 | Die Konsistenzprüfung meldet doppelte/fehlende IDs, ungültige lokale Links und Versionsabweichungen einzeln; Fehler verhindern die Baseline-Erstellung. | Abgeleitet (AEN-028) |
+| SWA-039 | KAN-034 | Die Desktop-Adminansicht behält ihre Tabs, Feldwerte und Bedienbarkeit bei Aktualisierungen; die Präsentation verwendet einen gemeinsamen QR-Renderer mit sichtbarer Fehlerbehandlung. | Abgeleitet (AEN-036) |
+| SWA-040 | KAN-035 | Die mobile Spielerübersicht ist kompakt, hält Gruppennamen und Teilnehmer lesbar und entfernt Wort- sowie Buchstabeninhalte nach Lösung aus dem DOM. | Abgeleitet (AEN-038) |
+| SWA-041 | KAN-036, KAN-045 | Spielerzustand enthält die für Gruppe und Aufgabe berechtigten Abschluss- und Zeitinformationen; nicht gestartete Aufgaben werden nicht als Nullzeit dargestellt. | Abgeleitet (AEN-053) |
+| SWA-042 | KAN-040 | Aufgeben schließt das Gruppenwort mit null Punkten ab und bestimmt den Spielleiter; Folgeaufgaben können nur vom Spielleiter aufgegeben werden. | Abgeleitet (AEN-053) |
+| SWA-044 | KAN-041, KAN-042, KAN-043 | Admins konfigurieren vor Gruppeneinteilung Gruppengröße, Aufgaben, Schwierigkeiten und Punktestaffeln; gespeicherte Werte werden serverseitig validiert. | Abgeleitet (AEN-053) |
+| SWA-048 | KAN-044, KAN-045 | Die Spielzeit beginnt mit Gruppeneinteilung, wird anhand serverseitiger Zeit berechnet und beendet das Spiel nach der konfigurierten Frist automatisch. | Abgeleitet (AEN-053) |
+| SWA-049 | KAN-046 | Die separate Beamerseite nutzt einen geschützten Anzeigekanal und zeigt keine Adminsteuerung oder geheimen Daten; Öffnen und Schließen verändern den Spielzustand nicht. | Abgeleitet (AEN-053) |
+| SWA-050 | KAN-037, KAN-047 | Der Admin kann nach Spielende finale Gruppen- und Aufgabenresultate als CSV exportieren; Export enthält keine Antworten oder Lösungen und schützt Tabellenkalkulations-Formelpräfixe. | Abgeleitet (AEN-053) |
+| SWA-051 | KAN-048 | Nicht fällige Statusabrufe vermeiden exklusive Spiel-/Rundensperren; fällige Enden und Spielaktionen prüfen die Frist weiterhin atomar. | Abgeleitet (AEN-061) |
+| SWA-052 | KAN-049 | Rang- und Punkteberechnung werden innerhalb eines Status-RPC gebündelt und für alle betroffenen Zeilen wiederverwendet. | Abgeleitet (AEN-061) |
+| SWA-053 | KAN-050 | Unveränderter fachlicher Zustand löst keine vollständige DOM-Neuerzeugung aus; Serverzeit wird trotzdem aktualisiert. | Abgeleitet (AEN-061) |
+| SWA-054 | KAN-051 | Unveränderte Admin-Konfiguration kann anhand einer Revision wiederverwendet werden; Reset, Login, Fehler und erfolgreiche Speicherung invalidieren den Cache. | Abgeleitet (AEN-061) |
+| SWA-055 | KAN-051 | Der Aufgabenparser liefert Aufgaben, Fehler, Warnungen und Kategorien in Dateireihenfolge; Fehler enthalten Zeilennummern. | Abgeleitet (AEN-061) |
+| SWA-056 | KAN-051 | Der Import-RPC validiert Aufgaben serverseitig und übernimmt sie erst nach expliziter Bestätigung, sofern keine Fehler vorliegen. | Abgeleitet (AEN-061) |
+| SWA-057 | KAN-051 | Aufgabenkategorien lassen sich mit Tastatur und ARIA-Bedienzustand auf- und zuklappen; die Reihenfolge aus der Importdatei bleibt erhalten. | Abgeleitet (AEN-061) |
+| SWA-070 | KAN-070 | Kategorien und Fortschrittsanzeige rendern Zähler im Format `x/y` ohne angehängtes Wort „erledigt“, auch bei 0 und vollständigem Fortschritt. | Abgeleitet (OFF-070) |
+| SWA-071 | KAN-071 | Bei nicht abschließender falscher Antwort bleibt die Rückmeldung ohne Ablauftimer sichtbar; die Eingabe bleibt aktiv und eine neue Aktion ersetzt die Meldung. | Abgeleitet (OFF-070) |
+| SWA-072 | KAN-072 | Nach abschließender Antwort und richtiger Gruppenwortlösung bleibt die Rückmeldung 3000 ms sichtbar; danach wird die Einzelansicht geschlossen. | Abgeleitet (OFF-070) |

@@ -687,3 +687,29 @@ body.admin-page {
 @media (max-width: 28rem) {
   .beamer-player h1, .mission-leader .player-group-name { padding: .75em 1em; background-size: 100% 100%, auto 85%, auto 85%; }
 }
+
+.player-group-mobile-label { display: none; }
+@media (max-width: 40rem) {
+  .player-overview { gap: .4rem; padding: .55rem; }
+  .player-overview .game-clock { align-items: center; gap: .15rem .5rem; font-size: .95rem; }
+  .player-overview .game-clock [data-game-countdown] { font-size: 1.35rem; }
+  .player-overview.player-word-phase .player-group-name { display: none; }
+  .player-overview .player-group-mobile-label {
+    display: block;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+  .player-overview .group-word-time,
+  .player-overview .provisional-place,
+  .player-overview .mission-progress .mission-rank,
+  .player-overview .task-overview-title,
+  .player-overview .task-overview-leader-intro { display: none; }
+  .player-overview .mission-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: .45rem; }
+  .player-overview h3 { margin-top: .3rem; font-size: 1rem; line-height: 1.25; }
+  .player-overview .category-toggle { min-height: 2.75rem; padding: .4rem .55rem; font-size: 1rem; line-height: 1.25; }
+  .player-overview .category-panel { gap: .35rem; }
+  .player-overview .task { gap: .2rem; padding: .4rem; }
+  .player-overview .task-meta { gap: .1rem .4rem; font-size: .9rem; }
+}

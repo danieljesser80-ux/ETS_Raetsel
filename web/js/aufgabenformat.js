@@ -45,7 +45,7 @@ function validate(block, errors, warnings) {
     else if ((task.type === 'schaetzung' || task.type === 'auswahl') && !NUMBER_RE.test(task.solution)) {
       fail('Lösung muss bei Schätzfragen eine ganze Zahl mit 1–9 Ziffern sein');
     }
-  } else {
+  } else if (task.type !== 'auswahl') {
     warn('Keine Lösung – Aufgabe ist nicht spielbar');
   }
 
@@ -60,7 +60,7 @@ function validate(block, errors, warnings) {
         const hit = rawOptions.find((o) => o.toLowerCase() === fields.correct_option.toLowerCase());
         if (hit) task.correct_option = hit;
         else fail('Richtige Option ist keine der Optionen');
-      } else if (task.solution) {
+      } else {
         warn('Keine richtige Option – Aufgabe ist nicht spielbar');
       }
     }

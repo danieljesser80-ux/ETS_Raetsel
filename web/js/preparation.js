@@ -1,18 +1,20 @@
 export function taskPreparation(task) {
   const missing = [];
   const solution = String(task.solution ?? '').trim();
-  if (!solution) {
+  const pureChoice = task.kind === 'exact' && task.needs_choice === true;
+  const choiceNoun = task.kind === 'estimate' ? 'Vornamen' : 'Optionen';
+  if (!solution && !pureChoice) {
     missing.push('Lösung fehlt');
   }
   if (task.needs_choice) {
     const options = (task.options || []).map((name) => String(name).trim());
     if (options.length !== 4 || options.some((name) => !name)
         || new Set(options.map((name) => name.toLowerCase())).size !== 4) {
-      missing.push('Vier verschiedene Vornamen fehlen');
+      missing.push(`Vier verschiedene ${choiceNoun} fehlen`);
     }
     const correct = String(task.correct_option ?? '').trim();
     if (!correct || !options.some((name) => name.toLowerCase() === correct.toLowerCase())) {
-      missing.push('Der richtige Name aus den vier Vornamen fehlt');
+      missing.push(task.kind === 'estimate' ? 'Der richtige Name aus den vier Vornamen fehlt' : 'Die richtige Option fehlt');
     }
   }
   if (['schach', 'sudoku', 'geo-saeule', 'geo-baum'].includes(task.id)

@@ -2,32 +2,44 @@
 
 ## 0. Sitzungseinstieg und aktueller Arbeitsstand
 
-**Stand 15.11.2026 – GitHub main.** Einstieg: Abschnitt 0 und 2, DOC-009; anschließend betroffene IDs. Historische Nachweise weiter unten bleiben erhalten und sind keine neuen Aufträge.
+**Stand 19.11.2026 – lokaler Ordnerarbeitsbereich ohne Git.** Einstieg: Abschnitt 0 und 2, DOC-009; anschließend betroffene IDs. Historische Nachweise weiter unten bleiben erhalten und sind keine neuen Aufträge.
 
 | Thema | Aktueller Stand |
 |---|---|
-| Projekt | GitHub Pages: https://danieljesser80-ux.github.io/ETS_Raetsel/; Repository danieljesser80-ux/ETS_Raetsel; Supabase als Backend. |
-| Arbeitsablauf | Anforderungen zuerst lesen; Änderungen im Branch, automatisierte Tests, bei grünen Tests Merge nach main gemäß Kundenregel; visuelle Prüfung auf Pages danach. Supabase-Änderungen vorher ausdrücklich benennen; SQL führt Kunde aus. Kein ungefragter Reset oder Live-Spielstart. |
-| Umsetzung | OFF-058–064 umgesetzt; OFF-065 PR #4, OFF-066/067 PR #5 (d5e82e0), Weihnachtsdekoration PR #6 (ba8b8e3) in main. Spielleiter, mobile Bestenliste und Projektor; ein Team je Zeile, Statistik rechts, Live-Wertung, bestehende Fonts und Weihnachtsgrafik. |
-| Tests und Abnahme | Testlauf #60 und #65 erfolgreich; Weihnachtsdesign am 15.11. ausdrücklich abgenommen trotz Abweichung von Vorschau (88d14ae). Einzelprüfung 25 Gruppen/1920×1080 und Handybreite nicht separat bestätigt. |
-| Supabase | Kunde bestätigte Schema-Update, Cron, Anonymous Sign-Ins, Adminzugang, Reset und Vorbereitung; neuere Designänderungen ohne SQL. Live-Konfiguration nicht erneut geprüft. |
-| Aufgaben | Import OFF-062/063 vom Kunden erfolgreich geprüft; zuletzt dokumentiert fehlende Lösungen Locker, Lampen, zwei Geocaching-Aufgaben, Wissensquiz und Geocaching-Bilder. Aktueller Inhalt vom Kunden zu bestätigen. |
-| Offene Arbeiten | OFF-056 reale Generalprobe mit zwei Gruppen; finale Aufgabenbestätigung; Lastmessung bis 100 Teilnehmer/25 Gruppen, Geräteprüfung; finale Baseline und Gesamtfreigabe. Keine bekannte neue Fehlerbehebung beauftragt. |
+| Projekt | GitHub Pages: https://danieljesser80-ux.github.io/ETS_Raetsel/; Repository danieljesser80-ux/ETS_Raetsel; Supabase als Backend. Die aktuelle Arbeitsumgebung ist ein lokaler Ordner ohne Git. |
+| Arbeitsablauf | Änderungen lokal dokumentieren, implementieren und testen. Der Kunde veröffentlicht selbst. Supabase-Änderungen vorher ausdrücklich benennen; SQL führt der Kunde aus. Kein ungefragter Reset oder Live-Spielstart. |
+| Umsetzung | OFF-064 PR #2, OFF-069-Rücknahme PR #10 und OFF-070 PR #11 sind in `main`; OFF-065 PR #4, OFF-066/067 PR #5 und OFF-068 PR #6 ebenfalls. OFF-071 ist lokal implementiert, aber nicht veröffentlicht oder gemergt. |
+| Tests und Abnahme | OFF-071: `npm run test:schnell` 363/363 bestanden; `node tools\konsistenz.mjs` sauber (437 IDs). Keine vollständige Testsuite oder Baseline erstellt. Echte Smartphone-/Beamerprüfung und Kundenabnahme offen. |
+| Supabase | `supabase\schema.sql` enthält die lokale OFF-072-Erweiterung; nicht live ausgeführt. Der Kunde führt das aktualisierte SQL aus und veröffentlicht den Webclient. Frühere Live-Konfiguration nicht erneut geprüft. |
+| Aufgaben | Import OFF-062/063 vom Kunden erfolgreich geprüft; Lauf 010 erkannte acht Aufgaben mit fünf Warnungen. Finale geschützte Aufgabendatei und Klärung aller Warnungen bleiben vom Kunden zu bestätigen. |
+| Offene Arbeiten | TST-K-020: OFF-071 nach Veröffentlichung auf echten Smartphones prüfen. OFF-064/070 und OFF-069 nach Veröffentlichung visuell kundenprüfen; reale Probe mit zwei Gruppen, Aufgabenbestätigung, Veröffentlichung/SQL und Kundenprüfung offen. Weiter offen: Lastmessung bis 100 Teilnehmer/25 Gruppen, Geräteprüfung, finale Baseline und Gesamtfreigabe. |
 | Performance | OFF-058–061 implementiert; reale Mehrverbindungs-/Lastmessung, EXPLAIN, Nutzlast- und Browservergleich nicht nachgewiesen. |
 | Baseline | BL-001 Anforderungsbaseline freigegeben; BL-008 historisch eingefroren, nicht freigegeben. Neue Einsatzbaseline erst nach Generalprobe und Kundenfreigabe. |
 | Geheimnisse | Lösungen, Admincodes und private Schlüssel nicht ins Repository; keine Live-Daten in Testnachweisen. |
 
-**OFF-069 (16.11.2026):** Neue Designreferenz in PR #9 umgesetzt, CI #96 grün, Merge a0917e7. Kunde lehnt die tatsächliche Optik ab und verlangt Rückkehr zum abgenommenen Design aus PR #6. Rücknahme stellt CSS und Views exakt auf Stand vor PR #9 zurück und entfernt dessen zwei Assets. Keine SQL-Änderung. Rücknahmeprüfung vor Merge; bisherige Abnahme bleibt maßgeblich.
+**OFF-069 (16.11.2026):** PR #9 wurde vom Kunden abgelehnt; die Rücknahme auf das abgenommene Design aus PR #6 und die Entfernung der zwei neuen Assets erfolgten in [PR #10](https://github.com/danieljesser80-ux/ETS_Raetsel/pull/10), gemergt in `main` am 16.11.2026. Visuelle Kundenprüfung der veröffentlichten Seite bleibt offen. Keine SQL-Änderung.
 
-**OFF-070 (17.11.2026):** Kundenauftrag: In der Aufgabenübersicht das Wort „erledigt“ aus Kategorie-Zählern und Fortschrittskachel entfernen; bei falscher Antwort mit weiteren Versuchen die Rückmeldung bis zur nächsten Aktion dauerhaft sichtbar halten; nach endgültiger Abgabe/Erfolg die Rückmeldung wieder 3 Sekunden anzeigen. Keine Supabase-/Schemaänderung, keine Änderung der Spiellogik. Automatisierte Prüfung und visuelle Abnahme separat.\n\n**Pflege:** Tatsächliche Änderungen, Tests, Veröffentlichung und Abnahme getrennt dokumentieren. Historische Angaben nicht als aktuellen Stand ausgeben.
+**OFF-070 (17.11.2026):** In [PR #11](https://github.com/danieljesser80-ux/ETS_Raetsel/pull/11), gemergt am 17.11.2026, wurden „erledigt“-Beschriftungen entfernt, nicht abschließende Fehlerrückmeldungen erhalten und terminale Rückmeldungen auf 3 Sekunden gesetzt. Keine Supabase-/Schemaänderung; visuelle Kundenabnahme nach Veröffentlichung offen.
+
+**OFF-071 (19.11.2026):** Smartphone-Spieleransicht lokal behutsam optimiert; Regeln-Link, Phasenlink, Gruppenbeschriftung und vereinbarte Anzeigeentfernungen umgesetzt. Keine Änderung an Spielregeln, Daten, Supabase oder anderen Ansichten. Schnelltests bestanden; manuelle Smartphone-/Kundenprüfung und Veröffentlichung offen.
+
+**OFF-064 (Klärung 19.11.2026):** Zwei Punkte (Zählerbeschriftung „erledigt“, einsekündige Rückmeldung) sind durch OFF-070 ersetzt; fünf übrige Punkte bleiben mit offener Verifikation.
+
+**OFF-070 (Klärung 19.11.2026):** Eine Fehlermeldung bei verbleibenden Versuchen bleibt auch beim Tippen sichtbar und wird erst durch die nächste Abgabe ersetzt. PR-/CI-/Abnahmestand nicht neu geprüft.
+
+**OFF-071 (18.–19.11.2026):** Mobile Spieleransicht und Screenshots analysiert; Änderungen auf Smartphones begrenzt, Gruppenwortzeit dort in allen Phasen ausblenden, endgültigen Platz nach Spielende beibehalten. Antrag geklärt, keine Umsetzungsfreigabe.
+
+**OFF-072 (19.11.2026):** Reine Auswahlaufgabe ergänzt und lokal verifiziert. Schnelltests 352/352, gezielte PGlite-Regression 20/20; keine Veröffentlichung, Live-SQL-Ausführung, Kundenabnahme oder neue Baseline. Details in DOC-006 und DOC-007; offene Anträge und Nachweis in DOC-008.
+
+**Pflege:** Tatsächliche Änderungen, Tests, Veröffentlichung und Abnahme getrennt dokumentieren. Historische Angaben nicht als aktuellen Stand ausgeben.
 
 ## 1. Dokumentstand und Vorgehen
 
 | Merkmal | Stand |
 |---|---|
 | Dokument-ID | DOC-001 |
-| Version | 0.64 |
-| Datum | 15.11.2026 |
+| Version | 0.73 |
+| Datum | 19.11.2026 |
 | Status | Baseline für ersten Release freigegeben (AEN-006) |
 | Zweck | Gemeinsame Grundlage für Anforderungen, Änderungen, Architektur, Implementierung und Prüfung |
 | Einsatz | Private Weihnachtsfeier, maximal 100 Spieler |
@@ -96,51 +108,65 @@ Agenten werden erst gestartet, wenn ein konkretes Arbeitspaket mit ausreichend g
 
 ## 2. Dokumentverzeichnis
 
-Jede ID hat genau eine maßgebliche Definitionsstelle. Querverweise und die Matrix ersetzen diese Definition nicht. Die sieben aktiven Dokumente werden bei Änderungen gemeinsam auf Konsistenz geprüft (AEN-022: SWA in DOC-002, UNA in DOC-004 aufgegangen; die Dokument-IDs DOC-003 und DOC-005 sind entfallen und werden nicht neu vergeben).
+Jede ID hat genau eine maßgebliche Definitionsstelle. Querverweise und die Matrix ersetzen diese Definition nicht. Die sieben aktiven Dokumente der Anforderungskette werden bei Änderungen gemeinsam auf Konsistenz geprüft (AEN-022: SWA in DOC-002, UNA in DOC-004 aufgegangen; die Dokument-IDs DOC-003 und DOC-005 sind entfallen und werden nicht neu vergeben). DOC-010 ist die ergänzende technische Formatbeschreibung.
 
 | Dokument-ID | Dokument | Maßgeblicher Inhalt | Version |
 |---|---|---|---|
-| DOC-001 | [Übersicht und Rückverfolgbarkeit](ANFORDERUNGEN.md) | Sitzungseinstieg/Arbeitsstand, Vorgehen, KI-Arbeitsstrategie, Statusbegriffe, Dokumentverzeichnis, Matrix und Freigabestand | 0.63 |
-| DOC-002 | [Kunden- und Softwareanforderungen](docs/KUNDENANFORDERUNGEN.md) | KAN, ENT, Entscheidungen, Aufgabenideen und SWA | 0.21 |
-| DOC-004 | [Architektur und Komponenten](docs/ARCHITEKTUR.md) | ARC, UNA, Daten-/Zustandsentwurf und Infrastrukturrahmen | 0.20 |
-| DOC-006 | [Testkonzept und Testspezifikation](docs/TESTSPEZIFIKATION.md) | TST, Testkonzept und Nachweisregeln | 0.28 |
-| DOC-007 | [Änderungsregister](docs/AENDERUNGSREGISTER.md) | AEN und Dokumenthistorie | 0.64 |
-| DOC-008 | [Änderungsanträge](docs/AENDERUNGSANTRAEGE.md) | Änderungsanträge (OFF) mit Status und Statusverlauf; nie gelöscht | 0.44 |
+| DOC-001 | [Übersicht und Rückverfolgbarkeit](ANFORDERUNGEN.md) | Sitzungseinstieg/Arbeitsstand, Vorgehen, KI-Arbeitsstrategie, Statusbegriffe, Dokumentverzeichnis, Matrix und Freigabestand | 0.73 |
+| DOC-002 | [Kunden- und Softwareanforderungen](docs/KUNDENANFORDERUNGEN.md) | KAN, ENT, Entscheidungen, Aufgabenideen und SWA | 0.26 |
+| DOC-004 | [Architektur und Komponenten](docs/ARCHITEKTUR.md) | ARC, UNA, Daten-/Zustandsentwurf und Infrastrukturrahmen | 0.23 |
+| DOC-006 | [Testkonzept und Testspezifikation](docs/TESTSPEZIFIKATION.md) | TST, Testkonzept und Nachweisregeln | 0.32 |
+| DOC-007 | [Änderungsregister](docs/AENDERUNGSREGISTER.md) | AEN und Dokumenthistorie | 0.73 |
+| DOC-008 | [Änderungsanträge](docs/AENDERUNGSANTRAEGE.md) | Änderungsanträge (OFF) mit Status und Statusverlauf; nie gelöscht | 0.53 |
 | DOC-009 | [Konfigurationsmanagement](docs/KONFIGURATIONSMANAGEMENT.md) | Änderungskontrolle, Konfigurationselemente, Baselines (BL) | 1.2 (rekonstruiert) |
+| DOC-010 | [Aufgabenformat](docs/AUFGABENFORMAT.md) | Ergänzende technische Formatbeschreibung für den Aufgabenimport | 0.2 |
 Die [ursprüngliche Gesamtsammlung v0.1](docs/archiv/ANFORDERUNGEN-v0.1.md) ist ausschließlich ein historischer, unveränderter Stand und keine aktive Definitionsquelle.
 
 ## 3. Rückverfolgbarkeitsmatrix
 
-Seit AEN-022 nur noch Kundenanforderung → Kundenabnahmetest. Die Ableitung SWA → ARC → UNA steht in den Quellspalten der Tabellen in DOC-002 und DOC-004 und in der Testspezifikation. Die Matrix wird bei jeder akzeptierten Änderung aktualisiert.
+Seit AEN-022 bildet die Matrix Kundenanforderungen auf Testnachweise ab. Kundenabnahme und technische Verifikation sind in DOC-006 getrennt gekennzeichnet. Die Ableitung SWA → ARC → UNA steht in den Quellspalten der Tabellen in DOC-002 und DOC-004.
 
-| Kundenanforderungen | Kundenabnahme |
+| Kundenanforderungen | Testnachweis |
 |---|---|
 | KAN-001, KAN-003, KAN-004, KAN-005 | TST-K-001 |
 | KAN-002 | TST-K-005 |
 | KAN-006 bis KAN-010 | TST-K-002 |
 | KAN-011, KAN-012 | TST-K-003 |
-| KAN-013, KAN-014, KAN-018, KAN-019, KAN-020 | TST-K-004, TST-K-008 |
-| KAN-015 | TST-K-006 |
+| KAN-013, KAN-014, KAN-018, KAN-020 | TST-K-004, TST-K-008 |
 | KAN-016, KAN-017 | TST-K-007 |
-| KAN-021 bis KAN-026 | TST-K-009, TST-K-010 |
+| KAN-019 | abgelöst durch KAN-028 |
+| KAN-015 | TST-K-006 |
+| KAN-021, KAN-023, KAN-024 | TST-K-009 |
+| KAN-022 | abgelöst durch KAN-056 |
+| KAN-025, KAN-026 | TST-K-010 |
 | KAN-027 | TST-K-011 |
 | KAN-028 bis KAN-033 | TST-K-012 |
 | KAN-034 | TST-K-013 |
 | KAN-035 | TST-K-014 |
 | KAN-036 bis KAN-047 | TST-K-015 |
+| KAN-048 bis KAN-051 | TST-S-037 bis TST-S-042 |
 | KAN-052 bis KAN-058 | TST-K-016 |
+| KAN-059, KAN-060 | TST-K-017 |
+| KAN-061 | TST-K-061 |
+| KAN-062 | TST-K-062 |
+| KAN-063 | TST-K-063 |
+| KAN-070 bis KAN-072 | TST-K-019 |
+| KAN-073 | TST-K-018 |
+| KAN-074 bis KAN-079 | TST-U-038, TST-S-077, TST-K-020 |
 
 ## 4. Freigabe- und Entwicklungsstand
 
 | Ebene | Stand |
 |---|---|
-| Kundenanforderungen | Entscheidungen einschließlich ENT-008 getroffen; Anforderungsbaseline für ersten Release freigegeben (AEN-006), Folgeänderungen beauftragt, keine neue Release-Freigabe |
-| Softwareanforderungen | Abgeleitet, einschließlich OFF-064/AEN-062 (SWA-058 bis SWA-064) angepasst |
+| Kundenanforderungen | ENT-008 bleibt offen; Anforderungsbaseline für ersten Release freigegeben (AEN-006), Folgeänderungen beauftragt, keine neue Release-Freigabe |
+| Softwareanforderungen | DOC-002 enthält die rekonstruierten Basisanforderungen und Ergänzungen bis SWA-079; abgelöste Regeln sind gekennzeichnet. |
 | Architektur | GitHub Pages + Supabase vom Kunden gewählt (ENT-011); Details Entwurf |
-| Komponentenanforderungen | Abgeleiteter Entwurf, ergänzt um UNA-041 bis UNA-045 für OFF-064 |
-| Implementierung | AEN-053/AEN-054 und OFF-058..063 umgesetzt/verifiziert. OFF-064 auf separatem Branch implementiert; keine Übernahme nach `main`, keine Veröffentlichung. Spieler-Beamer erfordert das neue `supabase/schema.sql` und eine bereits angemeldete Spielersitzung. |
-| Tests | Letzter nachgewiesener Lauf: AEN-061 (345 schnelle/558 volle Tests, Lauf 010). OFF-064-Testfälle ergänzt; Ausführung, Konsistenz und Geheimnisprüfung stehen aus. Smartphone-/Beamerprüfung nach Schema-Update ebenfalls offen. |
+| Komponentenanforderungen | Abgeleiteter Entwurf, ergänzt bis UNA-050; Details und Status siehe DOC-004. |
+| Implementierung | OFF-064/069/070 sind laut PR #2/#10/#11 in `main`. OFF-071 lokal umgesetzt in `web/`; nicht veröffentlicht oder gemergt. Keine Schemaänderung. |
+| Tests | OFF-071 Schnelltests 363/363 und Konsistenzprüfung 437 IDs sauber. Smartphone-/Beamer- und Kundenprüfung bleiben offen. |
 | Baseline / Kundenabnahme / Release | Konfigurationsmanagement nach DOC-009 (AEN-014). BL-001: Anforderungsbaseline „v0.5“ für den ersten Release vom Kunden freigegeben am 05.11.2026 (AEN-006). BL-002: Gesamtstand eingefroren, Freigabe offen. BL-003 bis BL-007 abgelöst. BL-008: Stand nach AEN-021 eingefroren, Freigabe offen; die nächste Baseline folgt vor der Generalprobe (AEN-022). Kundenabnahme und Release nicht erfolgt. |
+
+### Historische Änderungsnachweise
 
 Der kompakte aktuelle Kunden-/Arbeitsstand und die offenen Anschlussarbeiten stehen maßgeblich in Abschnitt 0. Die folgenden Änderungsbeschreibungen sind historische Nachweise; sie sind keine zusätzlichen aktuellen Aufträge und keine Aufforderung, bereits bestätigte Veröffentlichungen erneut durchzuführen.
 
@@ -156,7 +182,7 @@ OFF-032 (Sammlung AEN-033) ist mit OFF-031 in drei Stufen umgesetzt und lokal ve
 
 OFF-033 bis OFF-035 sind mit AEN-036 in drei Stufen umgesetzt und lokal verifiziert ([Lauf 007](testprotokolle/lauf-007.md)). Desktop-Admin mit erhaltenen Tabpanels/internem Scrollen; einseitige Monitor-Anleitung mit kompakter Grafik; Präsentation mit gemeinsamem QR-Renderer zur Spielseite derselben Website. Lokale Datei-/Loopbackvorschauen zeigen einen Veröffentlichungshinweis statt eines unbrauchbaren Smartphone-QR. Spieler/Spielregeln/Backend unverändert; Sammlung AEN-035 bleibt erhalten.
 
-### 4.1 Strukturierte Konsistenzstatus
+### 4.1 Historische Konsistenzstatus
 
 **Fehlerkorrektur AEN-054:** „DELETE requires a WHERE clause“ beim Reset durch explizite WHERE-Bedingungen der Token-Löschung in Reset und Admincode-Wechsel behoben. Bestehende KAN/SWA unverändert; UNA-031 und TST-S-036/TST-U-028 präzisiert. 329 schnelle/530 volle Tests lokal bestanden, Konsistenz/Geheimnisse sauber. Kunde bestätigt erneutes SQL-Update und erfolgreichen Reset mit bearbeitbaren Vorbereitungsfeldern. Admincode-Wechsel nur lokal geprüft.
 
@@ -186,7 +212,7 @@ Diese Querverweise sind keine neuen Definitionen. Die Prüfung vergleicht sie mi
 
 | Referenz | Status |
 |---|---|
-| ENT-008 | entschieden |
+| ENT-008 | offen |
 | OFF-022 | verifiziert |
 | OFF-023 | verifiziert |
 | OFF-024 | verifiziert |
@@ -251,7 +277,7 @@ OFF-041 (AEN-041) ist gesammelt/geklärt: Geocaching in der Spielerübersicht da
 
 ## OFF-070 – Freigabe und Rückverfolgbarkeit (17.11.2026)
 
-Der Kunde hat OFF-070 ausdrücklich als zusammenhängendes Änderungspaket zur vollständigen Umsetzung freigegeben. Prozessreihenfolge: Dokumentation → Tests → Implementierung/Fehlerbehebung → grüne CI → Merge. Historischer vorzeitig erstellter PR #11 bleibt Entwicklungsbranch, nicht stillschweigend freigegeben.
+Der Kunde hat OFF-070 ausdrücklich als zusammenhängendes Änderungspaket zur vollständigen Umsetzung freigegeben. PR #11 ist am 17.11.2026 in `main` gemergt; der historische Prozessverlauf bleibt unten erhalten. Visuelle Abnahme nach Veröffentlichung offen.
 
 | Kunde | Software | Architektur | Tests | Änderung |
 |---|---|---|---|---|
@@ -260,3 +286,18 @@ Der Kunde hat OFF-070 ausdrücklich als zusammenhängendes Änderungspaket zur v
 | KAN-072 | SWA-072 | ARC-070 | TST-S-071/073, TST-U-036 | 3000-ms-Abschlussfeedback |
 
 Keine Änderung von Supabase. Reale visuelle Abnahme nach Veröffentlichung offen.
+
+## OFF-071 – Umsetzung und Rückverfolgbarkeit (19.11.2026)
+
+Der Kunde gab die Umsetzung am 19.11.2026 mit „setze jetzt alles um“ frei. Die vollständigen Kundenanforderungen KAN-074 bis KAN-079, Softwareanforderungen SWA-074 bis SWA-079, Komponentenvertrag UNA-050 und Testfolgenanalyse mit TST-U-038, TST-S-077 und TST-K-020 stehen in DOC-002, DOC-004 und DOC-006.
+
+| Kunde | Software | Architektur | Tests | Änderung |
+|---|---|---|---|---|
+| KAN-074 | SWA-074 | ARC-014, UNA-050 | TST-U-038, TST-K-020 | Mobile Abstände, Hierarchie, Kategorien |
+| KAN-075 | SWA-075 | ARC-014, UNA-050 | TST-U-038, TST-S-077, TST-K-020 | Gruppenwortzeit und vorläufiger Platz mobil ausblenden; Spielrestzeit, Punkte/Fortschritt und finalen Platz behalten |
+| KAN-076 | SWA-076 | ARC-014, UNA-050 | TST-U-038 | Linktext „Regeln“ |
+| KAN-077 | SWA-077 | ARC-014, UNA-050 | TST-U-038, TST-K-020 | Mobile Einleitung entfernen; Aufgaben/Kategorien und Rollenhinweise erhalten |
+| KAN-078 | SWA-078 | ARC-014, UNA-050 | TST-S-077, TST-U-038 | Bestenlistenlink nur in `anmeldung` ausblenden |
+| KAN-079 | SWA-079 | ARC-014, UNA-050 | TST-U-038, TST-K-020 | Dynamische Gruppenbeschriftung unter Spielrestzeit |
+
+Keine Daten-, Spielregel-, Rollen-, API-, Supabase- oder SQL-Änderung. Lokale Verifikation ist keine visuelle Kundenabnahme.

@@ -175,12 +175,12 @@ function gameClock(doc, state, nowMs) {
   return clock;
 }
 
-function taskTime(doc, start, duration, state, nowMs, label = 'Aufgabenzeit') {
+function taskTime(doc, start, duration, state, nowMs, label = 'Aufgabenzeit', extraClass = '') {
   const time = elapsedSeconds(start, duration, state, nowMs);
   const value = el(doc, 'span', { text: time === null
     ? (start == null && duration == null ? 'Nicht gestartet' : 'Zeit nicht verfügbar') : formatClock(time),
   attrs: { 'data-task-time': '1', 'data-started-ms': start ?? '', 'data-duration-ms': duration ?? '' } });
-  return el(doc, 'p', { cls: 'task-time' }, [doc.createTextNode(`${label}: `), value]);
+  return el(doc, 'p', { cls: `task-time${extraClass ? ` ${extraClass}` : ''}` }, [doc.createTextNode(`${label}: `), value]);
 }
 
 function giveUpButton(doc, taskId, handlers, disabled = false) {
@@ -267,7 +267,7 @@ function taskStatus(task, finished) {
 function choiceForm(doc, task, handlers, { feedback, disabled } = {}) {
   const form = el(doc, 'form', { cls: 'stack' });
   const radioName = `choice-${task.id}`;
-  form.append(el(doc, 'p', { text: 'Wählt einen Namen:' }));
+  form.append(el(doc, 'p', { text: task.kind === 'estimate' ? 'Wählt einen Namen:' : 'Wählt eine Option:' }));
   for (const [idx, opt] of (task.options || []).entries()) {
     const id = `f-${radioName}-${idx}`;
     const radioAttrs = { id, type: 'radio', name: radioName, value: opt };
@@ -280,15 +280,18 @@ function choiceForm(doc, task, handlers, { feedback, disabled } = {}) {
     );
   }
   const numName = `task-${task.id}`;
-  const numAttrs = { id: `f-${numName}`, name: numName, type: 'text', inputmode: 'numeric', autocomplete: 'off' };
-  if (disabled) numAttrs.disabled = 'disabled';
-  const num = el(doc, 'input', { cls: 'big-input', attrs: numAttrs });
+  const needsNumber = task.kind === 'estimate';
+  if (needsNumber) {
+    const numAttrs = { id: `f-${numName}`, name: numName, type: 'text', inputmode: 'numeric', autocomplete: 'off' };
+    if (disabled) numAttrs.disabled = 'disabled';
+    const num = el(doc, 'input', { cls: 'big-input', attrs: numAttrs });
+    form.append(
+      el(doc, 'label', { text: 'Wie viele Personen? (Zahl, eine Abgabe)', attrs: { for: `f-${numName}` } }),
+      num,
+    );
+  }
   const btnAttrs = { type: 'submit' };
   if (disabled) btnAttrs.disabled = 'disabled';
-  form.append(
-    el(doc, 'label', { text: 'Wie viele Personen? (Zahl, eine Abgabe)', attrs: { for: `f-${numName}` } }),
-    num,
-  );
   const fbNode = feedbackNode(doc, feedback);
   if (fbNode) form.append(fbNode);
   form.append(el(doc, 'button', { cls: 'btn primary', text: 'Abgeben', attrs: btnAttrs }));
@@ -297,7 +300,8 @@ function choiceForm(doc, task, handlers, { feedback, disabled } = {}) {
     const live = e.currentTarget;
     if (live.querySelector('button[type="submit"]').disabled) return;
     const chosen = live.querySelector(`input[name="${radioName}"]:checked`);
-    handlers.onSubmitTask && handlers.onSubmitTask(task.id, live.querySelector(`input[name="${numName}"]`).value, chosen ? chosen.value : null);
+    const answer = needsNumber ? live.querySelector(`input[name="${numName}"]`).value : '';
+    handlers.onSubmitTask && handlers.onSubmitTask(task.id, answer, chosen ? chosen.value : null);
   });
   return form;
 }
@@ -336,9 +340,12 @@ function taskOverview(doc, state, handlers, nowMs) {
   const tasks = state.tasks || [];
   const isLeader = state.leader === true;
   const finished = state.phase === 'aufgabe_abgeschlossen';
-  const out = [sectionTitle(doc, 'Rätsel')];
+  const title = sectionTitle(doc, 'Rätsel');
+  title.classList.add('task-overview-title');
+  const out = [title];
   out.push(
     el(doc, 'p', {
+      cls: isLeader ? 'task-overview-leader-intro' : 'task-overview-role-intro',
       text: isLeader
         ? 'Öffnen startet die Zeit. Drei exakte Versuche, eine Schätzung.'
         : `Euer Spielleiter${state.leader_name ? ` (${state.leader_name})` : ''} öffnet die Rätsel und gibt die Antworten ein.`,
@@ -450,31 +457,37 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
       card.append(...taskView(doc, state, openTask, handlers, nowMs));
     } else {
       card.classList.add('player-overview');
+      card.classList.add('player-word-phase');
       if (state.leader === true) card.classList.add('mission-leader');
+      card.append(el(doc, 'p', { cls: 'player-group-mobile-label', text: `DEINE GRUPPE: ${group.name}` }));
       card.append(el(doc, 'h2', { cls: 'player-group-name', text: group.name }));
       const list = el(doc, 'ul', { cls: 'members', attrs: { 'aria-label': 'Mitglieder eurer Gruppe' } });
       for (const m of group.members || []) {
         list.appendChild(el(doc, 'li', { text: m, cls: m === state.name ? 'me' : '' }));
       }
       card.append(list);
-      card.append(taskTime(doc, state.word_started_ms, state.word_duration_ms, state, nowMs, 'Gruppenwortzeit'));
+      card.append(taskTime(doc, state.word_started_ms, state.word_duration_ms, state, nowMs, 'Gruppenwortzeit', 'group-word-time'));
       if (wordCompleted) {
-        card.append(
-          el(doc, 'p', {
-            cls: `message ${state.word_outcome === 'given_up' ? 'info' : 'success'}`,
-            text: state.word_outcome === 'given_up' ? 'Gruppenwort aufgegeben – 0 Punkte'
-              : state.solved.points !== undefined
-              ? `Wort gelöst! Platz ${state.solved.rank} – ${state.solved.points} Punkte`
-              : `Wort gelöst! Vorläufig Platz ${state.solved.rank}`,
-          }),
-        );
+        if (state.word_outcome === 'given_up') {
+          card.append(el(doc, 'p', { cls: 'message info', text: 'Gruppenwort aufgegeben – 0 Punkte' }));
+        } else if (state.solved.points !== undefined) {
+          card.append(el(doc, 'p', {
+            cls: 'message success',
+            text: `Wort gelöst! Platz ${state.solved.rank} – ${state.solved.points} Punkte`,
+          }));
+        } else {
+          card.append(el(doc, 'p', { cls: 'message success' }, [
+            doc.createTextNode('Wort gelöst! '),
+            el(doc, 'span', { cls: 'provisional-place', text: `Vorläufig Platz ${state.solved.rank}` }),
+          ]));
+        }
         if (state.leader === true) {
           const tasks = state.tasks || [];
           const completed = tasks.filter(t => t.submitted === true).length;
           const standing = state.final || state.liveStanding;
           card.append(el(doc, 'div', { cls: 'mission-progress' }, [
             el(doc, 'span', { text: `${standing?.points ?? '–'} Punkte` }),
-            el(doc, 'span', { text: `Platz ${standing?.rank ?? '–'}` }),
+            el(doc, 'span', { cls: 'mission-rank', text: `Platz ${standing?.rank ?? '–'}` }),
             el(doc, 'span', { text: `${completed}/${tasks.length}` }),
           ]));
         }
@@ -503,7 +516,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
       card.append(el(doc, 'h2', { cls: 'player-group-name', text: state.group.name }));
       const members = el(doc, 'ul', { cls: 'members', attrs: { 'aria-label': 'Mitglieder eurer Gruppe' } });
       for (const name of state.group.members || []) members.append(el(doc, 'li', { text: name, cls: name === state.name ? 'me' : '' }));
-      card.append(members, taskTime(doc, state.word_started_ms, state.word_duration_ms, state, nowMs, 'Gruppenwortzeit'));
+      card.append(members, taskTime(doc, state.word_started_ms, state.word_duration_ms, state, nowMs, 'Gruppenwortzeit', 'group-word-time'));
     }
     if (state.final) {
       card.append(
@@ -521,7 +534,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
   } else {
     card.append(el(doc, 'p', { text: phaseText(phase) }));
   }
-  if (state.joined && state.leader !== true) {
+  if (state.joined && state.leader !== true && phase !== 'anmeldung') {
     card.append(el(doc, 'p', { cls: 'beamer-link' }, [
       el(doc, 'a', { text: 'Bestenliste auf diesem Gerät öffnen', attrs: {
         href: 'beamer.html?mode=player', target: '_blank', rel: 'noopener',
@@ -788,23 +801,28 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
     const [l2, body] = field('body', 'Text', t.body);
     const [l3, image] = field('image', 'Bild (https-Link oder Pfad)', t.image_url);
     const [l4, solution] = field('solution', t.kind === 'estimate' ? 'Richtige Zahl' : 'Lösung', t.solution);
+    const pureChoice = t.kind === 'exact' && t.needs_choice === true;
     const box = el(doc, 'div', { cls: 'task stack', attrs: { 'data-task': t.id } }, [
       el(doc, 'p', { cls: 'tname', text: `${t.category}: ${t.title}` }),
       el(doc, 'p', { cls: 'task-difficulty' }, [difficultyTag(doc, t.difficulty)]),
-      el(doc, 'p', { text: t.available ? 'Freigegeben' : 'Nicht verfügbar (keine Lösung)' }),
+      el(doc, 'p', { text: t.available ? 'Freigegeben' : 'Nicht verfügbar (Aufgabe unvollständig)' }),
     ]);
-    box.append(l1, title, l2, body, l3, image, l4, solution,
+    const fields = [l1, title, l2, body, l3, image];
+    if (!pureChoice) fields.push(l4, solution);
+    box.append(...fields,
       el(doc, 'label', { text: 'Schwierigkeit', attrs: { for: `f-t-${t.id}-difficulty` } }),
       selectLevel(`t-${t.id}-difficulty`, t.difficulty ?? 'mittel'));
     const optInputs = [];
     let correct = null;
     if (t.needs_choice) {
+      const optionLabel = t.kind === 'estimate' ? 'Name' : 'Option';
       for (let k = 0; k < 4; k++) {
-        const [lo, io] = field(`opt${k + 1}`, `Name ${k + 1}`, (t.options || [])[k]);
+        const [lo, io] = field(`opt${k + 1}`, `${optionLabel} ${k + 1}`, (t.options || [])[k]);
         box.append(lo, io);
         optInputs.push(io);
       }
-      const [lc, ic] = field('correct', 'Richtiger Name (einer der vier)', t.correct_option);
+      const correctLabel = t.kind === 'estimate' ? 'Richtiger Name (einer der vier)' : 'Richtige Option (eine der vier)';
+      const [lc, ic] = field('correct', correctLabel, t.correct_option);
       box.append(lc, ic);
       correct = ic;
     }
@@ -813,7 +831,8 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
         if (!handlers.onSetTask) return;
         const box = event.currentTarget.parentElement;
         const value = (suffix) => box.querySelector(`[name="t-${t.id}-${suffix}"]`).value;
-        const f = { title: value('title'), body: value('body'), imageUrl: value('image'), solution: value('solution'), difficulty: value('difficulty') };
+        const f = { title: value('title'), body: value('body'), imageUrl: value('image'),
+          solution: pureChoice ? null : value('solution'), difficulty: value('difficulty') };
         if (t.needs_choice) {
           const names = [1, 2, 3, 4].map((n) => value(`opt${n}`).trim()).filter(Boolean);
           f.options = names;

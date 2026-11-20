@@ -85,7 +85,9 @@ alter table public.round add column if not exists finished_at timestamptz;
 alter table public.round add column if not exists word_difficulty text not null default 'mittel'
   check (word_difficulty in ('leicht', 'mittel', 'schwer'));
 alter table public.round add column if not exists point_schedules jsonb not null default
-  '{"leicht":[5,4,3,2,2,1,1,1,1],"mittel":[10,8,6,5,4,3,2,1,1],"schwer":[20,16,12,10,8,6,4,2,2]}';
+  '{"leicht":[15,13,11,9,7,6,5,4,3,2,2],"mittel":[30,26,22,19,16,13,11,9,7,6,5],"schwer":[45,39,34,29,24,20,17,14,11,9,8]}';
+alter table public.round alter column point_schedules set default
+  '{"leicht":[15,13,11,9,7,6,5,4,3,2,2],"mittel":[30,26,22,19,16,13,11,9,7,6,5],"schwer":[45,39,34,29,24,20,17,14,11,9,8]}'::jsonb;
 -- Laufende Alt-Runden bekommen einmalig eine Frist, nicht bei jeder Einrichtung erneut.
 update public.round set game_deadline = words_started_at + make_interval(mins => game_minutes)
  where phase = 'wortaufgabe_aktiv' and game_deadline is null and words_started_at is not null;
@@ -164,7 +166,7 @@ create table if not exists public.task_attempts (
 insert into public.task_attempts (task_id, group_id, attempt_no, player_id, at, answer, correct, duration_ms)
   select a.task_id, a.group_id, 1, a.player_id, a.at, coalesce(a.answer, ''), a.correct, a.duration_ms
     from public.task_answers a join public.tasks t on t.id = a.task_id
-   where t.kind = 'exact' and not a.given_up
+   where t.kind = 'exact' and not t.needs_choice and not a.given_up
      and not exists (select 1 from public.task_attempts x where x.task_id = a.task_id and x.group_id = a.group_id)
   on conflict do nothing;
 
@@ -286,7 +288,7 @@ begin
   if (select count(*) from jsonb_object_keys(p_schedules)) <> 3 then return false; end if;
   foreach k in array array['leicht','mittel','schwer'] loop
     if jsonb_typeof(p_schedules->k) is distinct from 'array' then return false; end if;
-    if jsonb_array_length(p_schedules->k) <> 9 then return false; end if;
+    if jsonb_array_length(p_schedules->k) not in (9, 11) then return false; end if;
     previous := 10000;
     for v in select value from jsonb_array_elements(p_schedules->k) loop
       if jsonb_typeof(v) <> 'number' or (v #>> '{}') !~ '^[0-9]+$' then return false; end if;
@@ -307,7 +309,9 @@ begin
      or p_difficulty not in ('leicht','mittel','schwer') then raise exception 'ungueltige_wertung'; end if;
   select point_schedules into schedules from public.round where id = 1;
   if not public.valid_schedules(schedules) then raise exception 'ungueltige_punktestaffel'; end if;
-  return (schedules -> p_difficulty ->> least(p_rank - 1, 8))::int;
+  return (schedules -> p_difficulty ->> least(
+    p_rank - 1, jsonb_array_length(schedules -> p_difficulty) - 1
+  ))::int;
 end $$;
 
 create or replace function public.automatic_end_ready() returns boolean
@@ -375,14 +379,18 @@ create or replace function public.normalize_task_answer(p_text text) returns tex
 language sql immutable
 as $$ select upper(regexp_replace(coalesce(p_text, ''), '[\s,;.\-]+', '', 'g')) $$;
 
--- AEN-021: Aufgabe ist freigegeben, wenn die Lösung (bei Auswahlfragen auch 4 Namen und der richtige Name) gepflegt ist.
+-- AEN-021/OFF-072: Aufgabe ist freigegeben, wenn Lösung und erforderliche Auswahloptionen gepflegt sind.
 create or replace function public.task_ready(t public.tasks) returns boolean
 language sql immutable
 as $$
-  select t.solution is not null
-     and (not t.needs_choice
-          or (coalesce(cardinality(t.options), 0) = 4 and t.correct_option is not null
-              and t.correct_option = any(t.options)))
+  select case when t.kind = 'exact' and t.needs_choice then
+       coalesce(cardinality(t.options), 0) = 4 and t.correct_option is not null
+       and t.correct_option = any(t.options)
+     else t.solution is not null
+       and (not t.needs_choice
+            or (coalesce(cardinality(t.options), 0) = 4 and t.correct_option is not null
+                and t.correct_option = any(t.options)))
+     end
 $$;
 
 -- AEN-021: Plätze und Punkte aller Gruppen, bei jeder Abfrage aus den Abgaben berechnet.
@@ -538,16 +546,20 @@ begin
                'given_up', coalesce((select a.given_up from public.task_answers a where a.task_id = t.id and a.group_id = p.group_id), false),
                'submitted', exists (select 1 from public.task_answers a
                                      where a.task_id = t.id and a.group_id = p.group_id),
-               'correct', (select a.correct from public.task_attempts a
-                            where t.kind = 'exact' and a.task_id = t.id and a.group_id = p.group_id
-                            order by a.attempt_no desc limit 1),
-               'max_attempts', case when t.kind = 'exact' then 3 else 1 end,
-               'attempts_used', case when t.kind = 'exact'
+               'correct', case when t.kind = 'exact' and t.needs_choice then
+                              (select a.correct from public.task_answers a
+                                where a.task_id = t.id and a.group_id = p.group_id)
+                            else (select a.correct from public.task_attempts a
+                                   where t.kind = 'exact' and a.task_id = t.id and a.group_id = p.group_id
+                                   order by a.attempt_no desc limit 1)
+                       end,
+               'max_attempts', case when t.kind = 'exact' and not t.needs_choice then 3 else 1 end,
+               'attempts_used', case when t.kind = 'exact' and not t.needs_choice
                     then (select count(*) from public.task_attempts a where a.task_id = t.id and a.group_id = p.group_id)
                     else (select count(*) from public.task_answers a where a.task_id = t.id and a.group_id = p.group_id) end,
                'attempts_remaining', case
                     when exists (select 1 from public.task_answers a where a.task_id = t.id and a.group_id = p.group_id) then 0
-                    when t.kind = 'exact' then 3 - (select count(*) from public.task_attempts a where a.task_id = t.id and a.group_id = p.group_id)
+                    when t.kind = 'exact' and not t.needs_choice then 3 - (select count(*) from public.task_attempts a where a.task_id = t.id and a.group_id = p.group_id)
                     else 1 end,
                'body', case when st.started_at is not null then t.body end,
                'image_url', case when st.started_at is not null then t.image_url end,
@@ -672,6 +684,17 @@ begin
   end if;
   select started_at into st from public.task_starts where task_id = t.id and group_id = p.group_id;
   if st is null then return jsonb_build_object('ok', false, 'reason', 'nicht_gestartet'); end if;
+
+  if t.kind = 'exact' and t.needs_choice then
+    select o into ch from unnest(t.options) o where lower(o) = lower(btrim(coalesce(p_choice, ''))) limit 1;
+    if ch is null then return jsonb_build_object('ok', false, 'reason', 'ungueltige_auswahl'); end if;
+    ok := ch = t.correct_option;
+    insert into public.task_answers (task_id, group_id, player_id, at, answer, choice, correct, duration_ms)
+      values (t.id, p.group_id, uid, now_ts, ch, ch, ok,
+              public.epoch_ms(now_ts) - public.epoch_ms(st));
+    return jsonb_build_object('ok', true, 'submitted', true, 'correct', ok,
+                              'attempts_used', 1, 'attempts_remaining', 0, 'max_attempts', 1);
+  end if;
 
   if t.kind = 'estimate' then
     ans := regexp_replace(coalesce(p_answer, ''), '^\s+|\s+$', '', 'g');
@@ -1098,12 +1121,13 @@ begin
     end if;
     cat_pos[v_idx] := cat_pos[v_idx] + 1;
     v_sort := 1000 * v_idx + 10 * cat_pos[v_idx];
-    if v_sol is null then
+    if v_sol is null and v_type <> 'auswahl' then
       warns := warns || jsonb_build_object('task', v_id, 'reason', 'keine_loesung'); n_unready := n_unready + 1;
     elsif v_type = 'auswahl' and v_cor is null then
       warns := warns || jsonb_build_object('task', v_id, 'reason', 'keine_richtige_option'); n_unready := n_unready + 1;
     end if;
-    insert into pg_temp.import_tasks values (v_id, v_cat, v_title, case when v_type = 'exakt' then 'exact' else 'estimate' end,
+    insert into pg_temp.import_tasks values (v_id, v_cat, v_title,
+      case when v_type = 'schaetzung' or (v_type = 'auswahl' and v_sol is not null) then 'estimate' else 'exact' end,
       v_sort, v_body, v_img, v_sol, v_type = 'auswahl', v_opts, v_cor, v_diff);
   end loop;
 
@@ -1186,11 +1210,13 @@ begin
                       where rs.group_id is not null
                      union all
                      select k.sort + 1, 1, jsonb_build_object('title', k.title, 'kind', k.kind,
-                              'answer', case when a.choice is not null then a.choice || ' / ' || a.answer else a.answer end,
+                              'answer', case when a.choice is not null and a.guess is null then a.choice
+                                             when a.choice is not null then a.choice || ' / ' || a.answer
+                                             else a.answer end,
                               'correct', case when k.kind = 'exact' then a.correct end, 'given_up', a.given_up,
                               'duration_ms', a.duration_ms)
                        from public.task_answers a join public.tasks k on k.id = a.task_id
-                      where a.group_id = g.id and (k.kind = 'estimate' or a.given_up)
+                      where a.group_id = g.id and (k.kind = 'estimate' or (k.kind = 'exact' and k.needs_choice) or a.given_up)
                      union all
                      select k.sort + 1, a.attempt_no, jsonb_build_object('title', k.title, 'kind', k.kind,
                               'answer', a.answer, 'correct', a.correct, 'duration_ms', a.duration_ms,

@@ -743,13 +743,14 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
     el(doc, 'thead', {}, [el(doc, 'tr', {}, ['Platz', 'leicht', 'mittel', 'schwer'].map((text) => el(doc, 'th', { text })))]),
   ]);
   const pointRows = el(doc, 'tbody');
-  for (let i = 1; i <= 9; i++) {
-    const row = el(doc, 'tr', {}, [el(doc, 'th', { text: i === 9 ? '9+' : i })]);
+  for (let i = 1; i <= 11; i++) {
+    const row = el(doc, 'tr', {}, [el(doc, 'th', { text: i === 11 ? '11+' : i })]);
     for (const level of ['leicht', 'mittel', 'schwer']) {
+      const schedule = overview.point_schedules?.[level] || [];
       row.append(el(doc, 'td', {}, [el(doc, 'input', { cls: 'big-input', attrs: {
         type: 'number', name: `points-${level}-${i}`, min: 0, max: 10000,
-        value: overview.point_schedules?.[level]?.[i - 1] ?? '',
-        'aria-label': `${level}, Platz ${i === 9 ? '9 und weitere' : i}`,
+        value: schedule[Math.min(i - 1, schedule.length - 1)] ?? '',
+        'aria-label': `${level}, Platz ${i === 11 ? '11 und weitere' : i}`,
         ...(canStart ? {} : { disabled: 'disabled' }),
       } })]));
     }
@@ -759,7 +760,7 @@ export function renderAdmin(root, overview, handlers = {}, nowMs = Date.now()) {
   gameCard.append(pointsTable, mk('set-game', 'Spielzeit und Punkte speichern', canStart, 'primary', () => {
     const values = (name) => liveRoot.querySelector(`[name="${name}"]`).value;
     const schedules = Object.fromEntries(['leicht', 'mittel', 'schwer'].map((level) => [level,
-      Array.from({ length: 9 }, (_, i) => values(`points-${level}-${i + 1}`) === '' ? null : Number(values(`points-${level}-${i + 1}`)))]));
+      Array.from({ length: 11 }, (_, i) => values(`points-${level}-${i + 1}`) === '' ? null : Number(values(`points-${level}-${i + 1}`)))]));
     handlers.onSetGameConfig?.(Number(values('game-minutes')), values('word-difficulty'), schedules);
   }));
   const wordsInput = el(doc, 'textarea', { cls: 'big-input', text: (overview.words || []).join('\n'),

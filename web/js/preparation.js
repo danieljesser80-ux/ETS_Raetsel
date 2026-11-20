@@ -62,7 +62,7 @@ export function roundPreparation(overview) {
   if (!['leicht', 'mittel', 'schwer'].includes(overview.word_difficulty)) missing.push('Gruppenwort-Schwierigkeit fehlt');
   for (const level of ['leicht', 'mittel', 'schwer']) {
     const points = overview.point_schedules?.[level];
-    if (!Array.isArray(points) || points.length !== 9 || points.some((value, i) =>
+    if (!Array.isArray(points) || ![9, 11].includes(points.length) || points.some((value, i) =>
       !Number.isInteger(value) || value < 0 || value > 10000 || (i > 0 && value > points[i - 1]))) {
       missing.push(`Punktestaffel ${level} ungültig`);
     }

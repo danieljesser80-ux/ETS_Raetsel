@@ -10,7 +10,11 @@ try {
   const config = await api.gameConfig();
   const levels = ['leicht', 'mittel', 'schwer'];
   if (!config?.ok || levels.some((level) => !Array.isArray(config.point_schedules?.[level])
-      || config.point_schedules[level].length !== 9)) throw new Error('Punktekonfiguration fehlt');
+      || ![9, 11].includes(config.point_schedules[level].length))) throw new Error('Punktekonfiguration fehlt');
+  const scheduleRows = Object.fromEntries(levels.map((level) => {
+    const schedule = config.point_schedules[level];
+    return [level, Array.from({ length: 11 }, (_, i) => schedule[Math.min(i, schedule.length - 1)])];
+  }));
   const table = document.createElement('table');
   table.className = 'points-table';
   const caption = document.createElement('caption');
@@ -18,7 +22,7 @@ try {
   table.append(caption);
   const head = document.createElement('thead');
   const heading = document.createElement('tr');
-  for (const text of ['Stufe / Platz', ...Array.from({ length: 9 }, (_, i) => i === 8 ? '9+' : i + 1)]) {
+  for (const text of ['Stufe / Platz', ...Array.from({ length: 11 }, (_, i) => i === 10 ? '11+' : i + 1)]) {
     const cell = document.createElement('th');
     cell.scope = 'col';
     cell.textContent = text;
@@ -29,7 +33,7 @@ try {
   const body = document.createElement('tbody');
   for (const level of levels) {
     const row = document.createElement('tr');
-    for (const [i, text] of [level, ...config.point_schedules[level]].entries()) {
+    for (const [i, text] of [level, ...scheduleRows[level]].entries()) {
       const cell = document.createElement(i === 0 ? 'th' : 'td');
       if (i === 0) cell.scope = 'row';
       cell.textContent = text;

@@ -125,7 +125,7 @@ const handlers = {
   onSetGroupSize: (min, max) => command(() => api.admin.setGroupSize(code, min, max), 'Gruppengröße gespeichert.', ['gmin', 'gmax']),
   onSetGameConfig: (minutes, difficulty, schedules) => command(() => api.admin.setGameConfig(code, minutes, difficulty, schedules),
     'Spielzeit und Punkte gespeichert.', ['game-minutes', 'word-difficulty',
-      ...['leicht', 'mittel', 'schwer'].flatMap((level) => Array.from({ length: 9 }, (_, i) => `points-${level}-${i + 1}`))]),
+      ...['leicht', 'mittel', 'schwer'].flatMap((level) => Array.from({ length: 11 }, (_, i) => `points-${level}-${i + 1}`))]),
   onSetWords: (words) => command(() => api.admin.setWords(code, words), 'Wortliste gespeichert.', ['words']),
   onSetTask: (id, fields) => command(() => api.admin.setTask(code, id, fields), 'Rätsel gespeichert.',
     ['title', 'body', 'image', 'solution', 'opt1', 'opt2', 'opt3', 'opt4', 'correct', 'difficulty'].map((suffix) => `t-${id}-${suffix}`)),

@@ -173,6 +173,7 @@ label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 .ranking .group-status { display: block; font-size: 0.8em; font-weight: 400; overflow-wrap: anywhere; }
 .ranking .group-members { display: inline; margin-left: 0; font-size: 0.8em; font-weight: 400; overflow-wrap: anywhere; }
 .task-difficulty { margin: 0.25rem 0; }
+.tbody { white-space: pre-line; }
 .difficulty-tag { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; color: #fff; font-size: 0.82em; line-height: 1.45; font-weight: 800; }
 .difficulty-leicht { background: #1769aa; }
 .difficulty-mittel { background: #c62828; }

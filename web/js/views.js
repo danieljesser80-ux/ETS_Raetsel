@@ -475,7 +475,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
       card.classList.add('player-overview');
       card.classList.add('player-word-phase');
       if (state.leader === true) card.classList.add('mission-leader');
-      card.append(el(doc, 'p', { cls: 'player-group-mobile-label', text: `DEINE GRUPPE: ${group.name}` }));
+      card.append(el(doc, 'p', { cls: 'player-group-mobile-label', text: 'DEINE GRUPPE:' }));
       card.append(el(doc, 'h2', { cls: 'player-group-name', text: group.name }));
       const list = el(doc, 'ul', { cls: 'members', attrs: { 'aria-label': 'Mitglieder eurer Gruppe' } });
       for (const m of group.members || []) {
@@ -548,6 +548,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
     card.classList.add('player-overview');
     card.append(sectionTitle(doc, 'Spiele beendet'));
     if (state.group) {
+      card.append(el(doc, 'p', { cls: 'player-group-mobile-label', text: 'DEINE GRUPPE:' }));
       card.append(el(doc, 'h2', { cls: 'player-group-name', text: state.group.name }));
       const members = el(doc, 'ul', { cls: 'members', attrs: { 'aria-label': 'Mitglieder eurer Gruppe' } });
       for (const name of state.group.members || []) members.append(el(doc, 'li', { text: name, cls: name === state.name ? 'me' : '' }));
@@ -568,13 +569,6 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
     else card.append(el(doc, 'p', { cls: 'message info', text: 'Eure Gruppe hat das Wort nicht gelöst.' }));
   } else {
     card.append(el(doc, 'p', { text: phaseText(phase) }));
-  }
-  if (state.joined && state.leader !== true && phase !== 'anmeldung') {
-    card.append(el(doc, 'p', { cls: 'beamer-link' }, [
-      el(doc, 'a', { text: 'Bestenliste auf diesem Gerät öffnen', attrs: {
-        href: 'beamer.html?mode=player', target: '_blank', rel: 'noopener',
-      } }),
-    ]));
   }
   root.appendChild(card);
   commit(liveRoot, root, JSON.stringify(['player', state.phase, state.joined, state.name,

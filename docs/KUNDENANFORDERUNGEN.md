@@ -1,6 +1,6 @@
 # Kundenanforderungen – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-002 | **Version:** 0.26 | **Datum:** 19.11.2026
+**Dokument-ID:** DOC-002 | **Version:** 0.30 | **Datum:** 20.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 
@@ -192,6 +192,36 @@ Diese Vorschläge sind **keine maßgebliche Quelle**. Maßgeblich sind die Entsc
 | ID | Softwareanforderung | Quelle | Abnahmekriterium |
 |---|---|---|---|
 | SWA-073 | Die Spielsoftware unterstützt eigenständige Auswahlaufgaben mit vier Optionen und ohne Zahleneingabe. | KAN-073 | Eine Auswahlaufgabe ist ohne numerische Lösung spielbar, akzeptiert genau eine gültige Auswahl und wertet richtige Antworten nach Dauer wie `exakt`; falsche Antworten bleiben abgeschlossen und unplatziert. `auswahl` mit numerischer Lösung behält die bisherige Schätzwertung. |
+
+## OFF-073 – Zeilenumbrüche im Aufgabentext
+
+| ID | Anforderung | Status | Abnahmekriterium |
+|---|---|---|---|
+| KAN-080 | Die Spieleransicht soll die im Aufgabentext vorgegebenen Zeilenumbrüche und Leerzeilen anzeigen. | Bestätigt (OFF-073) | Absätze und nummerierte Zeilen bleiben bei der Darstellung erkennbar. Zusätzliche Markdown- oder HTML-Formatierung ist nicht beauftragt; Spielverhalten und Aufgabeninhalt bleiben unverändert. |
+
+| ID | Softwareanforderung | Quelle | Abnahmekriterium |
+|---|---|---|---|
+| SWA-080 | Die Spieleransicht stellt Zeilenumbrüche und Leerzeilen im Aufgabentext dar. | KAN-080 | Der aus dem Spielzustand gelieferte Text erscheint als Klartext mit seinen internen Zeilenumbrüchen und Leerzeilen; lange Zeilen umbrechen weiterhin entsprechend der verfügbaren Breite. Keine Auswertung von HTML oder Markdown; andere Ansichten und Spielverhalten bleiben unverändert. |
+
+## OFF-074 – Vorbelegung der Punktestaffeln
+
+| ID | Anforderung | Status | Abnahmekriterium |
+|---|---|---|---|
+| KAN-081 | Neue Runden erhalten die Punktestaffeln aus der Kundenvorlage als Vorbelegung. Eine bereits gespeicherte Staffel wird beim ersten SQL-Update gemäß OFF-075 einmalig ersetzt. | Bestätigt (OFF-074, geändert durch OFF-075) | Leicht: Plätze 1–9 `15, 13, 11, 9, 7, 6, 5, 4, 3`, ab Platz 10 `2`; mittel: Plätze 1–10 `30, 26, 22, 19, 16, 13, 11, 9, 7, 6`, ab Platz 11 `5`; schwer: Plätze 1–10 `45, 39, 34, 29, 24, 20, 17, 14, 11, 9`, ab Platz 11 `8`. Die bestehenden Werte werden einmalig durch diese Werte ersetzt, sofern die Runde noch nicht eingeteilt ist; spätere Änderungen bleiben bei erneuter Schemaausführung erhalten. Nach Gruppeneinteilung wird die noch nicht durchgeführte Übernahme ausdrücklich abgelehnt, damit laufende oder abgeschlossene Ergebnisse nicht nachträglich verändert werden. |
+
+| ID | Softwareanforderung | Quelle | Abnahmekriterium |
+|---|---|---|---|
+| SWA-081 | Punktestaffeln unterstützen die Vorbelegung, einmalige Übernahme und Ranggrenzen aus KAN-081. | KAN-081 | Neue Runden erhalten die Werte der Kundenvorlage. Beim ersten Schema-Update werden gespeicherte Staffeln in den Phasen `vorbereitet` und `anmeldung` einmalig vollständig ersetzt; die Konfigurationsrevision steigt bei geänderten Werten. Nach Gruppeneinteilung wird eine noch ausstehende Übernahme mit einem Fehler abgelehnt. Nach erfolgreicher Übernahme und bei Neuinstallation bleiben spätere Änderungen bei Schemawiederholungen und `admin_reset` erhalten. Eine neunwertige Staffel behält Plätze 1–8 und ihren Restwert ab Platz 9; elf Werte bilden Plätze 1–10 und einen Restwert ab Platz 11 ab. Rangpunkte werden serverseitig anhand des letzten verfügbaren Eintrags gedeckelt. |
+
+## OFF-076 – Klarere Spieleransicht
+
+| ID | Anforderung | Status | Abnahmekriterium |
+|---|---|---|---|
+| KAN-082 | Die Smartphone-Spieleransicht soll gemäß freigegebener Designvorschau übersichtlicher sein, ohne das bestehende Spiel zu verändern. | Bestätigt (OFF-076) | Der aktuelle nächste Schritt wird nach Gruppenwort-Erfolg als hervorgehobener Hinweis dargestellt; Rollenhinweis, Punkte, Fortschritt und verfügbare Rätsel bleiben verständlich. Rätsel haben einheitliche sichtbare Zustände wie „Noch offen“, „Zeit läuft“ und „Richtig/Falsch/Aufgegeben“. Die Hauptaktion bleibt dominant; „Aufgeben“ bleibt vorhanden, wird aber sekundär dargestellt. Weihnachtsfarben, Papier-/Aktenstil, bestehende Schriften und Barrierefreiheit bleiben erhalten; API, Daten, Regeln, Phasen und andere Ansichten ändern sich nicht. |
+
+| ID | Softwareanforderung | Quelle | Abnahmekriterium |
+|---|---|---|---|
+| SWA-082 | Die Spieleransicht strukturiert vorhandene Zustände und Aktionen gemäß KAN-082 visuell neu. | KAN-082 | Nach Gruppenwort-Abschluss zeigt der Renderer vor den Aufgaben einen rollenabhängigen nächsten Schritt. Punkte/Abschlussfortschritt verwenden einen kompakten, beschrifteten Statusblock. Jede Aufgabenkarte enthält genau einen textlich eindeutigen Status; die vorhandene Titelaktion öffnet Aufgaben unverändert. Sekundäre Aufgeben-Aktionen werden als zurückhaltende Textaktionen statt als gleichgewichtige Primärbuttons dargestellt. Desktop-, Beamer- und Adminansicht sowie Datenzugriff bleiben unverändert; mobile Ausgabe bleibt bis 40 rem gekapselt. |
 
 ## OFF-071 – Behutsame Optimierung der Smartphone-Spieleransicht
 

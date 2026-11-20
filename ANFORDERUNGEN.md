@@ -2,17 +2,17 @@
 
 ## 0. Sitzungseinstieg und aktueller Arbeitsstand
 
-**Stand 19.11.2026 – lokaler Ordnerarbeitsbereich ohne Git.** Einstieg: Abschnitt 0 und 2, DOC-009; anschließend betroffene IDs. Historische Nachweise weiter unten bleiben erhalten und sind keine neuen Aufträge.
+**Stand 20.11.2026 – lokaler Ordnerarbeitsbereich ohne Git.** Einstieg: Abschnitt 0 und 2, DOC-009; anschließend betroffene IDs. Historische Nachweise weiter unten bleiben erhalten und sind keine neuen Aufträge.
 
 | Thema | Aktueller Stand |
 |---|---|
 | Projekt | GitHub Pages: https://danieljesser80-ux.github.io/ETS_Raetsel/; Repository danieljesser80-ux/ETS_Raetsel; Supabase als Backend. Die aktuelle Arbeitsumgebung ist ein lokaler Ordner ohne Git. |
 | Arbeitsablauf | Änderungen lokal dokumentieren, implementieren und testen. Der Kunde veröffentlicht selbst. Supabase-Änderungen vorher ausdrücklich benennen; SQL führt der Kunde aus. Kein ungefragter Reset oder Live-Spielstart. |
-| Umsetzung | OFF-064 PR #2, OFF-069-Rücknahme PR #10 und OFF-070 PR #11 sind in `main`; OFF-065 PR #4, OFF-066/067 PR #5 und OFF-068 PR #6 ebenfalls. OFF-071 ist lokal implementiert, aber nicht veröffentlicht oder gemergt. |
-| Tests und Abnahme | OFF-071: `npm run test:schnell` 363/363 bestanden; `node tools\konsistenz.mjs` sauber (437 IDs). Keine vollständige Testsuite oder Baseline erstellt. Echte Smartphone-/Beamerprüfung und Kundenabnahme offen. |
-| Supabase | `supabase\schema.sql` enthält die lokale OFF-072-Erweiterung; nicht live ausgeführt. Der Kunde führt das aktualisierte SQL aus und veröffentlicht den Webclient. Frühere Live-Konfiguration nicht erneut geprüft. |
-| Aufgaben | Import OFF-062/063 vom Kunden erfolgreich geprüft; Lauf 010 erkannte acht Aufgaben mit fünf Warnungen. Finale geschützte Aufgabendatei und Klärung aller Warnungen bleiben vom Kunden zu bestätigen. |
-| Offene Arbeiten | TST-K-020: OFF-071 nach Veröffentlichung auf echten Smartphones prüfen. OFF-064/070 und OFF-069 nach Veröffentlichung visuell kundenprüfen; reale Probe mit zwei Gruppen, Aufgabenbestätigung, Veröffentlichung/SQL und Kundenprüfung offen. Weiter offen: Lastmessung bis 100 Teilnehmer/25 Gruppen, Geräteprüfung, finale Baseline und Gesamtfreigabe. |
+| Umsetzung | OFF-064 PR #2, OFF-069-Rücknahme PR #10 und OFF-070 PR #11 sind in `main`; OFF-065 PR #4, OFF-066/067 PR #5 und OFF-068 PR #6 ebenfalls. OFF-071, OFF-074 und OFF-075 sind lokal implementiert. Kunde bestätigt am 20.11.2026, dass die Staffelübernahme funktioniert; Prüfstand und genaue Prüfschritte wurden nicht genannt. OFF-073: CSS-Regel auf GitHub Pages gesehen und Funktion vom Kunden bestätigt; keine SQL-Änderung. |
+| Tests und Abnahme | OFF-076, Lauf 014: `npm run test:schnell` 371/371, gezielte View-/Renderer-Tests 65/65 und Konsistenzprüfung sauber. OFF-075 weiterhin mit Lauf 013 und Kundenbestätigung dokumentiert. Geheimnisprüfung meldet bereits vorhandene Treffer in DOC-002, Zeile 116. Keine vollständige Testsuite oder Baseline erstellt; TST-K-022, TST-K-023, echte Smartphone-/Beamerprüfung und Gesamtfreigabe offen. |
+| Supabase | `supabase\schema.sql` enthält lokale OFF-072-, OFF-074- und OFF-075-Änderungen. OFF-075 übernimmt die Punktestaffeln einmalig in `vorbereitet`/`anmeldung`; in späteren Phasen wird die noch ausstehende Übernahme mit Fehler abgelehnt. Der Kunde bestätigt die Funktion, aber nicht ausdrücklich den Prüfstand oder die Live-SQL-Ausführung. Frühere Live-Konfiguration nicht erneut geprüft. |
+| Aufgaben | Import OFF-062/063 vom Kunden erfolgreich geprüft; Lauf 010 erkannte acht Aufgaben mit fünf Warnungen. Am 20.11.2026 angehängte Datei lokal mit dem Parser geprüft: 17 Aufgaben, keine Fehler oder Warnungen; sieben reine Auswahlaufgaben benötigen OFF-072 in veröffentlichtem Webclient und Live-Schema. Servervorschau, Übernahme, inhaltliche Prüfung und finale Aufgabenbestätigung offen. Lösungen nicht im Projekt ablegen. |
+| Offene Arbeiten | OFF-076 nach Veröffentlichung auf Smartphone gemäß TST-K-023 prüfen. OFF-075: Funktion vom Kunden bestätigt; vollständiger Umfang von TST-K-022 sowie Prüfstand und Live-SQL-Ausführung nicht bestätigt. Die vorhandenen Treffer der Geheimnisprüfung in DOC-002 müssen getrennt geklärt werden. OFF-073: Kunde bestätigt am 20.11.2026, dass es funktioniert; geprüfte Geräte nicht genannt, vollständiger Smartphone-/Desktop-Nachweis TST-K-021 offen. TST-K-020: OFF-071 nach Veröffentlichung auf echten Smartphones prüfen. OFF-064/070 und OFF-069 nach Veröffentlichung visuell kundenprüfen; reale Probe mit zwei Gruppen, Aufgabenbestätigung, Veröffentlichung und Kundenprüfung offen. Weiter offen: Lastmessung bis 100 Teilnehmer/25 Gruppen, Geräteprüfung, finale Baseline und Gesamtfreigabe. |
 | Performance | OFF-058–061 implementiert; reale Mehrverbindungs-/Lastmessung, EXPLAIN, Nutzlast- und Browservergleich nicht nachgewiesen. |
 | Baseline | BL-001 Anforderungsbaseline freigegeben; BL-008 historisch eingefroren, nicht freigegeben. Neue Einsatzbaseline erst nach Generalprobe und Kundenfreigabe. |
 | Geheimnisse | Lösungen, Admincodes und private Schlüssel nicht ins Repository; keine Live-Daten in Testnachweisen. |
@@ -27,9 +27,15 @@
 
 **OFF-070 (Klärung 19.11.2026):** Eine Fehlermeldung bei verbleibenden Versuchen bleibt auch beim Tippen sichtbar und wird erst durch die nächste Abgabe ersetzt. PR-/CI-/Abnahmestand nicht neu geprüft.
 
-**OFF-071 (18.–19.11.2026):** Mobile Spieleransicht und Screenshots analysiert; Änderungen auf Smartphones begrenzt, Gruppenwortzeit dort in allen Phasen ausblenden, endgültigen Platz nach Spielende beibehalten. Antrag geklärt, keine Umsetzungsfreigabe.
+**OFF-071 (historische Klärung vor Freigabe am 19.11.2026):** Mobile Spieleransicht und Screenshots analysiert; Änderungen auf Smartphones begrenzt, Gruppenwortzeit dort in allen Phasen ausblenden, endgültigen Platz nach Spielende beibehalten.
 
 **OFF-072 (19.11.2026):** Reine Auswahlaufgabe ergänzt und lokal verifiziert. Schnelltests 352/352, gezielte PGlite-Regression 20/20; keine Veröffentlichung, Live-SQL-Ausführung, Kundenabnahme oder neue Baseline. Details in DOC-006 und DOC-007; offene Anträge und Nachweis in DOC-008.
+
+**OFF-074 (20.11.2026):** KAN-081, SWA-081, ARC-016, UNA-052 und TST-U-040/TST-S-078/TST-K-022 abgeleitet. Neue Punktestaffeln verwenden die Kundenvorlagen; neunwertige Altstaffeln bleiben mit unveränderter Rangbedeutung gültig. Das Schema setzt nur den Spalten-Default, vorhandene Werte bleiben erhalten. Lauf 012: Schnelltests 368/368, PGlite 20/20 und Konsistenzprüfung 457 IDs sauber. Keine Live-SQL-Ausführung, Veröffentlichung, Kundenprüfung oder Baseline.
+
+**OFF-075 (20.11.2026):** Nach „umsetzen“ lokal implementiert und geprüft (Lauf 013). Das SQL übernimmt die Staffeln einmalig nur vor Gruppeneinteilung; spätere Anpassungen bleiben erhalten. Der Kunde bestätigt „funktioniert“; Prüfstand und vollständiger Umfang von TST-K-022 bleiben unbestätigt.
+
+**OFF-076 (20.11.2026):** Smartphone-Spieleransicht nach freigegebener Vorschau lokal umgesetzt und geprüft (Lauf 014). Nächster Schritt, beschrifteter Fortschritt, kompakte Rätselzustände und sekundäre Aufgeben-Aktion sind vorhanden; Spielregeln, API und Daten bleiben unverändert. Veröffentlichung und Smartphone-Kundenprüfung offen.
 
 **Pflege:** Tatsächliche Änderungen, Tests, Veröffentlichung und Abnahme getrennt dokumentieren. Historische Angaben nicht als aktuellen Stand ausgeben.
 
@@ -38,8 +44,8 @@
 | Merkmal | Stand |
 |---|---|
 | Dokument-ID | DOC-001 |
-| Version | 0.73 |
-| Datum | 19.11.2026 |
+| Version | 0.82 |
+| Datum | 20.11.2026 |
 | Status | Baseline für ersten Release freigegeben (AEN-006) |
 | Zweck | Gemeinsame Grundlage für Anforderungen, Änderungen, Architektur, Implementierung und Prüfung |
 | Einsatz | Private Weihnachtsfeier, maximal 100 Spieler |
@@ -112,14 +118,14 @@ Jede ID hat genau eine maßgebliche Definitionsstelle. Querverweise und die Matr
 
 | Dokument-ID | Dokument | Maßgeblicher Inhalt | Version |
 |---|---|---|---|
-| DOC-001 | [Übersicht und Rückverfolgbarkeit](ANFORDERUNGEN.md) | Sitzungseinstieg/Arbeitsstand, Vorgehen, KI-Arbeitsstrategie, Statusbegriffe, Dokumentverzeichnis, Matrix und Freigabestand | 0.73 |
-| DOC-002 | [Kunden- und Softwareanforderungen](docs/KUNDENANFORDERUNGEN.md) | KAN, ENT, Entscheidungen, Aufgabenideen und SWA | 0.26 |
-| DOC-004 | [Architektur und Komponenten](docs/ARCHITEKTUR.md) | ARC, UNA, Daten-/Zustandsentwurf und Infrastrukturrahmen | 0.23 |
-| DOC-006 | [Testkonzept und Testspezifikation](docs/TESTSPEZIFIKATION.md) | TST, Testkonzept und Nachweisregeln | 0.32 |
-| DOC-007 | [Änderungsregister](docs/AENDERUNGSREGISTER.md) | AEN und Dokumenthistorie | 0.73 |
-| DOC-008 | [Änderungsanträge](docs/AENDERUNGSANTRAEGE.md) | Änderungsanträge (OFF) mit Status und Statusverlauf; nie gelöscht | 0.53 |
+| DOC-001 | [Übersicht und Rückverfolgbarkeit](ANFORDERUNGEN.md) | Sitzungseinstieg/Arbeitsstand, Vorgehen, KI-Arbeitsstrategie, Statusbegriffe, Dokumentverzeichnis, Matrix und Freigabestand | 0.82 |
+| DOC-002 | [Kunden- und Softwareanforderungen](docs/KUNDENANFORDERUNGEN.md) | KAN, ENT, Entscheidungen, Aufgabenideen und SWA | 0.30 |
+| DOC-004 | [Architektur und Komponenten](docs/ARCHITEKTUR.md) | ARC, UNA, Daten-/Zustandsentwurf und Infrastrukturrahmen | 0.27 |
+| DOC-006 | [Testkonzept und Testspezifikation](docs/TESTSPEZIFIKATION.md) | TST, Testkonzept und Nachweisregeln | 0.36 |
+| DOC-007 | [Änderungsregister](docs/AENDERUNGSREGISTER.md) | AEN und Dokumenthistorie | 0.82 |
+| DOC-008 | [Änderungsanträge](docs/AENDERUNGSANTRAEGE.md) | Änderungsanträge (OFF) mit Status und Statusverlauf; nie gelöscht | 0.62 |
 | DOC-009 | [Konfigurationsmanagement](docs/KONFIGURATIONSMANAGEMENT.md) | Änderungskontrolle, Konfigurationselemente, Baselines (BL) | 1.2 (rekonstruiert) |
-| DOC-010 | [Aufgabenformat](docs/AUFGABENFORMAT.md) | Ergänzende technische Formatbeschreibung für den Aufgabenimport | 0.2 |
+| DOC-010 | [Aufgabenformat](docs/AUFGABENFORMAT.md) | Ergänzende technische Formatbeschreibung für den Aufgabenimport | 0.3 |
 Die [ursprüngliche Gesamtsammlung v0.1](docs/archiv/ANFORDERUNGEN-v0.1.md) ist ausschließlich ein historischer, unveränderter Stand und keine aktive Definitionsquelle.
 
 ## 3. Rückverfolgbarkeitsmatrix
@@ -153,17 +159,20 @@ Seit AEN-022 bildet die Matrix Kundenanforderungen auf Testnachweise ab. Kundena
 | KAN-070 bis KAN-072 | TST-K-019 |
 | KAN-073 | TST-K-018 |
 | KAN-074 bis KAN-079 | TST-U-038, TST-S-077, TST-K-020 |
+| KAN-080 | TST-U-039, TST-K-021 |
+| KAN-081 | TST-U-040, TST-S-078, TST-K-022 |
+| KAN-082 | TST-U-041, TST-S-079, TST-K-023 |
 
 ## 4. Freigabe- und Entwicklungsstand
 
 | Ebene | Stand |
 |---|---|
 | Kundenanforderungen | ENT-008 bleibt offen; Anforderungsbaseline für ersten Release freigegeben (AEN-006), Folgeänderungen beauftragt, keine neue Release-Freigabe |
-| Softwareanforderungen | DOC-002 enthält die rekonstruierten Basisanforderungen und Ergänzungen bis SWA-079; abgelöste Regeln sind gekennzeichnet. |
+| Softwareanforderungen | DOC-002 enthält die rekonstruierten Basisanforderungen und Ergänzungen bis SWA-082; abgelöste Regeln sind gekennzeichnet. |
 | Architektur | GitHub Pages + Supabase vom Kunden gewählt (ENT-011); Details Entwurf |
-| Komponentenanforderungen | Abgeleiteter Entwurf, ergänzt bis UNA-050; Details und Status siehe DOC-004. |
-| Implementierung | OFF-064/069/070 sind laut PR #2/#10/#11 in `main`. OFF-071 lokal umgesetzt in `web/`; nicht veröffentlicht oder gemergt. Keine Schemaänderung. |
-| Tests | OFF-071 Schnelltests 363/363 und Konsistenzprüfung 437 IDs sauber. Smartphone-/Beamer- und Kundenprüfung bleiben offen. |
+| Komponentenanforderungen | Abgeleiteter Entwurf, ergänzt bis UNA-053; Details und Status siehe DOC-004. |
+| Implementierung | OFF-064/069/070 sind laut PR #2/#10/#11 in `main`. OFF-071, OFF-074, OFF-075 und OFF-076 lokal umgesetzt; Veröffentlichung steht aus. |
+| Tests | OFF-076 Lauf 014: 371 schnelle Tests und 65 gezielte View-/Renderer-Tests bestanden; Konsistenzprüfung sauber. Geheimnisprüfung meldet bestehende Treffer in DOC-002. Vollständige Testsuite nicht ausgeführt. Smartphone-/Beamer- und Kundenprüfung bleiben offen. |
 | Baseline / Kundenabnahme / Release | Konfigurationsmanagement nach DOC-009 (AEN-014). BL-001: Anforderungsbaseline „v0.5“ für den ersten Release vom Kunden freigegeben am 05.11.2026 (AEN-006). BL-002: Gesamtstand eingefroren, Freigabe offen. BL-003 bis BL-007 abgelöst. BL-008: Stand nach AEN-021 eingefroren, Freigabe offen; die nächste Baseline folgt vor der Generalprobe (AEN-022). Kundenabnahme und Release nicht erfolgt. |
 
 ### Historische Änderungsnachweise

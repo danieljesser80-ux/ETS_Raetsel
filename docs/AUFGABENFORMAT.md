@@ -1,6 +1,6 @@
 # Aufgabenformat für den Import
 
-**Dokument-ID:** DOC-010 | **Version:** 0.2 | **Datum:** 19.11.2026
+**Dokument-ID:** DOC-010 | **Version:** 0.3 | **Datum:** 20.11.2026
 Technische Formatbeschreibung zu UNA-037 / ARC-010/011/013
 Formatkennung: `raetsel-aufgaben/1`
 
@@ -32,6 +32,8 @@ Jede Aufgabe benötigt Kategorie, Titel, Typ und Text. Schwierigkeit ist optiona
 | Text | ja | Aufgabenbeschreibung; bis 4.000 Zeichen, mehrzeilig |
 
 Feldnamen sind nicht case-sensitiv. Unterstützte Synonyme für Lösung sind `Lösung` und `Loesung`; für Text kann auch `Text` verwendet werden.
+
+Zeilenumbrüche und Leerzeilen innerhalb von `Text` werden in der Spieler-Einzelansicht angezeigt; lange Zeilen können automatisch umbrechen. Markdown- und HTML-Auszeichnungen werden dort nicht interpretiert. Führende und abschließende Leerzeilen entfernt der Parser.
 
 Bei fehlender Lösung gibt der Parser für `exakt` und `schaetzung` eine Warnung aus. Für `auswahl` ohne Lösung wird keine Warnung für die fehlende Zahl ausgegeben; eine passende `Richtige Option` bleibt erforderlich. Bei fehlender richtiger Option gibt der Parser eine Warnung aus. Eine Warnung ist kein Formatfehler, die Aufgabe ist damit gegebenenfalls noch nicht spielbar. Bei Typen außer `auswahl` sind Optionen und richtige Option nicht zulässig.
 

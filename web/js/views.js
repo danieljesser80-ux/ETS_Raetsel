@@ -184,7 +184,7 @@ function taskTime(doc, start, duration, state, nowMs, label = 'Aufgabenzeit', ex
 }
 
 function giveUpButton(doc, taskId, handlers, disabled = false) {
-  const button = el(doc, 'button', { cls: 'btn danger', text: 'Aufgeben',
+  const button = el(doc, 'button', { cls: 'btn danger give-up-action', text: 'Aufgeben',
     attrs: { type: 'button', 'data-give-up': taskId } });
   button.disabled = disabled;
   listen(button, 'click', (event) => {
@@ -246,6 +246,19 @@ function submittedMark(task) {
   if (task.correct === false) return { text: '✗ Falsch', cls: 'wrong' };
   if (task.kind === 'estimate') return { text: 'Geschätzt', cls: 'guessed' };
   return { text: 'Abgegeben', cls: 'guessed' };
+}
+
+function taskState(task, finished) {
+  if (task.given_up) return { text: 'Aufgegeben', kind: 'given-up' };
+  if (task.submitted) {
+    if (task.correct === true) return { text: 'Richtig', kind: 'done' };
+    if (task.correct === false) return { text: 'Falsch', kind: 'wrong' };
+    return { text: task.kind === 'estimate' ? 'Geschätzt' : 'Abgegeben', kind: 'done' };
+  }
+  if (finished) return { text: 'Beendet', kind: 'ended' };
+  if (!task.available) return { text: 'Gesperrt', kind: 'locked' };
+  if (task.started) return { text: 'Zeit läuft', kind: 'running' };
+  return { text: 'Noch offen', kind: 'open' };
 }
 
 function taskStatus(task, finished) {
@@ -379,6 +392,7 @@ function taskOverview(doc, state, handlers, nowMs) {
     if (!open) panel.setAttribute('hidden', 'hidden');
     for (const t of group.items) {
       const mark = t.submitted ? submittedMark(t) : null;
+        const status = taskState(t, finished);
       const box = el(doc, 'div', { cls: `task stack${mark ? ` ${mark.cls}` : ''}`, attrs: { 'data-task': t.id } });
       if (isLeader && !finished && !t.submitted && t.available) {
         const b = el(doc, 'button', { cls: 'btn primary', text: t.title, attrs: { type: 'button', 'data-open': t.id } });
@@ -387,6 +401,7 @@ function taskOverview(doc, state, handlers, nowMs) {
       } else {
         box.append(el(doc, 'p', { cls: 'tname', text: t.title }));
       }
+      box.append(el(doc, 'p', { cls: `task-state ${status.kind}`, text: status.text }));
       box.append(el(doc, 'p', { cls: 'tstatus', text: taskStatus(t, finished) }));
       box.append(el(doc, 'div', { cls: 'task-meta' }, [
         difficultyTag(doc, t.difficulty),
@@ -453,6 +468,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
     if (!group) {
       card.append(sectionTitle(doc, 'Bitte warten'), el(doc, 'p', { text: 'Du hast noch keine Gruppe.' }));
     } else if (openTask) {
+      card.classList.add('player-task-detail');
       card.setAttribute('data-open-task', openTask.id);
       card.append(...taskView(doc, state, openTask, handlers, nowMs));
     } else {
@@ -468,6 +484,19 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
       card.append(list);
       card.append(taskTime(doc, state.word_started_ms, state.word_duration_ms, state, nowMs, 'Gruppenwortzeit', 'group-word-time'));
       if (wordCompleted) {
+        card.append(el(doc, 'aside', { cls: 'player-next-step', attrs: { 'aria-label': 'Nächster Schritt' } }, [
+          el(doc, 'p', { cls: 'player-next-step-label', text: 'Als Nächstes' }),
+          el(doc, 'strong', {
+            text: state.leader === true
+              ? 'Wähle ein offenes Rätsel.'
+              : 'Warte auf den Spielleiter.',
+          }),
+          el(doc, 'p', {
+            text: state.leader === true
+              ? 'Öffnen startet die Zeit. Bearbeite die Aufgabe gemeinsam mit deiner Gruppe.'
+              : `${state.leader_name || 'Euer Spielleiter'} öffnet das nächste Rätsel für eure Gruppe.`,
+          }),
+        ]));
         if (state.word_outcome === 'given_up') {
           card.append(el(doc, 'p', { cls: 'message info', text: 'Gruppenwort aufgegeben – 0 Punkte' }));
         } else if (state.solved.points !== undefined) {
@@ -486,9 +515,15 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
           const completed = tasks.filter(t => t.submitted === true).length;
           const standing = state.final || state.liveStanding;
           card.append(el(doc, 'div', { cls: 'mission-progress' }, [
-            el(doc, 'span', { text: `${standing?.points ?? '–'} Punkte` }),
+            el(doc, 'div', { cls: 'mission-points' }, [
+              el(doc, 'strong', { text: `${standing?.points ?? '–'} ` }),
+              el(doc, 'span', { text: 'Punkte' }),
+            ]),
             el(doc, 'span', { cls: 'mission-rank', text: `Platz ${standing?.rank ?? '–'}` }),
-            el(doc, 'span', { text: `${completed}/${tasks.length}` }),
+            el(doc, 'div', { cls: 'mission-completed' }, [
+              el(doc, 'strong', { text: `${completed}/${tasks.length} ` }),
+              el(doc, 'span', { text: 'Rätsel fertig' }),
+            ]),
           ]));
         }
         card.append(...taskOverview(doc, state, handlers, nowMs));

@@ -1,6 +1,6 @@
 # Testkonzept und Testspezifikation – Weihnachtsfeierspiel
 
-**Dokument-ID:** DOC-006 | **Version:** 0.32 | **Datum:** 19.11.2026
+**Dokument-ID:** DOC-006 | **Version:** 0.36 | **Datum:** 20.11.2026
 
 **Status:** Entwurf; fachliche und technische Freigaben unverändert ausstehend.
 
@@ -204,3 +204,32 @@ Es gab zuvor keine gezielten Assertions für Gruppenwortzeit in der Spielerüber
 | TST-K-020 | Kundenabnahme | Nach Deployment auf schmalen Smartphones: Design, Umbruch langer Gruppennamen, Informationshierarchie, Lesbarkeit, Spielrestzeit, Punkte/Fortschritt, finale Platzierung, Kategorien und Rollenhinweise prüfen. Desktop, Admin, Bestenliste und Beamer unverändert vergleichen. |
 
 **Grenze automatisierter Tests:** DOM-Tests beweisen weder tatsächliches CSS-Layout noch Lesbarkeit/Umbruch auf Geräten. Dafür TST-K-020 manuell durchführen; keine Live-Datenänderung, Supabase-Änderung oder Spielzustandsänderung ist erforderlich.
+
+## OFF-073 – Zeilenumbrüche im Aufgabentext
+
+| Test-ID | Ebene | Prüfschritte / Soll-Ergebnis |
+|---|---|---|
+| TST-U-039 | Unit/UI | Synthetischen mehrzeiligen Aufgabentext mit Leerzeilen und nummerierten Zeilen einlesen und in der Spieler-Einzelansicht darstellen. Text bleibt unverändert und HTML-artige Eingaben bleiben Klartext. Das Textelement erhält eine CSS-Darstellung, die Zeilenumbrüche erhält und automatischen Umbruch erlaubt. Bestehende Parserprüfung TST-S-040 bleibt gültig. |
+| TST-K-021 | Kundenabnahme | Nach Veröffentlichung auf Smartphone und Desktop eine Aufgabe mit Zeilenumbrüchen, Leerzeile und nummerierten Zeilen öffnen; Darstellung und automatischen Umbruch langer Zeilen prüfen. |
+
+DOM-/CSS-Tests belegen keine tatsächliche optische Darstellung im Browser; TST-K-021 bleibt bis zur Kundenprüfung offen.
+
+Lokaler Ausführungsnachweis: [Lauf 011](../testprotokolle/lauf-011.md).
+
+## OFF-074 – Punktestaffeln
+
+| Test-ID | Ebene | Prüfschritte / Soll-Ergebnis |
+|---|---|---|
+| TST-U-040 | Unit/UI | Die neuen Standardstaffeln liefern für Leicht `15,13,11,9,7,6,5,4,3,2,2`, Mittel `30,26,22,19,16,13,11,9,7,6,5` und Schwer `45,39,34,29,24,20,17,14,11,9,8`. `pointsForRank` wertet Rang 10 und Rang 11+ passend aus; neun Einträge behalten Rang 9+ als bisherigen Restwert. Eine zehnteilige Staffel wird abgewiesen. Die Adminansicht zeigt Plätze 1–10 und 11+; bei einer Altstaffel erscheinen deren bisherige Restpunkte in den zusätzlichen Zeilen. Speichern sendet elf Werte je Schwierigkeit. |
+| TST-S-078 | Software/DB | Neue Runden erhalten die elfteiligen Defaults und den Übernahmemarker; nach individuellen Änderungen bleiben die Staffeln bei Schemawiederholung und `admin_reset` erhalten. Bei einem Altstand ohne Marker ersetzt das Schema in beiden zulässigen Phasen alle drei gespeicherten Staffeln einmalig, erhöht die Konfigurationsrevision nur bei Änderung und erhält andere Einstellungen. Wiederholung, spätere Anpassung und Reset erhalten die Staffel; der Admincache erkennt eine neue Revision. In allen späteren Phasen wird die ausstehende Übernahme ausdrücklich abgewiesen und Werte und Revision bleiben unverändert. Nach Rückkehr zu einer zulässigen Phase ist die Übernahme möglich. Neunwertige Staffeln bleiben gültig und behalten Rang 9+; elfwertige Staffeln, Rang 10/11+ sowie ungültige Längen, Reihenfolgen und Werte prüfen. |
+| TST-K-022 | Kundenabnahme | Auf einem Teststand mit alter gespeicherter Staffel und einer noch nicht eingeteilten Runde das aktualisierte Schema ausführen und die einmalig übernommenen Kundenvorlagen, Admin-Eingaben und öffentliche Anleitung vergleichen. Nach eigener Änderung Schema erneut ausführen und Erhalt prüfen; ein Reset darf spätere Einstellungen nicht überschreiben. Ein bereits eingeteilter Teststand muss die ausstehende Übernahme mit Fehler ablehnen. Keine Live-Spielrunde oder Datenänderung an der Veranstaltung. |
+
+DOM-/PGlite-Tests belegen nicht die Abnahme auf dem Kundenstand; TST-K-022 bleibt bis zur Kundenprüfung nach Schemaausführung offen.
+
+## OFF-076 – Klarere Spieleransicht
+
+| Test-ID | Ebene | Prüfschritte / Soll-Ergebnis |
+|---|---|---|
+| TST-U-041 | Unit/UI | Nach Abschluss des Gruppenworts zeigt ein Spielleiter den hervorgehobenen nächsten Schritt „Wähle ein offenes Rätsel“, Mitglieder einen Wartehinweis mit bekanntem Spielleiternamen. Der Statusblock beschriftet Punkte und Rätselfortschritt; die Platzspalte bleibt mobil ausblendbar. Aufgaben erhalten aus dem bestehenden Zustand die kompakten Klassen/Textzustände `Noch offen`, `Zeit läuft`, `Richtig`, `Falsch`, `Aufgegeben` oder `Geschätzt`. Der vorhandene Öffnen-Handler bleibt unverändert. Aufgeben bleibt ein nativer Button mit gleichem Handler, erhält aber die Klasse für eine sekundäre Darstellung. Andere Ansichten und die unvolle Gruppenwortphase bleiben frei von diesen neuen Strukturelementen. |
+| TST-S-079 | Software/UI | Eine gerenderte aktive Spieleransicht behält Gruppen-, Zeit-, Fortschritts-, Aufgaben- und Rolleninformationen, während nächster Schritt und Aufgabenstatus im DOM eindeutig auffindbar sind. Die neue Hierarchie gilt nur bis 40 rem; Tastaturfokus, Buttontypen, vorhandene Aktionen, Polling-Aktualisierung und vorhandene Desktopstruktur bleiben erhalten. |
+| TST-K-023 | Kundenabnahme | Auf einem aktuellen Smartphone die veröffentlichte Spieleransicht als Spielleiter und Mitspieler prüfen: nächster Schritt sichtbar, Statuskarten schnell unterscheidbar, Fortschritt lesbar, Primär- und Aufgeben-Aktion eindeutig verschieden und keine horizontale Überbreite. Anschließend eine Aufgabe öffnen, abgeben und beenden; Spielablauf und Berechtigungen vergleichen. |

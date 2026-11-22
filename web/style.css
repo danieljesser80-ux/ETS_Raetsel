@@ -166,7 +166,7 @@ label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 .player-overview .btn { min-height: 3rem; margin: 0; font-size: 1.1rem; overflow-wrap: anywhere; }
 .player-overview .message { padding: 0.5rem 0.75rem; }
 
-.mission-progress .mission-completed { display: flex; flex-direction: column; }
+.mission-progress .mission-completed { display: flex; flex-direction: column; justify-content: center; }
 .mission-progress strong { font-size: 1.15em; }
 .mission-progress span { font-size: .78em; }
 .task-state { font-weight: 800; }
@@ -345,7 +345,7 @@ body.presentation { font-size: 1.5rem; overflow-wrap: anywhere; }
 .presentation-intro { color: var(--paper); text-align: center; margin: 0; }
 .presentation-flow {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1.25rem;
   list-style: none;
   margin: 1.5rem 0;
@@ -378,11 +378,11 @@ body.presentation { font-size: 1.5rem; overflow-wrap: anywhere; }
   color: #fff;
   font-weight: 800;
 }
-.presentation-flow h2 { font-size: 1.5rem; margin: 0.65rem 0; }
+.presentation-flow h2 { font-size: 1.45rem; margin: 0.65rem 0; }
 .presentation-flow p { margin: 0; }
 .presentation-flow > .presentation-cycle { border-style: dashed; }
 .presentation-flow .presentation-return { margin-top: 0.75rem; font-weight: 800; color: var(--red); }
-.presentation-ranking {
+.presentation-ranking, .presentation-points {
   background: var(--paper);
   border: 2px solid #5a4b3c;
   border-radius: 0.2rem;
@@ -390,6 +390,18 @@ body.presentation { font-size: 1.5rem; overflow-wrap: anywhere; }
   text-align: center;
 }
 .presentation-ranking p { margin: 0.25rem 0 0; }
+.presentation-points { min-width: 0; }
+.presentation-points h2 { margin-bottom: .45rem; text-align: center; }
+.presentation-points > p { margin: .55rem 0 0; font-size: .8em; text-align: center; }
+.points-table-wrap { max-width: 100%; overflow-x: auto; }
+.points-table { width: 100%; border-collapse: collapse; font-family: 'Courier Prime', monospace; font-size: .9em; text-align: center; }
+.points-table caption { margin-bottom: .35rem; font-weight: 800; }
+.points-table th, .points-table td { padding: .28rem .38rem; border: 1px solid #887762; white-space: nowrap; }
+.points-table thead th { color: var(--paper); background: #1c2128; }
+.points-table tbody th { min-width: 7rem; color: #fff; text-align: left; text-transform: capitalize; }
+.points-leicht th { background: #1769aa; }
+.points-mittel th { background: #c62828; }
+.points-schwer th { background: #111; }
 .presentation-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.25rem; padding: 0 1rem 1rem; font-size: 1rem; }
 .presentation-nav a { color: var(--gold); padding: 0.4rem 0; }
 .presentation-nav a:focus-visible { outline: 3px dashed var(--gold); outline-offset: 2px; }
@@ -557,11 +569,11 @@ body.admin-page {
   .guide-page .guide-cycle::before, .guide-page .guide-cycle > li::after { display: none; }
   .guide-page .guide-flow .guide-flow-return { padding: 0.45rem; margin-top: 0.5rem; }
   body.presentation { height: 100vh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; font-size: 1.75rem; }
-  .presentation-main { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) 26rem; grid-template-rows: auto minmax(0, 1fr) auto; gap: 1.5rem; min-height: 0; }
+  .presentation-main { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) 24rem; grid-template-rows: auto auto minmax(0, 1fr); gap: .8rem 1.25rem; min-height: 0; }
   .presentation-intro { grid-column: 1; grid-row: 1; }
   .presentation-flow { grid-column: 1; grid-row: 2; align-self: center; margin: 0; }
   .presentation-flow h2 { font-size: 1.75rem; }
-  .presentation-ranking { grid-column: 1; grid-row: 3; }
+  .presentation-points { grid-column: 1; grid-row: 3; align-self: start; }
   .presentation-qr { grid-column: 2; grid-row: 1 / -1; }
   .presentation-qr h2 { font-size: 1.75rem; }
 }
@@ -784,6 +796,8 @@ body.admin-page {
   .player-overview .task-overview-title,
   .player-overview .task-overview-leader-intro { display: none; }
   .player-overview .mission-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: .45rem; }
+  .player-overview .mission-progress .mission-rank,
+  .player-overview .mission-progress .mission-completed strong { font-size: 1.25rem; line-height: 1.15; }
   .player-overview .player-ranking { gap: .35rem; margin-top: .3rem; }
   .player-overview .player-ranking h2 { font-size: 1rem; }
   .player-overview .player-mobile-ranking {

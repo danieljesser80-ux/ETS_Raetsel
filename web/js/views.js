@@ -520,11 +520,10 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
               text: `Platz ${standing?.rank ?? '–'} von ${state.liveGroupCount ?? '–'} Gruppen`,
             }),
             el(doc, 'div', { cls: 'mission-completed' }, [
-              el(doc, 'strong', { text: `${completed}/${tasks.length} ` }),
-              el(doc, 'span', { text: 'Rätsel fertig' }),
+              el(doc, 'strong', { text: `${completed}/${tasks.length} Rätsel` }),
             ]),
           ]));
-        } else if ((state.liveRanking || []).length) {
+        } else {
           const board = rankingList(doc, state.liveRanking, true);
           board.classList.add('player-mobile-ranking');
           const own = [...board.children].find((row) =>
@@ -535,7 +534,7 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
             board,
           ]));
         }
-        card.append(...taskOverview(doc, state, handlers, nowMs));
+        if (state.leader === true) card.append(...taskOverview(doc, state, handlers, nowMs));
       } else {
         const letters = el(doc, 'div', { cls: 'letters', attrs: { 'aria-label': 'Deine Buchstaben' } });
         for (const l of state.letters || []) letters.appendChild(el(doc, 'span', { cls: 'letter', text: l }));

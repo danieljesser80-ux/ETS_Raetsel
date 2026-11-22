@@ -341,7 +341,7 @@ label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 body.presentation { font-size: 1.5rem; overflow-wrap: anywhere; }
 .presentation header { padding: 0.75rem; }
 .presentation h1 { font-size: clamp(1.8rem, 3vw, 2.6rem); }
-.presentation-main { max-width: 88rem; padding: 1.5rem; }
+.presentation-main { width: 100%; max-width: none; padding: clamp(.75rem, 1.5vw, 1.5rem); }
 .presentation-intro { color: var(--paper); text-align: center; margin: 0; }
 .presentation-flow {
   display: grid;
@@ -568,14 +568,79 @@ body.admin-page {
   .guide-page .guide-cycle > li { margin: 0; padding: 0.4rem; }
   .guide-page .guide-cycle::before, .guide-page .guide-cycle > li::after { display: none; }
   .guide-page .guide-flow .guide-flow-return { padding: 0.45rem; margin-top: 0.5rem; }
-  body.presentation { height: 100vh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; font-size: 1.75rem; }
-  .presentation-main { width: 100%; max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) 24rem; grid-template-rows: auto auto minmax(0, 1fr); gap: .8rem 1.25rem; min-height: 0; }
-  .presentation-intro { grid-column: 1; grid-row: 1; }
-  .presentation-flow { grid-column: 1; grid-row: 2; align-self: center; margin: 0; }
-  .presentation-flow h2 { font-size: 1.75rem; }
-  .presentation-points { grid-column: 1; grid-row: 3; align-self: start; }
-  .presentation-qr { grid-column: 2; grid-row: 1 / -1; }
-  .presentation-qr h2 { font-size: 1.75rem; }
+}
+
+@media (min-width: 70rem) {
+  body.presentation {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    font-size: clamp(1.15rem, 1.55vw, 1.75rem);
+  }
+  .presentation-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(18rem, 24vw, 25rem);
+    grid-template-rows: auto minmax(12rem, .9fr) minmax(12rem, 1.1fr);
+    gap: clamp(.55rem, 1vw, 1.1rem);
+    min-height: 0;
+    padding: clamp(.5rem, 1vw, 1rem) clamp(.75rem, 1.25vw, 1.25rem);
+  }
+  .presentation-intro {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    font-size: 1.05em;
+    font-weight: 700;
+  }
+  .presentation-flow {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: stretch;
+    margin: 0;
+    gap: clamp(.65rem, 1vw, 1.2rem);
+  }
+  .presentation-flow > li {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(.55rem, 1vw, 1rem);
+  }
+  .presentation-flow > li:not(:last-child)::after { right: clamp(-1.2rem, -1vw, -.65rem); width: clamp(.65rem, 1vw, 1.2rem); }
+  .presentation-flow h2 { font-size: clamp(1.35rem, 2.1vw, 2rem); line-height: 1.05; }
+  .presentation-flow p { line-height: 1.3; }
+  .presentation-flow .presentation-return { margin-top: .45rem; font-size: .8em; }
+  .presentation-number { width: clamp(2.1rem, 3vw, 2.8rem); line-height: clamp(2.1rem, 3vw, 2.8rem); }
+  .presentation-points {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: stretch;
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(.55rem, .9vw, .9rem);
+  }
+  .presentation-points h2 { margin: 0 0 .3rem; font-size: clamp(1.2rem, 1.8vw, 1.65rem); }
+  .presentation-points .points-table { font-size: clamp(.72rem, 1.2vw, 1rem); }
+  .presentation-points .points-table th, .presentation-points .points-table td { padding: clamp(.16rem, .35vw, .35rem) clamp(.18rem, .4vw, .45rem); }
+  .presentation-points > p { margin-top: .35rem; font-size: clamp(.78rem, 1.1vw, .95rem); line-height: 1.2; }
+  .presentation-qr {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: stretch;
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: clamp(.65rem, 1.1vw, 1.1rem);
+    flex-direction: column;
+    justify-content: center;
+  }
+  .presentation-qr h2 { margin-bottom: .55rem; font-size: clamp(1.35rem, 2.1vw, 2rem); }
+  .presentation-qr img { width: min(100%, 23rem); margin-inline: auto; }
+  .presentation-qr a { font-size: clamp(.72rem, 1.05vw, .95rem); overflow-wrap: anywhere; }
+  .presentation-nav { padding: .25rem 1rem .55rem; }
 }
 
 

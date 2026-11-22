@@ -166,7 +166,6 @@ label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 .player-overview .btn { min-height: 3rem; margin: 0; font-size: 1.1rem; overflow-wrap: anywhere; }
 .player-overview .message { padding: 0.5rem 0.75rem; }
 
-.mission-progress .mission-points,
 .mission-progress .mission-completed { display: flex; flex-direction: column; }
 .mission-progress strong { font-size: 1.15em; }
 .mission-progress span { font-size: .78em; }
@@ -193,12 +192,77 @@ label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 
 .guide { overflow-wrap: anywhere; }
 .guide nav { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
+.admin-guide-link {
+  display: block;
+  width: fit-content;
+  margin: 0 0 .75rem auto;
+  padding: .5rem .8rem;
+  color: var(--paper);
+  background: var(--red);
+  border: 2px solid var(--gold);
+  border-radius: .2rem;
+  font-weight: 800;
+}
+.admin-guide-link:hover { color: #fff; }
+.admin-guide-link:focus-visible { outline: 3px dashed var(--gold); outline-offset: 2px; }
 .guide-link { display: inline-block; padding: 0.5rem 0; color: var(--red); font-weight: 800; }
 .guide-link:focus-visible { outline: 3px dashed var(--red); outline-offset: 2px; }
 .guide dt { font-weight: 800; margin-top: 0.75rem; text-transform: uppercase; }
 .guide dd { margin: 0.25rem 0 0; }
 .guide-steps, .guide-rules { padding-left: 1.5rem; }
 .guide-steps li, .guide-rules li { margin-bottom: 0.75rem; }
+.guide-quickstart { border-width: 3px; }
+.guide-kicker {
+  margin: 0 0 .3rem;
+  color: var(--red);
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.guide-quicksteps {
+  display: grid;
+  gap: .55rem;
+  margin: .75rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: quickstep;
+}
+.guide-quicksteps li {
+  counter-increment: quickstep;
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr);
+  gap: .1rem .55rem;
+  padding: .65rem;
+  background: #fdfaf2;
+  border: 1px solid #887762;
+  border-left: .3rem solid var(--red);
+  border-radius: .15rem;
+}
+.guide-quicksteps li::before {
+  content: counter(quickstep);
+  grid-row: 1 / span 2;
+  align-self: center;
+  width: 2rem;
+  height: 2rem;
+  color: #fff;
+  background: var(--red);
+  border-radius: 50%;
+  font-weight: 900;
+  line-height: 2rem;
+  text-align: center;
+}
+.guide-quicksteps strong { font-family: 'Special Elite', monospace; font-size: 1.02rem; }
+.guide-quicksteps span { line-height: 1.35; }
+.guide-callout {
+  margin: .75rem 0 0;
+  padding: .65rem;
+  color: var(--paper);
+  background: #1c2128;
+  border-left: .3rem solid var(--gold);
+  font-weight: 700;
+}
+.admin-quickstart { border-color: var(--gold); }
 .guide-diagram { margin: 1rem 0 0; }
 .guide-monitor {
   background: #1c2128;
@@ -459,13 +523,15 @@ body.admin-page {
     padding: 1rem;
     display: grid;
     grid-template-columns: 1.05fr 1fr 1fr;
-    grid-template-areas: "nav nav nav" "flow idea value" "flow roles value" "flow know rules" "back back back";
+    grid-template-areas: "nav nav nav" "quick quick admin" "flow idea value" "flow roles value" "flow know rules" "back back back";
     gap: 1rem;
     align-items: start;
   }
   .guide-page .guide > .card { margin: 0; padding: 0.65rem; }
   .guide-page .guide > nav:first-child { grid-area: nav; }
   .guide-page .guide > nav:last-child { grid-area: back; }
+  .guide-page #schnellstart-spieler { grid-area: quick; }
+  .guide-page #schnellstart-admin { grid-area: admin; }
   .guide-page #idee { grid-area: idea; }
   .guide-page #ablaufgrafik { grid-area: flow; }
   .guide-page #rollen { grid-area: roles; }
@@ -663,7 +729,7 @@ body.admin-page {
 .mission-leader .mission-progress{background:#101317;color:var(--gold);padding:.65rem;text-align:center;font-weight:bold}
 .mission-leader .task{border:1px solid #887762;padding:.65rem}
 
-.mission-progress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.3rem;font-size:.9rem}.mission-progress span+span{border-left:1px dashed #887762}
+.mission-progress{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.3rem;font-size:.9rem}.mission-progress > :not(:first-child){border-left:1px dashed #887762}
 
 /* Christmas decoration: locally embedded crop of approved mockup; no external image request. */
 :root { --christmas-fir: url("data:image/webp;base64,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"); }
@@ -715,10 +781,24 @@ body.admin-page {
   .player-overview .player-group-mobile-label { line-height: 1.25; }
   .player-overview .group-word-time,
   .player-overview .provisional-place,
-  .player-overview .mission-progress .mission-rank,
   .player-overview .task-overview-title,
   .player-overview .task-overview-leader-intro { display: none; }
   .player-overview .mission-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: .45rem; }
+  .player-overview .player-ranking { gap: .35rem; margin-top: .3rem; }
+  .player-overview .player-ranking h2 { font-size: 1rem; }
+  .player-overview .player-mobile-ranking {
+    padding: .15rem .45rem;
+    border: 1px solid #887762;
+    background: #fdfaf3;
+  }
+  .player-overview .player-mobile-ranking li { padding: .45rem .15rem; }
+  .player-overview .player-mobile-ranking .own-group {
+    margin: 0 -.25rem;
+    padding-inline: .4rem;
+    background: #f0dba3;
+    border-left: .25rem solid var(--red);
+    font-weight: 900;
+  }
   .player-overview h3 { margin-top: .3rem; font-size: 1rem; line-height: 1.25; }
   .player-overview .category-toggle { min-height: 2.75rem; padding: .4rem .55rem; font-size: 1rem; line-height: 1.25; }
   .player-overview .category-panel { gap: .35rem; }

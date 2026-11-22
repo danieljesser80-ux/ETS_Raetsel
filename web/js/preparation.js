@@ -32,12 +32,11 @@ export function roundPreparation(overview) {
   if (!validSize) missing.push('Gruppengröße ungültig');
   const words = overview.words;
   const validWords = Array.isArray(words) && words.length > 0
-    && words.every((word) => typeof word === 'string' && /^[A-Z]{1,9}$/.test(word))
+    && words.every((word) => typeof word === 'string' && /^[A-Z]+$/.test(word))
     && new Set(words).size === words.length;
   if (!validWords) missing.push('Wortliste fehlt oder ist ungültig');
   if (validWords && validSize) {
     const count = (overview.players || []).length;
-    let sizes = Array.from({ length: max - min + 1 }, (_, i) => min + i);
     if (count >= min) {
       const candidates = [];
       for (let k = Math.ceil(count / max); k <= Math.floor(count / min); k++) {
@@ -45,15 +44,6 @@ export function roundPreparation(overview) {
       }
       candidates.sort((a, b) => a.distance - b.distance || b.k - a.k);
       if (!candidates.length) missing.push('Teilnehmerzahl passt nicht zur Gruppengröße');
-      else {
-        const k = candidates[0].k;
-        sizes = [...new Set([Math.floor(count / k), Math.ceil(count / k)])];
-      }
-    }
-    for (const size of sizes) {
-      if (!words.some((word) => size === 1 || (word.length >= size && word.length <= Math.min(2 * size, 9)))) {
-        missing.push(`Kein passendes Wort für Gruppengröße ${size}`);
-      }
     }
   }
   if (!Number.isInteger(overview.game_minutes) || overview.game_minutes < 1 || overview.game_minutes > 35791394) {

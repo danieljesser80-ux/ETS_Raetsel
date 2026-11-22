@@ -266,8 +266,8 @@ function taskStatus(task, finished) {
     const mark = submittedMark(task).text;
     const pl = task.placement;
     if (!pl) return mark;
-    if (finished && pl.points !== undefined) return `${mark} – Platz ${pl.rank}, ${pl.points} Punkte`;
-    return `${mark} – vorläufig Platz ${pl.rank}`;
+    if (finished && pl.points !== undefined) return `${mark} – ${pl.points} Punkte`;
+    return mark;
   }
   if (finished) return task.started ? 'Spiel beendet – offen, 0 Punkte' : 'Nicht gestartet – 0 Punkte';
   if (!task.available) return 'Noch nicht verfügbar';
@@ -515,15 +515,24 @@ export function renderPlayer(root, state, handlers = {}, nowMs = Date.now()) {
           const completed = tasks.filter(t => t.submitted === true).length;
           const standing = state.final || state.liveStanding;
           card.append(el(doc, 'div', { cls: 'mission-progress' }, [
-            el(doc, 'div', { cls: 'mission-points' }, [
-              el(doc, 'strong', { text: `${standing?.points ?? '–'} ` }),
-              el(doc, 'span', { text: 'Punkte' }),
-            ]),
-            el(doc, 'span', { cls: 'mission-rank', text: `Platz ${standing?.rank ?? '–'}` }),
+            el(doc, 'span', {
+              cls: 'mission-rank',
+              text: `Platz ${standing?.rank ?? '–'} von ${state.liveGroupCount ?? '–'} Gruppen`,
+            }),
             el(doc, 'div', { cls: 'mission-completed' }, [
               el(doc, 'strong', { text: `${completed}/${tasks.length} ` }),
               el(doc, 'span', { text: 'Rätsel fertig' }),
             ]),
+          ]));
+        } else if ((state.liveRanking || []).length) {
+          const board = rankingList(doc, state.liveRanking, true);
+          board.classList.add('player-mobile-ranking');
+          const own = [...board.children].find((row) =>
+            row.querySelector('.rname')?.firstChild?.textContent === state.group.name);
+          own?.classList.add('own-group');
+          card.append(el(doc, 'section', { cls: 'player-ranking stack' }, [
+            sectionTitle(doc, 'Aktuelle Rangliste'),
+            board,
           ]));
         }
         card.append(...taskOverview(doc, state, handlers, nowMs));

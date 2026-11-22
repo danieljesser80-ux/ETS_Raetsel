@@ -61,10 +61,14 @@ const sync = createRefreshLoop({
     await api.ensureSession();
     const s = await api.getState();
     if (!s || !s.ok) throw new Error(reasonText(s?.reason));
-    if (s.leader === true && s.group && s.phase !== 'aufgabe_abgeschlossen') {
+    if (s.group && s.phase !== 'anmeldung') {
       try {
         const board = await api.beamerState(null);
-        if (board?.ok) s.liveStanding = (board.ranking || []).find(r => r.group === s.group.name) || null;
+        if (board?.ok) {
+          s.liveRanking = board.ranking || [];
+          s.liveStanding = s.liveRanking.find(r => r.group === s.group.name) || null;
+          s.liveGroupCount = s.liveRanking.length;
+        }
       } catch { /* Ranking unavailable: retain normal gameplay. */ }
     }
     return s;
